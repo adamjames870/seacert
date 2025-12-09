@@ -52,3 +52,57 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 	)
 	return i, err
 }
+
+const getCertFromId = `-- name: GetCertFromId :one
+SELECT id, created_at, updated_at, name, cert_number, issuer, issued_date FROM certificates WHERE id=$1
+`
+
+func (q *Queries) GetCertFromId(ctx context.Context, id uuid.UUID) (Certificate, error) {
+	row := q.db.QueryRowContext(ctx, getCertFromId, id)
+	var i Certificate
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.CertNumber,
+		&i.Issuer,
+		&i.IssuedDate,
+	)
+	return i, err
+}
+
+const getCerts = `-- name: GetCerts :many
+SELECT id, created_at, updated_at, name, cert_number, issuer, issued_date FROM certificates
+`
+
+func (q *Queries) GetCerts(ctx context.Context) ([]Certificate, error) {
+	rows, err := q.db.QueryContext(ctx, getCerts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Certificate
+	for rows.Next() {
+		var i Certificate
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.CertNumber,
+			&i.Issuer,
+			&i.IssuedDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

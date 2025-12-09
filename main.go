@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -27,11 +26,6 @@ func run(state *apiState) error {
 	errState := state.LoadState()
 	if errState != nil {
 		return fmt.Errorf("error loading initial api state: %w", errState)
-	}
-
-	errEnv := godotenv.Load()
-	if errEnv != nil {
-		return fmt.Errorf("error loading .env file: %w", errEnv)
 	}
 
 	errEndpoints := state.CreateEndpoints()

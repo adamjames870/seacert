@@ -7,6 +7,7 @@ import (
 )
 
 type apiState struct {
-	mux *http.ServeMux
-	db  *database.Queries
+	mux   *http.ServeMux
+	db    *database.Queries
+	isDev bool
 }
