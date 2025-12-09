@@ -1,4 +1,4 @@
-﻿package main
+﻿package tests_integration
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ func TestInOrder(t *testing.T) {
 	tHealthzEndpoint(t)
 	tResetDb(t)
 	tHandlerAddCertificate(t)
-	tGetCertificate_E2E(t)
+	tGetCertificateFromId(t)
 }
 
 func tHealthzEndpoint(t *testing.T) {
@@ -46,22 +46,6 @@ func tResetDb(t *testing.T) {
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("RESET: expected status %d, got %d", http.StatusOK, resp.StatusCode)
-	}
-}
-
-func newMockCertificateFromParams(p models.ParamsAddCertificate) models.Certificate {
-	now := time.Now().UTC()
-
-	issuedDate, _ := time.Parse("2006-01-02", p.IssuedDate)
-
-	return models.Certificate{
-		ID:         uuid.New(),
-		CreatedAt:  now,
-		UpdatedAt:  now,
-		Name:       p.Name,
-		CertNumber: p.CertNumber,
-		Issuer:     p.Issuer,
-		IssuedDate: issuedDate,
 	}
 }
 
@@ -135,7 +119,7 @@ func tHandlerAddCertificate(t *testing.T) {
 	StoreCreatedCertificate(result)
 }
 
-func tGetCertificate_E2E(t *testing.T) {
+func tGetCertificateFromId(t *testing.T) {
 	if createdCert.ID == uuid.Nil {
 		t.Fatalf("POST test did not populate createdCert; ensure StoreCreatedCertificate() is called in the POST test")
 	}
