@@ -12,20 +12,31 @@ import (
 func main() {
 
 	var state apiState
-	if state.LoadState() != nil {
-		fmt.Println("Error loading initial api state")
+
+	err := run(&state)
+	if err != nil {
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	if godotenv.Load() != nil {
-		fmt.Println("Error loading .env file")
-		os.Exit(1)
+	fmt.Println("Hello, world!")
+
+}
+
+func run(state *apiState) error {
+	errState := state.LoadState()
+	if errState != nil {
+		return fmt.Errorf("error loading initial api state: %w", errState)
 	}
 
-	state.mux = http.NewServeMux()
-	if state.CreateEndpoints() != nil {
-		fmt.Println("Error creating endpoints")
-		os.Exit(1)
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		return fmt.Errorf("error loading .env file: %w", errEnv)
+	}
+
+	errEndpoints := state.CreateEndpoints()
+	if errEndpoints != nil {
+		return fmt.Errorf("error creating endpoints: %w", errEndpoints)
 	}
 
 	port := os.Getenv("PORT")
@@ -36,11 +47,11 @@ func main() {
 		Handler: state.mux,
 		Addr:    ":" + port,
 	}
-	if server.ListenAndServe() != nil {
-		fmt.Println("Error starting server")
-		os.Exit(1)
+
+	errServe := server.ListenAndServe()
+	if errServe != nil {
+		return fmt.Errorf("error starting server: %w", errServe)
 	}
 
-	fmt.Println("Hello, world!")
-
+	return nil
 }
