@@ -1,7 +1,7 @@
 -- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, name, cert_number, issuer, issued_date)
+INSERT INTO certificates (id, created_at, updated_at, cert_type_id, cert_number, issuer, issued_date, alternative_name, remarks)
 VALUES (
-           $1, $2, $3, $4, $5, $6, $7
+           $1, $2, $3, $4, $5, $6, $7, $8, $9
        )
 RETURNING *;
 

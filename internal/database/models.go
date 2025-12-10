@@ -5,17 +5,32 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Certificate struct {
-	ID         uuid.UUID
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Name       string
-	CertNumber string
-	Issuer     string
-	IssuedDate time.Time
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Name            string
+	CertNumber      string
+	Issuer          string
+	IssuedDate      time.Time
+	CertTypeID      uuid.NullUUID
+	AlternativeName sql.NullString
+	Remarks         sql.NullString
+}
+
+type CertificateType struct {
+	ID                   uuid.UUID
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	Name                 string
+	ShortName            string
+	StcwReference        sql.NullString
+	NormalValidityMonths sql.NullInt32
+	UpdatesCertTypeID    uuid.NullUUID
 }
