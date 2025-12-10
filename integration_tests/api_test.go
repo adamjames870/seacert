@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -19,10 +20,27 @@ func StoreCreatedCertificate(cert models.Certificate) {
 }
 
 func TestInOrder(t *testing.T) {
+
+	fmt.Println("Running integration tests...")
+
 	tHealthzEndpoint(t)
 	tResetDb(t)
 	tHandlerAddCertificate(t)
 	tGetCertificateFromId(t)
+
+	fmt.Println("Initial ntegration tests complete. Installing dummy certs...")
+
+	err := LoadDummyCerts()
+	if err != nil {
+		fmt.Println("Failed to load dummy certs:" + err.Error())
+	}
+
+	fmt.Println("Dummy certs installed. Checking retrieval...")
+
+	tGetAllCerts(t)
+
+	fmt.Println("All integration tests run.")
+
 }
 
 func tHealthzEndpoint(t *testing.T) {
@@ -163,4 +181,47 @@ func tGetCertificateFromId(t *testing.T) {
 	if !result.IssuedDate.Equal(createdCert.IssuedDate) {
 		t.Errorf("IssuedDate mismatch")
 	}
+
+}
+
+func tGetAllCerts(t *testing.T) {
+
+	expectedCount := 6
+
+	resp, errResp := http.Get("http://localhost:8080/api/certificates")
+	if errResp != nil {
+		t.Fatalf("failed to call /api/certificates: %v", errResp)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("failed to read response body: %v", err)
+	}
+
+	// ---- Unmarshal returned certificates ----
+	var returned []models.Certificate
+	if err := json.Unmarshal(body, &returned); err != nil {
+		t.Fatalf("failed to unmarshal API response: %v", err)
+	}
+
+	// ---- List returned certificates to stdout ----
+	fmt.Println("=== Certificates returned by API ===")
+	for i, c := range returned {
+		fmt.Printf("%d: %s (%s) issued by %s on %s\n",
+			i, c.Name, c.CertNumber, c.Issuer, c.IssuedDate)
+	}
+	fmt.Println("====================================")
+
+	// ---- Check count ----
+	if len(returned) != expectedCount {
+		t.Fatalf("certificate count mismatch: got %d, expected %d",
+			len(returned), expectedCount)
+	}
+
 }

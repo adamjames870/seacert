@@ -3,9 +3,31 @@
 import (
 	"net/http"
 
+	"github.com/adamjames870/seacert/internal/database"
 	"github.com/adamjames870/seacert/models"
 	"github.com/google/uuid"
 )
+
+func (state *apiState) handlerApiGetCerts(w http.ResponseWriter, r *http.Request) {
+
+	// GET api/certificates
+
+	certs, errCerts := state.db.GetCerts(r.Context())
+	if errCerts != nil {
+		respondWithError(w, 500, "cannot load certs: "+errCerts.Error())
+		return
+	}
+
+	// TODO - convert to lazy loading
+
+	apiCerts := make([]models.Certificate, 0, len(certs))
+	for _, dbCert := range certs {
+		apiCerts = append(apiCerts, convertCertStruct(dbCert))
+	}
+
+	respondWithJSON(w, 200, apiCerts)
+
+}
 
 func (state *apiState) handlerApiGetCertFromId(w http.ResponseWriter, r *http.Request) {
 
@@ -23,7 +45,12 @@ func (state *apiState) handlerApiGetCertFromId(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	rv := models.Certificate{
+	respondWithJSON(w, 200, convertCertStruct(dbCert))
+
+}
+
+func convertCertStruct(dbCert database.Certificate) models.Certificate {
+	return models.Certificate{
 		ID:         dbCert.ID,
 		CreatedAt:  dbCert.CreatedAt,
 		UpdatedAt:  dbCert.UpdatedAt,
@@ -32,7 +59,4 @@ func (state *apiState) handlerApiGetCertFromId(w http.ResponseWriter, r *http.Re
 		Issuer:     dbCert.Issuer,
 		IssuedDate: dbCert.IssuedDate,
 	}
-
-	respondWithJSON(w, 200, rv)
-
 }
