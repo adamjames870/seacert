@@ -30,22 +30,22 @@ func TestInOrder(t *testing.T) {
 
 	tHealthzEndpoint(t)
 	tResetDb(t)
-	//tHandlerAddCertType(t)
-	//tHandlerAddCertificate(t)
-	//tGetCertificateFromId(t)
-	//
-	//fmt.Println("Initial integration tests complete. Installing dummy certs...")
-	//
-	//err := LoadDummyCerts()
-	//if err != nil {
-	//	fmt.Println("Failed to load dummy certs:" + err.Error())
-	//}
-	//
-	//fmt.Println("Dummy certs installed. Checking retrieval...")
-	//
-	//tGetAllCerts(t)
-	//
-	//fmt.Println("All integration tests run.")
+	tHandlerAddCertType(t)
+	tHandlerAddCertificate(t)
+	tGetCertificateFromId(t)
+
+	fmt.Println("Initial integration tests complete. Installing dummy certs...")
+
+	err := LoadDummyCerts()
+	if err != nil {
+		fmt.Println("Failed to load dummy certs:" + err.Error())
+	}
+
+	fmt.Println("Dummy certs installed. Checking retrieval...")
+
+	tGetAllCerts(t)
+
+	fmt.Println("All integration tests run.")
 
 }
 

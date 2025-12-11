@@ -10,7 +10,7 @@ type Certificate struct {
 	ID              uuid.UUID       `json:"id"`
 	CreatedAt       time.Time       `json:"created-at"`
 	UpdatedAt       time.Time       `json:"updated-at"`
-	CertType        CertificateType `json:"name"`
+	CertType        CertificateType `json:"cert-type-id"`
 	CertNumber      string          `json:"cert-number"`
 	Issuer          string          `json:"issuer"`
 	IssuedDate      time.Time       `json:"issued-date"`

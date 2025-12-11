@@ -9,11 +9,20 @@ import (
 	"context"
 )
 
-const resetDb = `-- name: ResetDb :exec
+const resetCertTypes = `-- name: ResetCertTypes :exec
+DELETE from certificate_types
+`
+
+func (q *Queries) ResetCertTypes(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetCertTypes)
+	return err
+}
+
+const resetCerts = `-- name: ResetCerts :exec
 DELETE from certificates
 `
 
-func (q *Queries) ResetDb(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, resetDb)
+func (q *Queries) ResetCerts(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetCerts)
 	return err
 }

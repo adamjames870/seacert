@@ -5,6 +5,7 @@ func (state *apiState) CreateEndpoints() error {
 	// ----------- ADMIN Handlers ----------------
 	state.mux.HandleFunc("GET /admin/healthz", healthzHandler)
 	state.mux.HandleFunc("POST /admin/reset", state.handlerApiReset)
+	state.mux.HandleFunc("GET /admin/dbstats", state.handlerAdminDbStats)
 
 	// ----------- API Handlers ----------------
 	state.mux.HandleFunc("POST /api/certificates", state.handlerApiAddCert)
