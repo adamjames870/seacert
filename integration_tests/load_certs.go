@@ -8,8 +8,16 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/adamjames870/seacert/internal/database"
 	"github.com/adamjames870/seacert/models"
 )
+
+type DummyCert struct {
+	Name       string `json:"name"`
+	CertNumber string `json:"cert-number"`
+	Issuer     string `json:"issuer"`
+	IssuedDate string `json:"issued-date"`
+}
 
 const FileName = "dummy_certs.json"
 const PostUrl = "http://localhost:8080/api/certificates"
@@ -23,18 +31,54 @@ func LoadDummyCerts() error {
 
 	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
 
-	var certs []models.ParamsAddCertificate
+	var certs []DummyCert
 	if errUnmarshal := json.Unmarshal(data, &certs); errUnmarshal != nil {
 		return fmt.Errorf("unable to unmarshal JSON: %w", errUnmarshal)
 	}
 
 	for _, cert := range certs {
-		body, errBody := json.Marshal(cert)
-		if errBody != nil {
-			return fmt.Errorf("unable to marshal cert: %w", errBody)
+
+		certType := models.ParamsAddCertificateType{
+			Name:                 cert.Name,
+			ShortName:            "xx",
+			StcwReference:        "xx",
+			NormalValidityMonths: 0,
 		}
 
-		resp, errPost := http.Post(PostUrl, "application/json", bytes.NewReader(body))
+		certTypeBody, errCertTypeBody := json.Marshal(certType)
+		if errCertTypeBody != nil {
+			return fmt.Errorf("unable to marshal cert type: %w", errCertTypeBody)
+		}
+
+		fmt.Println(string(certTypeBody))
+
+		respCertType, errPostCertType := http.Post("http://localhost:8080/api/certificate-types", "application/json", bytes.NewReader(certTypeBody))
+		if errPostCertType != nil {
+			return fmt.Errorf("unable to post cert type: %w", errPostCertType)
+		}
+
+		decoder := json.NewDecoder(respCertType.Body)
+		certTypeReturned := database.CertificateType{}
+		errDecode := decoder.Decode(&certTypeReturned)
+		if errDecode != nil {
+			return fmt.Errorf("unable to decode cert type: %w", errDecode)
+		}
+
+		newCert := models.ParamsAddCertificate{
+			CertTypeId:      certTypeReturned.ID.String(),
+			CertNumber:      cert.CertNumber,
+			Issuer:          cert.Issuer,
+			IssuedDate:      cert.IssuedDate,
+			AlternativeName: "",
+			Remarks:         "",
+		}
+
+		certBody, errCertBody := json.Marshal(newCert)
+		if errCertBody != nil {
+			return fmt.Errorf("unable to marshal cert: %w", errCertBody)
+		}
+
+		resp, errPost := http.Post(PostUrl, "application/json", bytes.NewReader(certBody))
 		if errPost != nil {
 			return fmt.Errorf("unable to post cert: %w", errPost)
 		}

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal/database"
+	"github.com/adamjames870/seacert/mapper"
 	"github.com/adamjames870/seacert/models"
 	"github.com/google/uuid"
 )
@@ -11,6 +12,21 @@ import (
 func (state *apiState) handlerApiGetCerts(w http.ResponseWriter, r *http.Request) {
 
 	// GET api/certificates
+
+	// load CertTypes to dictionary
+
+	certTypes, errCertTypes := state.db.GetCertTypes(r.Context())
+	if errCertTypes != nil {
+		respondWithError(w, 500, "cannot load cert types: "+errCertTypes.Error())
+		return
+	}
+
+	certTypeMap := make(map[uuid.UUID]database.CertificateType)
+	for _, cType := range certTypes {
+		certTypeMap[cType.ID] = cType
+	}
+
+	// load certs
 
 	certs, errCerts := state.db.GetCerts(r.Context())
 	if errCerts != nil {
@@ -22,7 +38,7 @@ func (state *apiState) handlerApiGetCerts(w http.ResponseWriter, r *http.Request
 
 	apiCerts := make([]models.Certificate, 0, len(certs))
 	for _, dbCert := range certs {
-		apiCerts = append(apiCerts, convertCertStruct(dbCert))
+		apiCerts = append(apiCerts, mapper.MapCertificate(dbCert, certTypeMap[dbCert.CertTypeID]))
 	}
 
 	respondWithJSON(w, 200, apiCerts)
@@ -45,18 +61,12 @@ func (state *apiState) handlerApiGetCertFromId(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	respondWithJSON(w, 200, convertCertStruct(dbCert))
-
-}
-
-func convertCertStruct(dbCert database.Certificate) models.Certificate {
-	return models.Certificate{
-		ID:         dbCert.ID,
-		CreatedAt:  dbCert.CreatedAt,
-		UpdatedAt:  dbCert.UpdatedAt,
-		Name:       dbCert.Name,
-		CertNumber: dbCert.CertNumber,
-		Issuer:     dbCert.Issuer,
-		IssuedDate: dbCert.IssuedDate,
+	dbCertType, errCertType := state.db.GetCertTypeFromId(r.Context(), dbCert.CertTypeID)
+	if errCertType != nil {
+		respondWithError(w, 500, "cannot load cert type: "+errCertType.Error())
+		return
 	}
+
+	respondWithJSON(w, 200, mapper.MapCertificate(dbCert, dbCertType))
+
 }

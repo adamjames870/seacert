@@ -10,6 +10,8 @@ func (state *apiState) CreateEndpoints() error {
 	state.mux.HandleFunc("POST /api/certificates", state.handlerApiAddCert)
 	state.mux.HandleFunc("GET /api/certificates", state.handlerApiGetCerts)
 	state.mux.HandleFunc("GET /api/certificates/{certId}", state.handlerApiGetCertFromId)
+	state.mux.HandleFunc("GET /api/cert-types", state.handlerApiGetCertTypes)
+	state.mux.HandleFunc("POST /api/cert-types", state.handlerApiAddCertType)
 
 	return nil
 }

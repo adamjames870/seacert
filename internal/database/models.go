@@ -15,11 +15,10 @@ type Certificate struct {
 	ID              uuid.UUID
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	Name            string
 	CertNumber      string
 	Issuer          string
 	IssuedDate      time.Time
-	CertTypeID      uuid.NullUUID
+	CertTypeID      uuid.UUID
 	AlternativeName sql.NullString
 	Remarks         sql.NullString
 }
@@ -32,5 +31,4 @@ type CertificateType struct {
 	ShortName            string
 	StcwReference        sql.NullString
 	NormalValidityMonths sql.NullInt32
-	UpdatesCertTypeID    uuid.NullUUID
 }

@@ -5,16 +5,19 @@ import (
 
 	"github.com/adamjames870/seacert/models"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 func TestParamsAddCertificate_ValidationSuccess(t *testing.T) {
 	validate := validator.New()
 
 	params := models.ParamsAddCertificate{
-		Name:       "ISO 9001",
-		CertNumber: "ABC123",
-		Issuer:     "Lloyds",
-		IssuedDate: "2020-01-01",
+		CertTypeId:      uuid.UUID{}.String(),
+		CertNumber:      "ABC123",
+		Issuer:          "Lloyds",
+		IssuedDate:      "2020-01-01",
+		AlternativeName: "",
+		Remarks:         "",
 	}
 
 	err := validate.Struct(params)
@@ -39,7 +42,7 @@ func TestParamsAddCertificate_ValidationFailure(t *testing.T) {
 		t.Fatalf("expected 4 validation errors, got %d", len(ves))
 	}
 
-	expectedFields := []string{"Name", "CertNumber", "Issuer", "IssuedDate"}
+	expectedFields := []string{"CertTypeId", "CertNumber", "Issuer", "IssuedDate"}
 	for _, f := range expectedFields {
 		found := false
 		for _, ve := range ves {

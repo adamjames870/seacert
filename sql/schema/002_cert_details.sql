@@ -1,22 +1,16 @@
 -- +goose Up
 CREATE TABLE certificate_types (
-    id UUID PRIMARY KEY,
+    id uuid PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     name VARCHAR(255) NOT NULL UNIQUE,
     short_name VARCHAR(24) NOT NULL UNIQUE,
     stcw_reference VARCHAR(255),
-    normal_validity_months INTEGER,
-    updates_cert_type_id UUID,
-
-    CONSTRAINT fk_cert_type_updates_cert_type
-        FOREIGN KEY (updates_cert_type_id)
-        REFERENCES certificate_types(id)
-
+    normal_validity_months INTEGER
 );
 
 ALTER TABLE certificates
-    ADD COLUMN cert_type_id UUID;
+    ADD COLUMN cert_type_id UUID NOT NULL default '00000000-0000-0000-0000-000000000000';
 
 ALTER TABLE certificates
     ADD CONSTRAINT fk_cert_cert_type_id
