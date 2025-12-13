@@ -30,3 +30,19 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# REACT
+
+# Frontend node modules
+/frontend/node_modules/
+
+# Vite build output
+/frontend/dist/
+
+# Local environment variables
+/frontend/.env
+/frontend/.env.*   # e.g., .env.local, .env.development
+
+# Editor or OS-specific files (optional but recommended)
+*.log
+.DS_Store
