@@ -1,42 +1,84 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* Ensure full viewport height */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Outer wrapper centers everything */
+.app-wrapper {
+  display: flex;
+  justify-content: center; /* horizontal */
+  align-items: center;     /* vertical */
+  height: 100vh;           /* full viewport height */
+}
+
+/* Inner container */
+.app-container {
   text-align: center;
+  font-family: Arial, sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Heading and button spacing */
+h1 {
+  margin-bottom: 1rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+button.refresh-btn {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background-color: #f5f5f5;
+  transition: background-color 0.2s;
+  margin-bottom: 1rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+button.refresh-btn:hover {
+  background-color: #e0e0e0;
 }
 
-.card {
-  padding: 2em;
+/* Table styling */
+table.cert-table {
+  border-collapse: collapse;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.read-the-docs {
-  color: #888;
+table.cert-table th {
+  background-color: #333;
+  color: #fff;
+  padding: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+table.cert-table th:hover {
+  background-color: #555;
+}
+
+table.cert-table td {
+  padding: 0.5rem;
+}
+
+table.cert-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+table.cert-table tr:nth-child(odd) {
+  background-color: #fff;
+}
+
+table.cert-table tr {
+  border-bottom: 1px solid #ddd;
+}
+
+/* Loading and error messages */
+.loading,
+.error {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.error {
+  color: red;
 }
