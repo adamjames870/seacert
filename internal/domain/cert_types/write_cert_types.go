@@ -4,13 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
 )
 
-func WriteNewCertType(context context.Context, db sqlc.Queries, params dto.ParamsAddCertificateType) (sqlc.CertificateType, error) {
+func WriteNewCertType(state *internal.ApiState, ctx context.Context, params dto.ParamsAddCertificateType) (CertificateType, error) {
 
 	stcwRef := domain.ToNullString(params.StcwReference)
 	normalValidity := domain.ToNullInt32OrNil(params.NormalValidityMonths)
@@ -25,5 +26,13 @@ func WriteNewCertType(context context.Context, db sqlc.Queries, params dto.Param
 		NormalValidityMonths: normalValidity,
 	}
 
-	return db.CreateCertType(context, newCert)
+	dbCertType, errWriteNewCertType := state.Queries.CreateCertType(ctx, newCert)
+	if errWriteNewCertType != nil {
+		return CertificateType{}, errWriteNewCertType
+	}
+
+	apiCertType := MapCertificateTypeDbToDomain(dbCertType)
+
+	return apiCertType, nil
+
 }

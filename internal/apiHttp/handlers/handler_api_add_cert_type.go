@@ -23,13 +23,13 @@ func HandlerApiAddCertType(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		certType, certTypeErr := cert_types.WriteNewCertType(r.Context(), *state.Queries, params)
+		certType, certTypeErr := cert_types.WriteNewCertType(state, r.Context(), params)
 		if certTypeErr != nil {
 			respondWithError(w, 500, certTypeErr.Error())
 			return
 		}
 
-		rv := cert_types.MapCertificateType(certType)
+		rv := cert_types.MapCertificateTypeDomainToDto(certType)
 
 		respondWithJSON(w, 201, rv)
 

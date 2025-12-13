@@ -4,9 +4,8 @@ import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain/certificates"
-	"github.com/google/uuid"
+	"github.com/adamjames870/seacert/internal/dto"
 )
 
 func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
@@ -17,20 +16,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 		// load CertTypes to dictionary
 
-		certTypes, errCertTypes := state.Queries.GetCertTypes(r.Context())
-		if errCertTypes != nil {
-			respondWithError(w, 500, "cannot load cert types: "+errCertTypes.Error())
-			return
-		}
-
-		certTypeMap := make(map[uuid.UUID]sqlc.CertificateType)
-		for _, cType := range certTypes {
-			certTypeMap[cType.ID] = cType
-		}
-
-		// load certs
-
-		certs, errCerts := state.Queries.GetCerts(r.Context())
+		certs, errCerts := certificates.GetCertificates(state, r.Context())
 		if errCerts != nil {
 			respondWithError(w, 500, "cannot load certs: "+errCerts.Error())
 			return
@@ -38,12 +24,12 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 		// TODO - convert to lazy loading
 
-		apiCerts := make([]certificates.Certificate, 0, len(certs))
-		for _, dbCert := range certs {
-			apiCerts = append(apiCerts, certificates.MapCertificate(dbCert, certTypeMap[dbCert.CertTypeID]))
+		rv := make([]dto.Certificate, 0, len(certs))
+		for _, cert := range certs {
+			rv = append(rv, certificates.MapCertificateDomainToDto(cert))
 		}
 
-		respondWithJSON(w, 200, apiCerts)
+		respondWithJSON(w, 200, rv)
 
 	}
 }
@@ -53,25 +39,17 @@ func HandlerApiGetCertFromId(state *internal.ApiState) http.HandlerFunc {
 
 		// GET api/certificates/{certID}
 
-		certId, errId := uuid.Parse(r.PathValue("certId"))
-		if errId != nil {
-			respondWithError(w, 400, "cannot parse cert id to uuid: "+errId.Error())
-			return
-		}
+		certId := r.PathValue("certId")
 
-		dbCert, errCert := state.Queries.GetCertFromId(r.Context(), certId)
+		cert, errCert := certificates.GetCertificateFromId(state, r.Context(), certId)
 		if errCert != nil {
 			respondWithError(w, 404, "cannot load cert: "+errCert.Error())
 			return
 		}
 
-		dbCertType, errCertType := state.Queries.GetCertTypeFromId(r.Context(), dbCert.CertTypeID)
-		if errCertType != nil {
-			respondWithError(w, 500, "cannot load cert type: "+errCertType.Error())
-			return
-		}
+		rv := certificates.MapCertificateDomainToDto(cert)
 
-		respondWithJSON(w, 200, certificates.MapCertificate(dbCert, dbCertType))
+		respondWithJSON(w, 200, rv)
 
 	}
 }
