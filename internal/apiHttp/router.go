@@ -26,7 +26,6 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates", handlers.HandlerApiAddCert(state))
 	mux.Handle("GET /api/certificates", handlers.HandlerApiGetCerts(state))
-	mux.Handle("GET /api/certificates/{certId}", handlers.HandlerApiGetCertFromId(state))
 	mux.Handle("GET /api/cert-types", handlers.HandlerApiGetCertTypes(state))
 	mux.Handle("POST /api/cert-types", handlers.HandlerApiAddCertType(state))
 

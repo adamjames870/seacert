@@ -24,6 +24,8 @@ func MapCertificateTypeDomainToDto(certType CertificateType) dto.CertificateType
 
 	return dto.CertificateType{
 		Id:                   certType.Id.String(),
+		CreatedAt:            certType.CreatedAt,
+		UpdatedAt:            certType.UpdatedAt,
 		Name:                 certType.Name,
 		ShortName:            certType.ShortName,
 		StcwRef:              certType.StcwReference,

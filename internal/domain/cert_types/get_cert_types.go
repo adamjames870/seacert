@@ -38,3 +38,14 @@ func GetCertTypeFromId(state *internal.ApiState, ctx context.Context, id string)
 	return MapCertificateTypeDbToDomain(certType), nil
 
 }
+
+func GetCertTypeFromName(state *internal.ApiState, ctx context.Context, name string) (CertificateType, error) {
+
+	certType, errCertType := state.Queries.GetCertTypeFromName(ctx, name)
+	if errCertType != nil {
+		return CertificateType{}, errCertType
+	}
+
+	return MapCertificateTypeDbToDomain(certType), nil
+
+}

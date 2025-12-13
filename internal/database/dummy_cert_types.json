@@ -1,0 +1,32 @@
+[
+  {
+    "name": "STCW Basic Training",
+    "short-name": "BT",
+    "stcw-reference": "12394",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "STCW Advanced Fire Fighting",
+    "short-name": "AFF",
+    "stcw-reference": "48912",
+    "normal-validity-months": 120
+  },
+  {
+    "name": "STCW Medical First Aid",
+    "short-name": "MFA",
+    "stcw-reference": "38711",
+    "normal-validity-months": 180
+  },
+  {
+    "name": "GMDSS Radio Operator",
+    "short-name": "GMDSS",
+    "stcw-reference": "23411",
+    "normal-validity-months": 120
+  },
+  {
+    "name": "Certificate of Competency – OOW",
+    "short-name": "OOW",
+    "stcw-reference": "789",
+    "normal-validity-months": 60
+  }
+]
