@@ -8,6 +8,7 @@ import (
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
+	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
 )
@@ -25,13 +26,19 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 		return Certificate{}, errors.New("Error loading cert type: " + errGetCertType.Error())
 	}
 
+	issuerId := params.IssuerId
+	apiIssuer, errGetIssuer := issuers.GetIssuerFromId(state, ctx, issuerId)
+	if errGetIssuer != nil {
+		return Certificate{}, errors.New("Error loading issuer: " + errGetIssuer.Error())
+	}
+
 	newCert := sqlc.CreateCertParams{
 		ID:         uuid.New(),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		CertTypeID: apiCertType.Id,
 		CertNumber: params.CertNumber,
-		Issuer:     params.Issuer,
+		IssuerID:   apiIssuer.Id,
 		IssuedDate: issuedDate,
 	}
 
@@ -40,8 +47,8 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 		return Certificate{}, errCreateCert
 	}
 
-	apiCert := MapCertificateDbToDomain(dbCert, apiCertType)
+	apiCert := MapCertificateDbToDomain(dbCert, apiCertType, apiIssuer)
 
 	return apiCert, nil
-	
+
 }

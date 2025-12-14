@@ -5,31 +5,31 @@ import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/domain/cert_types"
+	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/adamjames870/seacert/internal/dto"
 )
 
-func HandlerApiAddCertType(state *internal.ApiState) http.HandlerFunc {
+func HandlerApiAddIssuer(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// POST api/cert-types
+		// POST api/issuers
 
 		decoder := json.NewDecoder(r.Body)
-		params := dto.ParamsAddCertificateType{}
+		params := dto.ParamsAddIssuer{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
 			respondWithError(w, 400, "unable to decode json: "+errDecode.Error())
 			return
 		}
 
-		certType, errCertType := cert_types.WriteNewCertType(state, r.Context(), params)
-		if errCertType != nil {
-			respondWithError(w, 500, errCertType.Error())
+		dbIssuer, errIssuer := issuers.WriteNewIssuer(state, r.Context(), params)
+		if errIssuer != nil {
+			respondWithError(w, 500, errIssuer.Error())
 			return
 		}
 
-		rv := cert_types.MapCertificateTypeDomainToDto(certType)
+		rv := issuers.MapIssuerDomainToDto(dbIssuer)
 
 		respondWithJSON(w, 201, rv)
 

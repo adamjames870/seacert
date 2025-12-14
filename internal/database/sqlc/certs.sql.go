@@ -14,11 +14,11 @@ import (
 )
 
 const createCert = `-- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, cert_type_id, cert_number, issuer, issued_date, alternative_name, remarks)
+INSERT INTO certificates (id, created_at, updated_at, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks)
 VALUES (
            $1, $2, $3, $4, $5, $6, $7, $8, $9
        )
-RETURNING id, created_at, updated_at, cert_number, issuer, issued_date, cert_type_id, alternative_name, remarks
+RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id
 `
 
 type CreateCertParams struct {
@@ -27,7 +27,7 @@ type CreateCertParams struct {
 	UpdatedAt       time.Time
 	CertTypeID      uuid.UUID
 	CertNumber      string
-	Issuer          string
+	IssuerID        uuid.UUID
 	IssuedDate      time.Time
 	AlternativeName sql.NullString
 	Remarks         sql.NullString
@@ -40,7 +40,7 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		arg.UpdatedAt,
 		arg.CertTypeID,
 		arg.CertNumber,
-		arg.Issuer,
+		arg.IssuerID,
 		arg.IssuedDate,
 		arg.AlternativeName,
 		arg.Remarks,
@@ -51,17 +51,17 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CertNumber,
-		&i.Issuer,
 		&i.IssuedDate,
 		&i.CertTypeID,
 		&i.AlternativeName,
 		&i.Remarks,
+		&i.IssuerID,
 	)
 	return i, err
 }
 
 const getCertFromId = `-- name: GetCertFromId :one
-SELECT id, created_at, updated_at, cert_number, issuer, issued_date, cert_type_id, alternative_name, remarks FROM certificates WHERE id=$1
+SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id FROM certificates WHERE id=$1
 `
 
 func (q *Queries) GetCertFromId(ctx context.Context, id uuid.UUID) (Certificate, error) {
@@ -72,17 +72,17 @@ func (q *Queries) GetCertFromId(ctx context.Context, id uuid.UUID) (Certificate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CertNumber,
-		&i.Issuer,
 		&i.IssuedDate,
 		&i.CertTypeID,
 		&i.AlternativeName,
 		&i.Remarks,
+		&i.IssuerID,
 	)
 	return i, err
 }
 
 const getCerts = `-- name: GetCerts :many
-SELECT id, created_at, updated_at, cert_number, issuer, issued_date, cert_type_id, alternative_name, remarks FROM certificates
+SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id FROM certificates
 `
 
 func (q *Queries) GetCerts(ctx context.Context) ([]Certificate, error) {
@@ -99,11 +99,11 @@ func (q *Queries) GetCerts(ctx context.Context) ([]Certificate, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CertNumber,
-			&i.Issuer,
 			&i.IssuedDate,
 			&i.CertTypeID,
 			&i.AlternativeName,
 			&i.Remarks,
+			&i.IssuerID,
 		); err != nil {
 			return nil, err
 		}

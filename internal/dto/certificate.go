@@ -12,7 +12,10 @@ type Certificate struct {
 	CertTypeStcwRef              string    `json:"cert-type-stcw-ref"`
 	CertTypeNormalValidityMonths int32     `json:"cert-type-normal-validity-months"`
 	CertNumber                   string    `json:"cert-number"`
-	Issuer                       string    `json:"issuer"`
+	IssuerId                     string    `json:"issuer-id"`
+	IssuerName                   string    `json:"issuer-name"`
+	IssuerCountry                string    `json:"issuer-country"`
+	IssuerWebsite                string    `json:"issuer-website"`
 	IssuedDate                   time.Time `json:"issued-date"`
 	AlternativeName              string    `json:"alternative-name"`
 	Remarks                      string    `json:"remarks"`

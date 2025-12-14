@@ -26,3 +26,12 @@ func (q *Queries) ResetCerts(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetCerts)
 	return err
 }
+
+const resetIssuers = `-- name: ResetIssuers :exec
+DELETE from issuers
+`
+
+func (q *Queries) ResetIssuers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetIssuers)
+	return err
+}

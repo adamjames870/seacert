@@ -4,11 +4,12 @@ import (
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
+	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
 )
 
-func MapCertificateDbToDomain(cert sqlc.Certificate, certType cert_types.CertificateType) Certificate {
+func MapCertificateDbToDomain(cert sqlc.Certificate, certType cert_types.CertificateType, issuer issuers.Issuer) Certificate {
 
 	return Certificate{
 		ID:              cert.ID,
@@ -16,7 +17,7 @@ func MapCertificateDbToDomain(cert sqlc.Certificate, certType cert_types.Certifi
 		UpdatedAt:       cert.UpdatedAt,
 		CertType:        certType,
 		CertNumber:      cert.CertNumber,
-		Issuer:          cert.Issuer,
+		Issuer:          issuer,
 		IssuedDate:      cert.IssuedDate,
 		AlternativeName: cert.AlternativeName.String,
 		Remarks:         cert.Remarks.String,
@@ -35,7 +36,10 @@ func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 		CertTypeStcwRef:              cert.CertType.StcwReference,
 		CertTypeNormalValidityMonths: cert.CertType.NormalValidityMonths,
 		CertNumber:                   cert.CertNumber,
-		Issuer:                       cert.Issuer,
+		IssuerId:                     cert.Issuer.Id.String(),
+		IssuerName:                   cert.Issuer.Name,
+		IssuerCountry:                cert.Issuer.Country,
+		IssuerWebsite:                cert.Issuer.Website,
 		IssuedDate:                   cert.IssuedDate,
 		AlternativeName:              cert.AlternativeName,
 		Remarks:                      cert.Remarks,
@@ -55,7 +59,14 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		NormalValidityMonths: cert.CertTypeNormalValidityMonths,
 	}
 
+	issuerDto := dto.Issuer{
+		Name:    cert.IssuerName,
+		Country: cert.IssuerCountry,
+		Website: cert.IssuerWebsite,
+	}
+
 	certType := cert_types.MapCertificateTypeDtoToDomain(certTypeDto)
+	issuer := issuers.MapIssuerDtoToDomain(issuerDto)
 
 	return Certificate{
 		ID:              id,
@@ -63,7 +74,7 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		UpdatedAt:       cert.UpdatedAt,
 		CertType:        certType,
 		CertNumber:      cert.CertNumber,
-		Issuer:          cert.Issuer,
+		Issuer:          issuer,
 		IssuedDate:      cert.IssuedDate,
 		AlternativeName: cert.AlternativeName,
 		Remarks:         cert.Remarks,
@@ -81,7 +92,7 @@ func MapCertificateDomainToDb(cert Certificate) sqlc.Certificate {
 		CreatedAt:       cert.CreatedAt,
 		UpdatedAt:       cert.UpdatedAt,
 		CertNumber:      cert.CertNumber,
-		Issuer:          cert.Issuer,
+		IssuerID:        cert.Issuer.Id,
 		IssuedDate:      cert.IssuedDate,
 		CertTypeID:      cert.CertType.Id,
 		AlternativeName: alternativeName,
