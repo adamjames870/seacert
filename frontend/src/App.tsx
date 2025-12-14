@@ -5,7 +5,7 @@ interface Certificate {
     id: string;
     "cert-type-name": string;
     "cert-number": string;
-    issuer: string;
+    "issuer-name": string;
     "issued-date": string;
 }
 
@@ -91,8 +91,8 @@ function App() {
                     <th onClick={() => handleSort("cert-number")}>
                         Cert Number {sortKey === "cert-number" ? (sortAsc ? "↑" : "↓") : ""}
                     </th>
-                    <th onClick={() => handleSort("issuer")}>
-                        Issuer {sortKey === "issuer" ? (sortAsc ? "↑" : "↓") : ""}
+                    <th onClick={() => handleSort("issuer-name")}>
+                        Issuer {sortKey === "issuer-name" ? (sortAsc ? "↑" : "↓") : ""}
                     </th>
                     <th onClick={() => handleSort("issued-date")}>
                         Issued Date {sortKey === "issued-date" ? (sortAsc ? "↑" : "↓") : ""}
@@ -104,7 +104,7 @@ function App() {
                     <tr key={cert.id}>
                         <td>{cert["cert-type-name"]}</td>
                         <td>{cert["cert-number"]}</td>
-                        <td>{cert.issuer}</td>
+                        <td>{cert["issuer-name"]}</td>
                         <td>{formatDate(cert["issued-date"])}</td>
                     </tr>
                 ))}
