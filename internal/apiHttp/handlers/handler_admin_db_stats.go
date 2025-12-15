@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/apiHttp/auth"
 	"github.com/adamjames870/seacert/internal/dto"
 )
 
@@ -29,10 +30,19 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			respondWithError(w, 500, errCountIssuers.Error())
 		}
 
+		user, ok := r.Context().Value(auth.UserContextKey).(auth.User)
+		if !ok {
+			http.Error(w, "user not found in context", http.StatusUnauthorized)
+			return
+		}
+
 		rv := dto.DbStats{
 			CountCert:     int(countCert),
 			CountCertType: int(countCertType),
 			CountIssuer:   int(countIssuers),
+			UserId:        user.ID,
+			UserEmail:     user.Email,
+			UserRole:      user.Role,
 		}
 
 		respondWithJSON(w, 200, rv)

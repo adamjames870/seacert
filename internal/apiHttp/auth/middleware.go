@@ -15,10 +15,6 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 )
 
-type contextKey string
-
-const UserContextKey contextKey = "user"
-
 func Middleware(jwtSecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,8 +60,32 @@ func Middleware(jwtSecret string) func(http.Handler) http.Handler {
 				}
 			}
 
+			maxTokenAge := int64(3600) // 1 hour
+			if iat, ok := claims["iat"].(float64); ok {
+				if time.Now().Unix()-int64(iat) > maxTokenAge {
+					http.Error(w, "token too old", http.StatusUnauthorized)
+					return
+				}
+			}
+
+			if aud, ok := claims["aud"].(string); !ok || aud != "authenticated" {
+				http.Error(w, "invalid audience", http.StatusUnauthorized)
+				return
+			}
+
+			if role, ok := claims["role"].(string); !ok || role != "authenticated" {
+				http.Error(w, "invalid role", http.StatusUnauthorized)
+				return
+			}
+
+			user := User{
+				ID:    claims["sub"].(string),
+				Email: claims["email"].(string),
+				Role:  claims["role"].(string),
+			}
+
 			// Store claims in context for handlers
-			ctx := context.WithValue(r.Context(), UserContextKey, claims)
+			ctx := context.WithValue(r.Context(), UserContextKey, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

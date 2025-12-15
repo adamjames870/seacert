@@ -25,10 +25,9 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	)
 
 	// ----------- ADMIN Handlers ----------------
-	mux.Handle("GET /admin/healthz", authMw(handlers.HandlerAdminHealthz()))
-
+	mux.Handle("GET /admin/healthz", handlers.HandlerAdminHealthz())
 	mux.Handle("POST /admin/reset", handlers.HandlerApiReset(state))
-	mux.Handle("GET /admin/dbstats", handlers.HandlerAdminDbStats(state))
+	mux.Handle("GET /admin/dbstats", authMw(handlers.HandlerAdminDbStats(state)))
 
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates", handlers.HandlerApiAddCert(state))
