@@ -2,8 +2,10 @@
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/apiHttp/auth"
 	"github.com/adamjames870/seacert/internal/apiHttp/handlers"
 )
 
@@ -18,8 +20,13 @@ func BuildRouter(state *internal.ApiState) (*http.ServeMux, error) {
 
 func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 
+	authMw := auth.Middleware(
+		os.Getenv("SUPABASE_SECRET"),
+	)
+
 	// ----------- ADMIN Handlers ----------------
-	mux.Handle("GET /admin/healthz", handlers.HandlerAdminHealthz())
+	mux.Handle("GET /admin/healthz", authMw(handlers.HandlerAdminHealthz()))
+
 	mux.Handle("POST /admin/reset", handlers.HandlerApiReset(state))
 	mux.Handle("GET /admin/dbstats", handlers.HandlerAdminDbStats(state))
 

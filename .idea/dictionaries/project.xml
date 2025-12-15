@@ -4,6 +4,7 @@
       <w>healthz</w>
       <w>lloyds</w>
       <w>stcw</w>
+      <w>supabase</w>
     </words>
   </dictionary>
 </component>
