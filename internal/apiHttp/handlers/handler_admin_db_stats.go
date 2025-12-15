@@ -24,9 +24,15 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			respondWithError(w, 500, errCountCertType.Error())
 		}
 
+		countIssuers, errCountIssuers := state.Queries.CountIssuers(r.Context())
+		if errCountIssuers != nil {
+			respondWithError(w, 500, errCountIssuers.Error())
+		}
+
 		rv := dto.DbStats{
 			CountCert:     int(countCert),
 			CountCertType: int(countCertType),
+			CountIssuer:   int(countIssuers),
 		}
 
 		respondWithJSON(w, 200, rv)
