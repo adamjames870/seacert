@@ -5,10 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
@@ -17,21 +15,7 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 )
 
-type ctxKey string
-
-const UserIDKey ctxKey = "userID"
-
-func loadSupabaseJWK(apiKey string) (jwk.Key, error) {
-
-	key, err := jwk.ParseKey([]byte(apiKey))
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-
-func Middleware(authInfo Info) (func(http.Handler) http.Handler, error) {
+func NewAuthMiddleware(authInfo Info) (func(http.Handler) http.Handler, error) {
 
 	key, err := loadSupabaseJWK(authInfo.ApiKey)
 	if err != nil {
@@ -46,13 +30,18 @@ func Middleware(authInfo Info) (func(http.Handler) http.Handler, error) {
 				return
 			}
 
-			parts := strings.Split(authHeader, " ")
-			if len(parts) != 2 || parts[0] != "Bearer" {
+			const bearerPrefix = "Bearer "
+
+			if !strings.HasPrefix(authHeader, bearerPrefix) {
 				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
 				return
 			}
 
-			tokenString := parts[1]
+			tokenString := strings.TrimPrefix(authHeader, bearerPrefix)
+			if tokenString == "" {
+				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
+				return
+			}
 
 			// Parse and validate token
 			token, err := jwt.ParseString(
@@ -67,33 +56,13 @@ func Middleware(authInfo Info) (func(http.Handler) http.Handler, error) {
 				return
 			}
 
-			issuedAt := token.IssuedAt()
-			now := time.Now()
-			if now.Sub(issuedAt) > time.Hour {
-				http.Error(w, "token too old", http.StatusUnauthorized)
-				return
-			}
-
-			role, ok := token.Get("role")
-			if !ok || role.(string) != "authenticated" {
-				http.Error(w, "invalid role", http.StatusUnauthorized)
-				return
-			}
-
-			email, ok := token.Get("email")
-			if !ok || email == nil {
-				http.Error(w, "invalid email", http.StatusUnauthorized)
-				return
-			}
-
-			user := User{
-				ID:    token.Subject(),
-				Email: email.(string),
-				Role:  role.(string),
+			user, errUser := userFromToken(token)
+			if errUser != nil {
+				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
 			}
 
 			// Store claims in context for handlers
-			ctx := context.WithValue(r.Context(), UserContextKey, user)
+			ctx := context.WithValue(r.Context(), userContextKey, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}, nil

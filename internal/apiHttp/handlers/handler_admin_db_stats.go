@@ -30,7 +30,7 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			respondWithError(w, 500, errCountIssuers.Error())
 		}
 
-		user, ok := r.Context().Value(auth.UserContextKey).(auth.User)
+		user, ok := auth.UserFromContext(r.Context())
 		if !ok {
 			http.Error(w, "user not found in context", http.StatusUnauthorized)
 			return
