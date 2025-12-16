@@ -16,7 +16,7 @@ func main() {
 	}
 
 	url := os.Getenv("SUPABASE_URL")
-	apiKey := os.Getenv("SUPABASE_ANON_KEY")
+	apiKey := os.Getenv("SUPABASE_PERISHABLE_KEY") //("SUPABASE_ANON_KEY")
 	email := os.Getenv("TEST_USER_EMAIL")
 	password := os.Getenv("TEST_USER_PASSWORD")
 

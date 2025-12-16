@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
 var (
@@ -15,7 +17,27 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 )
 
-func Middleware(jwtSecret string) func(http.Handler) http.Handler {
+type ctxKey string
+
+const UserIDKey ctxKey = "userID"
+
+func loadSupabaseJWK(apiKey string) (jwk.Key, error) {
+
+	key, err := jwk.ParseKey([]byte(apiKey))
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
+}
+
+func Middleware(authInfo Info) (func(http.Handler) http.Handler, error) {
+
+	key, err := loadSupabaseJWK(authInfo.ApiKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -33,60 +55,46 @@ func Middleware(jwtSecret string) func(http.Handler) http.Handler {
 			tokenString := parts[1]
 
 			// Parse and validate token
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				// Supabase access tokens are HS256 signed
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, ErrInvalidToken
-				}
-				return []byte(jwtSecret), nil
-			})
-			if err != nil || !token.Valid {
+			token, err := jwt.ParseString(
+				tokenString,
+				jwt.WithKey(jwa.ES256, key),
+				jwt.WithValidate(true),
+				jwt.WithIssuer(authInfo.ExpectedIssuer),
+				jwt.WithAudience(authInfo.ExpectedAudience),
+			)
+			if err != nil {
 				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
 				return
 			}
 
-			// Extract claims (user info)
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok {
-				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
+			issuedAt := token.IssuedAt()
+			now := time.Now()
+			if now.Sub(issuedAt) > time.Hour {
+				http.Error(w, "token too old", http.StatusUnauthorized)
 				return
 			}
 
-			// Optional: check token expiration
-			if exp, ok := claims["exp"].(float64); ok {
-				if int64(exp) < time.Now().Unix() {
-					http.Error(w, "token expired", http.StatusUnauthorized)
-					return
-				}
-			}
-
-			maxTokenAge := int64(3600) // 1 hour
-			if iat, ok := claims["iat"].(float64); ok {
-				if time.Now().Unix()-int64(iat) > maxTokenAge {
-					http.Error(w, "token too old", http.StatusUnauthorized)
-					return
-				}
-			}
-
-			if aud, ok := claims["aud"].(string); !ok || aud != "authenticated" {
-				http.Error(w, "invalid audience", http.StatusUnauthorized)
-				return
-			}
-
-			if role, ok := claims["role"].(string); !ok || role != "authenticated" {
+			role, ok := token.Get("role")
+			if !ok || role.(string) != "authenticated" {
 				http.Error(w, "invalid role", http.StatusUnauthorized)
 				return
 			}
 
+			email, ok := token.Get("email")
+			if !ok || email == nil {
+				http.Error(w, "invalid email", http.StatusUnauthorized)
+				return
+			}
+
 			user := User{
-				ID:    claims["sub"].(string),
-				Email: claims["email"].(string),
-				Role:  claims["role"].(string),
+				ID:    token.Subject(),
+				Email: email.(string),
+				Role:  role.(string),
 			}
 
 			// Store claims in context for handlers
 			ctx := context.WithValue(r.Context(), UserContextKey, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
-	}
+	}, nil
 }
