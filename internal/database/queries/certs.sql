@@ -10,3 +10,16 @@ SELECT * FROM certificates WHERE user_id=$1;
 
 -- name: GetCertFromId :one
 SELECT * FROM certificates WHERE id=$1 AND user_id=$2;
+
+-- name: UpdateCertificate :one
+UPDATE certificates
+SET
+    cert_number=COALESCE(sqlc.narg('cert_number'), cert_number),
+    issued_date=COALESCE(sqlc.narg('issued_date'), issued_date),
+    cert_type_id=COALESCE(sqlc.narg('cert_type_id'), cert_type_id),
+    alternative_name=COALESCE(sqlc.narg('alternative_name'), alternative_name),
+    remarks=COALESCE(sqlc.narg('remarks'), remarks),
+    issuer_id=COALESCE(sqlc.narg('issuer_id'), issuer_id),
+    updated_at=NOW()
+WHERE id=$1
+RETURNING *;

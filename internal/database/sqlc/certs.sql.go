@@ -127,3 +127,53 @@ func (q *Queries) GetCerts(ctx context.Context, userID uuid.UUID) ([]Certificate
 	}
 	return items, nil
 }
+
+const updateCertificate = `-- name: UpdateCertificate :one
+UPDATE certificates
+SET
+    cert_number=COALESCE($2, cert_number),
+    issued_date=COALESCE($3, issued_date),
+    cert_type_id=COALESCE($4, cert_type_id),
+    alternative_name=COALESCE($5, alternative_name),
+    remarks=COALESCE($6, remarks),
+    issuer_id=COALESCE($7, issuer_id),
+    updated_at=NOW()
+WHERE id=$1
+RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id
+`
+
+type UpdateCertificateParams struct {
+	ID              uuid.UUID
+	CertNumber      sql.NullString
+	IssuedDate      sql.NullTime
+	CertTypeID      uuid.NullUUID
+	AlternativeName sql.NullString
+	Remarks         sql.NullString
+	IssuerID        uuid.NullUUID
+}
+
+func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificateParams) (Certificate, error) {
+	row := q.db.QueryRowContext(ctx, updateCertificate,
+		arg.ID,
+		arg.CertNumber,
+		arg.IssuedDate,
+		arg.CertTypeID,
+		arg.AlternativeName,
+		arg.Remarks,
+		arg.IssuerID,
+	)
+	var i Certificate
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CertNumber,
+		&i.IssuedDate,
+		&i.CertTypeID,
+		&i.AlternativeName,
+		&i.Remarks,
+		&i.IssuerID,
+		&i.UserID,
+	)
+	return i, err
+}

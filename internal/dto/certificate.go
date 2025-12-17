@@ -30,3 +30,14 @@ type ParamsAddCertificate struct {
 	AlternativeName *string `json:"alternative-name,omitempty"`
 	Remarks         *string `json:"remarks,omitempty"`
 }
+
+type ParamsUpdateCertificate struct {
+	UserId          string  `json:"user-id"`
+	Id              string  `json:"id" validate:"required"`
+	CertNumber      *string `json:"cert-number,omitempty"`
+	CertTypeId      *string `json:"cert-type-id,omitempty"`
+	IssuerId        *string `json:"issuer-id,omitempty"`
+	IssuedDate      *string `json:"issued-date,omitempty"`
+	AlternativeName *string `json:"alternative-name,omitempty"`
+	Remarks         *string `json:"remarks,omitempty"`
+}

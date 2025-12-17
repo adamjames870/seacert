@@ -2,6 +2,7 @@
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -24,14 +25,28 @@ func ToNullInt32OrNil(v int32) sql.NullInt32 {
 	return sql.NullInt32{Int32: v, Valid: true}
 }
 
-func ToNullUUID(id *uuid.UUID) uuid.NullUUID {
-	if id == nil {
-		return uuid.NullUUID{
-			Valid: false,
-		}
+func ToNullUUIDFromStringPointer(id *string) uuid.NullUUID {
+	if id == nil || *id == "" {
+		return uuid.NullUUID{Valid: false}
 	}
-	return uuid.NullUUID{
-		UUID:  *id,
-		Valid: true,
+
+	parsed, err := uuid.Parse(*id)
+	if err != nil {
+		return uuid.NullUUID{Valid: false}
 	}
+
+	return uuid.NullUUID{UUID: parsed, Valid: true}
+}
+
+func ToNullTimeFromStringPointer(t *string) sql.NullTime {
+	if t == nil || *t == "" {
+		return sql.NullTime{Valid: false}
+	}
+
+	parsed, err := time.Parse(time.RFC3339, *t)
+	if err != nil {
+		return sql.NullTime{Valid: false}
+	}
+
+	return sql.NullTime{Time: parsed, Valid: true}
 }
