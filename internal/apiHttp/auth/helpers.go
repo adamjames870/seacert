@@ -1,8 +1,11 @@
 ﻿package auth
 
 import (
+	"context"
 	"errors"
 
+	"github.com/adamjames870/seacert/internal/domain/users"
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
@@ -25,25 +28,34 @@ func getStringClaim(t jwt.Token, name string) (string, bool) {
 	return s, ok && s != ""
 }
 
-func userFromToken(t jwt.Token) (User, error) {
+func userFromToken(t jwt.Token) (users.User, error) {
 	role, ok := getStringClaim(t, "role")
 	if !ok || role != "authenticated" {
-		return User{}, errors.New("invalid role")
+		return users.User{}, errors.New("invalid role")
 	}
 
 	email, ok := getStringClaim(t, "email")
 	if !ok {
-		return User{}, errors.New("invalid email")
+		return users.User{}, errors.New("invalid email")
 	}
 
 	sub := t.Subject()
 	if sub == "" {
-		return User{}, errors.New("missing subject")
+		return users.User{}, errors.New("missing subject")
 	}
 
-	return User{
-		ID:    sub,
+	id, errId := uuid.Parse(sub)
+	if errId != nil {
+		return users.User{}, errId
+	}
+
+	return users.User{
+		Id:    id,
 		Email: email,
-		Role:  role,
 	}, nil
+}
+
+func UserFromContext(ctx context.Context) (users.User, bool) {
+	user, ok := ctx.Value(userContextKey).(users.User)
+	return user, ok
 }

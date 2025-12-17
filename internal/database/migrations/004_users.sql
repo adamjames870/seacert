@@ -3,10 +3,10 @@ CREATE TABLE users (
                        id uuid PRIMARY KEY,
                        created_at TIMESTAMP NOT NULL,
                        updated_at TIMESTAMP NOT NULL,
-                       forename VARCHAR NOT NULL,
-                       surname VARCHAR NOT NULL,
+                       forename VARCHAR,
+                       surname VARCHAR,
                        email VARCHAR NOT NULL UNIQUE,
-                       nationality VARCHAR(2) NOT NULL
+                       nationality VARCHAR(2)
 );
 
 ALTER TABLE certificates

@@ -9,3 +9,7 @@ SELECT COUNT (*) AS count_certificates FROM certificates;
 -- name: CountIssuers :one
 
 SELECT COUNT (*) AS count_issuers FROM issuers;
+
+-- name: CountUsers :one
+
+SELECT COUNT (*) AS count_users FROM users;

@@ -21,6 +21,7 @@ type Certificate struct {
 	AlternativeName sql.NullString
 	Remarks         sql.NullString
 	IssuerID        uuid.UUID
+	UserID          uuid.UUID
 }
 
 type CertificateType struct {
@@ -40,4 +41,14 @@ type Issuer struct {
 	Name      string
 	Country   sql.NullString
 	Website   sql.NullString
+}
+
+type User struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Forename    sql.NullString
+	Surname     sql.NullString
+	Email       string
+	Nationality sql.NullString
 }

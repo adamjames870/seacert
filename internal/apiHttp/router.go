@@ -27,7 +27,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 		ExpectedAudience: os.Getenv("SUPABASE_AUDIENCE"),
 	}
 
-	authMw, errAuthMw := auth.NewAuthMiddleware(authInfo)
+	authMw, errAuthMw := auth.NewAuthMiddleware(authInfo, state)
 	if errAuthMw != nil {
 		panic(errAuthMw)
 	}

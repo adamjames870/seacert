@@ -30,6 +30,11 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			respondWithError(w, 500, errCountIssuers.Error())
 		}
 
+		countUsers, errCountUsers := state.Queries.CountUsers(r.Context())
+		if errCountUsers != nil {
+			respondWithError(w, 500, errCountUsers.Error())
+		}
+
 		user, ok := auth.UserFromContext(r.Context())
 		if !ok {
 			http.Error(w, "user not found in context", http.StatusUnauthorized)
@@ -40,9 +45,9 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			CountCert:     int(countCert),
 			CountCertType: int(countCertType),
 			CountIssuer:   int(countIssuers),
-			UserId:        user.ID,
+			CountUsers:    int(countUsers),
+			UserId:        user.Id.String(),
 			UserEmail:     user.Email,
-			UserRole:      user.Role,
 		}
 
 		respondWithJSON(w, 200, rv)

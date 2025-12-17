@@ -32,6 +32,12 @@ func HandlerApiReset(state *internal.ApiState) http.HandlerFunc {
 			respondWithError(w, 500, errResetIssuers.Error())
 		}
 
+		errResetUsers := state.Queries.ResetUsers(r.Context())
+		if errResetUsers != nil {
+			fmt.Println(errResetUsers)
+			respondWithError(w, 500, errResetUsers.Error())
+		}
+
 		respondWithJSON(w, 200, map[string]string{"message": "db reset"})
 
 	}

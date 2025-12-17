@@ -44,3 +44,15 @@ func (q *Queries) CountIssuers(ctx context.Context) (int64, error) {
 	err := row.Scan(&count_issuers)
 	return count_issuers, err
 }
+
+const countUsers = `-- name: CountUsers :one
+
+SELECT COUNT (*) AS count_users FROM users
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsers)
+	var count_users int64
+	err := row.Scan(&count_users)
+	return count_users, err
+}

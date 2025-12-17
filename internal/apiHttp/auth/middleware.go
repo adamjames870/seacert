@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/domain/users"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
@@ -15,7 +17,7 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 )
 
-func NewAuthMiddleware(authInfo Info) (func(http.Handler) http.Handler, error) {
+func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handler) http.Handler, error) {
 
 	key, err := loadSupabaseJWK(authInfo.ApiKey)
 	if err != nil {
@@ -59,6 +61,11 @@ func NewAuthMiddleware(authInfo Info) (func(http.Handler) http.Handler, error) {
 			user, errUser := userFromToken(token)
 			if errUser != nil {
 				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
+			}
+
+			_, errUserExists := users.EnsureUserExists(state, r.Context(), user.Id, user.Email)
+			if errUserExists != nil {
+				http.Error(w, "user cannot be found or created", http.StatusBadRequest)
 			}
 
 			// Store claims in context for handlers
