@@ -14,9 +14,9 @@ import (
 )
 
 const createCert = `-- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks)
+INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks)
 VALUES (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
        )
 RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id
 `
@@ -25,6 +25,7 @@ type CreateCertParams struct {
 	ID              uuid.UUID
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	UserID          uuid.UUID
 	CertTypeID      uuid.UUID
 	CertNumber      string
 	IssuerID        uuid.UUID
@@ -38,6 +39,7 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.UserID,
 		arg.CertTypeID,
 		arg.CertNumber,
 		arg.IssuerID,
@@ -62,11 +64,16 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 }
 
 const getCertFromId = `-- name: GetCertFromId :one
-SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id FROM certificates WHERE id=$1
+SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id FROM certificates WHERE id=$1 AND user_id=$2
 `
 
-func (q *Queries) GetCertFromId(ctx context.Context, id uuid.UUID) (Certificate, error) {
-	row := q.db.QueryRowContext(ctx, getCertFromId, id)
+type GetCertFromIdParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetCertFromId(ctx context.Context, arg GetCertFromIdParams) (Certificate, error) {
+	row := q.db.QueryRowContext(ctx, getCertFromId, arg.ID, arg.UserID)
 	var i Certificate
 	err := row.Scan(
 		&i.ID,
@@ -84,11 +91,11 @@ func (q *Queries) GetCertFromId(ctx context.Context, id uuid.UUID) (Certificate,
 }
 
 const getCerts = `-- name: GetCerts :many
-SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id FROM certificates
+SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id FROM certificates WHERE user_id=$1
 `
 
-func (q *Queries) GetCerts(ctx context.Context) ([]Certificate, error) {
-	rows, err := q.db.QueryContext(ctx, getCerts)
+func (q *Queries) GetCerts(ctx context.Context, userID uuid.UUID) ([]Certificate, error) {
+	rows, err := q.db.QueryContext(ctx, getCerts, userID)
 	if err != nil {
 		return nil, err
 	}

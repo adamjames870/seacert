@@ -2,8 +2,11 @@
 
 import (
 	"context"
+	"errors"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/apiHttp/auth"
+	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/google/uuid"
@@ -21,7 +24,12 @@ func GetCertificates(state *internal.ApiState, ctx context.Context) ([]Certifica
 		return nil, errIssuerMap
 	}
 
-	certs, errCerts := state.Queries.GetCerts(ctx)
+	user, okUser := auth.UserFromContext(ctx)
+	if !okUser {
+		return nil, errors.New("unable to get user from context")
+	}
+
+	certs, errCerts := state.Queries.GetCerts(ctx, user.Id)
 	if errCerts != nil {
 		return nil, errCerts
 	}
@@ -44,7 +52,17 @@ func GetCertificateFromId(state *internal.ApiState, ctx context.Context, id stri
 		return Certificate{}, errId
 	}
 
-	cert, errCert := state.Queries.GetCertFromId(ctx, certUuid)
+	user, okUser := auth.UserFromContext(ctx)
+	if !okUser {
+		return Certificate{}, errors.New("unable to get user from context")
+	}
+
+	params := sqlc.GetCertFromIdParams{
+		ID:     certUuid,
+		UserID: user.Id,
+	}
+
+	cert, errCert := state.Queries.GetCertFromId(ctx, params)
 	if errCert != nil {
 		return Certificate{}, errCert
 	}

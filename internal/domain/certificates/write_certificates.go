@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/apiHttp/auth"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/domain/issuers"
@@ -32,10 +33,16 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 		return Certificate{}, errors.New("Error loading issuer: " + errGetIssuer.Error())
 	}
 
+	user, okUser := auth.UserFromContext(ctx)
+	if !okUser {
+		return Certificate{}, errors.New("unable to get user from context")
+	}
+
 	newCert := sqlc.CreateCertParams{
 		ID:         uuid.New(),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
+		UserID:     user.Id,
 		CertTypeID: apiCertType.Id,
 		CertNumber: params.CertNumber,
 		IssuerID:   apiIssuer.Id,
