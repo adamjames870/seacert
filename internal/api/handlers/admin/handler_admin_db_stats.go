@@ -1,10 +1,11 @@
-﻿package handlers
+﻿package admin
 
 import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/apiHttp/auth"
+	"github.com/adamjames870/seacert/internal/api/auth"
+	"github.com/adamjames870/seacert/internal/api/handlers"
 	"github.com/adamjames870/seacert/internal/dto"
 )
 
@@ -12,27 +13,27 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !state.IsDev {
-			respondWithError(w, 403, "")
+			handlers.RespondWithError(w, 403, "")
 		}
 
 		countCert, errCountCert := state.Queries.CountCertificates(r.Context())
 		if errCountCert != nil {
-			respondWithError(w, 500, errCountCert.Error())
+			handlers.RespondWithError(w, 500, errCountCert.Error())
 		}
 
 		countCertType, errCountCertType := state.Queries.CountCertTypes(r.Context())
 		if errCountCertType != nil {
-			respondWithError(w, 500, errCountCertType.Error())
+			handlers.RespondWithError(w, 500, errCountCertType.Error())
 		}
 
 		countIssuers, errCountIssuers := state.Queries.CountIssuers(r.Context())
 		if errCountIssuers != nil {
-			respondWithError(w, 500, errCountIssuers.Error())
+			handlers.RespondWithError(w, 500, errCountIssuers.Error())
 		}
 
 		countUsers, errCountUsers := state.Queries.CountUsers(r.Context())
 		if errCountUsers != nil {
-			respondWithError(w, 500, errCountUsers.Error())
+			handlers.RespondWithError(w, 500, errCountUsers.Error())
 		}
 
 		user, ok := auth.UserFromContext(r.Context())
@@ -50,7 +51,7 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			UserEmail:     user.Email,
 		}
 
-		respondWithJSON(w, 200, rv)
+		handlers.RespondWithJSON(w, 200, rv)
 	}
 
 }

@@ -1,11 +1,12 @@
-﻿package handlers
+﻿package admin
 
 import (
 	"encoding/json"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/apiHttp/auth"
+	"github.com/adamjames870/seacert/internal/api/auth"
+	"github.com/adamjames870/seacert/internal/api/handlers"
 	"github.com/adamjames870/seacert/internal/domain/users"
 	"github.com/adamjames870/seacert/internal/dto"
 )
@@ -20,13 +21,13 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 		params := dto.ParamsUpdateUser{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			respondWithError(w, 400, "unable to decode json: "+errDecode.Error())
+			handlers.RespondWithError(w, 400, "unable to decode json: "+errDecode.Error())
 			return
 		}
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			respondWithError(w, 401, "user not found in context")
+			handlers.RespondWithError(w, 401, "user not found in context")
 			return
 		}
 
@@ -34,12 +35,12 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 
 		user, userErr := users.UpdateUser(state, r.Context(), params)
 		if userErr != nil {
-			respondWithError(w, 500, userErr.Error())
+			handlers.RespondWithError(w, 500, userErr.Error())
 		}
 
 		userDto := users.MapUserDomainToDto(user)
 
-		respondWithJSON(w, 200, userDto)
+		handlers.RespondWithJSON(w, 200, userDto)
 
 	}
 

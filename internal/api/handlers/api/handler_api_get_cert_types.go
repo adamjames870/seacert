@@ -1,10 +1,11 @@
-﻿package handlers
+﻿package api
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/api/handlers"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/dto"
 )
@@ -23,28 +24,28 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		if idParam == "" && nameParam == "" {
 			rv, err := getAllCertTypes(state, r.Context())
 			if err != nil {
-				respondWithError(w, 500, err.Error())
+				handlers.RespondWithError(w, 500, err.Error())
 				return
 			}
-			respondWithJSON(w, 200, rv)
+			handlers.RespondWithJSON(w, 200, rv)
 			return
 		}
 
 		if idParam != "" {
 			rv, err := getCertTypeFromId(state, r.Context(), idParam)
 			if err != nil {
-				respondWithError(w, 404, err.Error())
+				handlers.RespondWithError(w, 404, err.Error())
 			}
-			respondWithJSON(w, 200, rv)
+			handlers.RespondWithJSON(w, 200, rv)
 			return
 		}
 
 		if nameParam != "" {
 			rv, err := getCertTypeFromName(state, r.Context(), nameParam)
 			if err != nil {
-				respondWithError(w, 404, err.Error())
+				handlers.RespondWithError(w, 404, err.Error())
 			}
-			respondWithJSON(w, 200, rv)
+			handlers.RespondWithJSON(w, 200, rv)
 		}
 
 	}

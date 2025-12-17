@@ -1,11 +1,12 @@
-﻿package handlers
+﻿package api
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/apiHttp/auth"
+	"github.com/adamjames870/seacert/internal/api/auth"
+	"github.com/adamjames870/seacert/internal/api/handlers"
 	"github.com/adamjames870/seacert/internal/domain/certificates"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
@@ -22,26 +23,26 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			respondWithError(w, 401, "user not found in context")
+			handlers.RespondWithError(w, 401, "user not found in context")
 			return
 		}
 
 		if idParam == "" {
 			rv, err := getAllCertificates(state, r.Context(), userId)
 			if err != nil {
-				respondWithError(w, 500, err.Error())
+				handlers.RespondWithError(w, 500, err.Error())
 				return
 			}
-			respondWithJSON(w, 200, rv)
+			handlers.RespondWithJSON(w, 200, rv)
 			return
 		}
 
 		if idParam != "" {
 			rv, err := certificates.GetCertificateFromId(state, r.Context(), idParam, userId)
 			if err != nil {
-				respondWithError(w, 404, err.Error())
+				handlers.RespondWithError(w, 404, err.Error())
 			}
-			respondWithJSON(w, 200, certificates.MapCertificateDomainToDto(rv))
+			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(rv))
 			return
 		}
 
