@@ -12,3 +12,13 @@ WHERE email = $1;
 SELECT *
 FROM users
 WHERE id = $1;
+
+-- name: UpdateUser :one
+UPDATE users
+SET
+    forename = COALESCE(sqlc.narg('forename'), forename),
+    surname = COALESCE(sqlc.narg('surname'), surname),
+    nationality = COALESCE(sqlc.narg('nationality'), nationality),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;

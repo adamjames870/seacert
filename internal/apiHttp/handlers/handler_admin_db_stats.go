@@ -46,7 +46,7 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 			CountCertType: int(countCertType),
 			CountIssuer:   int(countIssuers),
 			CountUsers:    int(countUsers),
-			UserId:        user.Id.String(),
+			UserId:        user.Id,
 			UserEmail:     user.Email,
 		}
 

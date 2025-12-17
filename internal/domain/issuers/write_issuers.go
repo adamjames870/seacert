@@ -13,8 +13,8 @@ import (
 
 func WriteNewIssuer(state *internal.ApiState, ctx context.Context, params dto.ParamsAddIssuer) (Issuer, error) {
 
-	country := domain.ToNullString(params.Country)
-	website := domain.ToNullString(params.Website)
+	country := domain.ToNullStringFromPointer(params.Country)
+	website := domain.ToNullStringFromPointer(params.Website)
 
 	newIssuer := sqlc.CreateIssuerParams{
 		ID:        uuid.New(),

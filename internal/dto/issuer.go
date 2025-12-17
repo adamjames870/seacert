@@ -12,7 +12,7 @@ type Issuer struct {
 }
 
 type ParamsAddIssuer struct {
-	Name    string `json:"name"`
-	Country string `json:"country"`
-	Website string `json:"website"`
+	Name    string  `json:"name"`
+	Country *string `json:"country,omitempty"`
+	Website *string `json:"website,omitempty"`
 }

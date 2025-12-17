@@ -22,10 +22,11 @@ type Certificate struct {
 }
 
 type ParamsAddCertificate struct {
-	CertTypeId      string `json:"cert-type-id" validate:"required"`
-	CertNumber      string `json:"cert-number" validate:"required"`
-	IssuerId        string `json:"issuer-id" validate:"required"`
-	IssuedDate      string `json:"issued-date" validate:"required"`
-	AlternativeName string `json:"alternative-name"`
-	Remarks         string `json:"remarks"`
+	UserId          string  `json:"user-id" validate:"required"`
+	CertTypeId      string  `json:"cert-type-id" validate:"required"`
+	CertNumber      string  `json:"cert-number" validate:"required"`
+	IssuerId        string  `json:"issuer-id" validate:"required"`
+	IssuedDate      string  `json:"issued-date" validate:"required"`
+	AlternativeName *string `json:"alternative-name,omitempty"`
+	Remarks         *string `json:"remarks,omitempty"`
 }

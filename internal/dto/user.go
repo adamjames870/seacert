@@ -16,3 +16,10 @@ type ParamsAddUser struct {
 	Id    string `json:"id"`
 	Email string `json:"email"`
 }
+
+type ParamsUpdateUser struct {
+	Id          string  `json:"id"`
+	Forename    *string `json:"forename,omitempty"`
+	Surname     *string `json:"surname,omitempty"`
+	Nationality *string `json:"nationality,omitempty"`
+}

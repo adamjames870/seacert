@@ -6,16 +6,18 @@ import (
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/apiHttp/auth"
-	"github.com/adamjames870/seacert/internal/domain/certificates"
+	"github.com/adamjames870/seacert/internal/domain/users"
 	"github.com/adamjames870/seacert/internal/dto"
 )
 
-func HandlerApiAddCert(state *internal.ApiState) http.HandlerFunc {
+func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// POST api/certificates
+
+		// PUT admin/users
+
 		decoder := json.NewDecoder(r.Body)
-		params := dto.ParamsAddCertificate{}
+		params := dto.ParamsUpdateUser{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
 			respondWithError(w, 400, "unable to decode json: "+errDecode.Error())
@@ -28,17 +30,17 @@ func HandlerApiAddCert(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		params.UserId = userId.String()
+		params.Id = userId.String()
 
-		cert, certErr := certificates.WriteNewCert(state, r.Context(), params)
-		if certErr != nil {
-			respondWithError(w, 500, "error writing cert: "+certErr.Error())
-			return
+		user, userErr := users.UpdateUser(state, r.Context(), params)
+		if userErr != nil {
+			respondWithError(w, 500, userErr.Error())
 		}
 
-		rv := certificates.MapCertificateDomainToDto(cert)
+		userDto := users.MapUserDomainToDto(user)
 
-		respondWithJSON(w, 201, rv)
+		respondWithJSON(w, 200, userDto)
 
 	}
+
 }

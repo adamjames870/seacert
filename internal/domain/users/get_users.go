@@ -33,14 +33,9 @@ func EnsureUserExists(state *internal.ApiState, ctx context.Context, id uuid.UUI
 
 }
 
-func GetUserFromId(state *internal.ApiState, ctx context.Context, id uuid.UUID) (User, error) {
+func GetUser(state *internal.ApiState, ctx context.Context, id uuid.UUID) (User, error) {
 
-	uuidId, errUuid := uuid.Parse(id.String())
-	if errUuid != nil {
-		return User{}, errUuid
-	}
-
-	user, errUser := state.Queries.GetUserByID(ctx, uuidId)
+	user, errUser := state.Queries.GetUserByID(ctx, id)
 	if errUser != nil {
 		return User{}, errUser
 	}

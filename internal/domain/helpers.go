@@ -6,10 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func ToNullString(s string) sql.NullString {
-	if s == "" {
+func ToNullStringFromPointer(s *string) sql.NullString {
+	if s == nil {
 		return sql.NullString{Valid: false}
 	}
+	return sql.NullString{String: *s, Valid: true}
+}
+
+func ToNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 

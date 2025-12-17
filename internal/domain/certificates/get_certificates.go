@@ -2,17 +2,15 @@
 
 import (
 	"context"
-	"errors"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/apiHttp/auth"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/google/uuid"
 )
 
-func GetCertificates(state *internal.ApiState, ctx context.Context) ([]Certificate, error) {
+func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.UUID) ([]Certificate, error) {
 
 	certTypeMap, errCertTypeMap := getMapOfCertTypes(state, ctx)
 	if errCertTypeMap != nil {
@@ -24,12 +22,12 @@ func GetCertificates(state *internal.ApiState, ctx context.Context) ([]Certifica
 		return nil, errIssuerMap
 	}
 
-	user, okUser := auth.UserFromContext(ctx)
-	if !okUser {
-		return nil, errors.New("unable to get user from context")
+	uuidId, errParse := uuid.Parse(userId.String())
+	if errParse != nil {
+		return nil, errParse
 	}
 
-	certs, errCerts := state.Queries.GetCerts(ctx, user.Id)
+	certs, errCerts := state.Queries.GetCerts(ctx, uuidId)
 	if errCerts != nil {
 		return nil, errCerts
 	}
@@ -45,21 +43,16 @@ func GetCertificates(state *internal.ApiState, ctx context.Context) ([]Certifica
 
 }
 
-func GetCertificateFromId(state *internal.ApiState, ctx context.Context, id string) (Certificate, error) {
+func GetCertificateFromId(state *internal.ApiState, ctx context.Context, certId string, userId uuid.UUID) (Certificate, error) {
 
-	certUuid, errId := uuid.Parse(id)
+	certUuid, errId := uuid.Parse(certId)
 	if errId != nil {
 		return Certificate{}, errId
 	}
 
-	user, okUser := auth.UserFromContext(ctx)
-	if !okUser {
-		return Certificate{}, errors.New("unable to get user from context")
-	}
-
 	params := sqlc.GetCertFromIdParams{
 		ID:     certUuid,
-		UserID: user.Id,
+		UserID: userId,
 	}
 
 	cert, errCert := state.Queries.GetCertFromId(ctx, params)

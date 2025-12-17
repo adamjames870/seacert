@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/apiHttp/auth"
 	"github.com/adamjames870/seacert/internal/domain/certificates"
 	"github.com/adamjames870/seacert/internal/dto"
+	"github.com/google/uuid"
 )
 
 func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
@@ -16,12 +18,16 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 		// GET api/certificates
 		// GET api/certificates?id=<uuid>
 
-		// TODO - convert to lazy loading
-
 		idParam := r.URL.Query().Get("id")
 
+		userId, errId := auth.UserIdFromContext(r.Context())
+		if errId != nil {
+			respondWithError(w, 401, "user not found in context")
+			return
+		}
+
 		if idParam == "" {
-			rv, err := getAllCertificates(state, r.Context())
+			rv, err := getAllCertificates(state, r.Context(), userId)
 			if err != nil {
 				respondWithError(w, 500, err.Error())
 				return
@@ -31,7 +37,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		if idParam != "" {
-			rv, err := certificates.GetCertificateFromId(state, r.Context(), idParam)
+			rv, err := certificates.GetCertificateFromId(state, r.Context(), idParam, userId)
 			if err != nil {
 				respondWithError(w, 404, err.Error())
 			}
@@ -42,9 +48,9 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 	}
 }
 
-func getAllCertificates(state *internal.ApiState, ctx context.Context) ([]dto.Certificate, error) {
+func getAllCertificates(state *internal.ApiState, ctx context.Context, userId uuid.UUID) ([]dto.Certificate, error) {
 
-	certs, errCerts := certificates.GetCertificates(state, ctx)
+	certs, errCerts := certificates.GetCertificates(state, ctx, userId)
 	if errCerts != nil {
 		return nil, errCerts
 	}
@@ -56,25 +62,4 @@ func getAllCertificates(state *internal.ApiState, ctx context.Context) ([]dto.Ce
 
 	return rv, nil
 
-}
-
-func HandlerApiGetCertFromId(state *internal.ApiState) http.HandlerFunc {
-
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		// GET api/certificates/{certID}
-
-		certId := r.PathValue("certId")
-
-		cert, errCert := certificates.GetCertificateFromId(state, r.Context(), certId)
-		if errCert != nil {
-			respondWithError(w, 404, "cannot load cert: "+errCert.Error())
-			return
-		}
-
-		rv := certificates.MapCertificateDomainToDto(cert)
-
-		respondWithJSON(w, 200, rv)
-
-	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/domain/users"
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
@@ -61,9 +62,16 @@ func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handl
 			user, errUser := userFromToken(token)
 			if errUser != nil {
 				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
+				return
 			}
 
-			_, errUserExists := users.EnsureUserExists(state, r.Context(), user.Id, user.Email)
+			uuidId, errParse := uuid.Parse(user.Id)
+			if errParse != nil {
+				http.Error(w, "user id is not a valid uuid", http.StatusBadRequest)
+				return
+			}
+
+			_, errUserExists := users.EnsureUserExists(state, r.Context(), uuidId, user.Email)
 			if errUserExists != nil {
 				http.Error(w, "user cannot be found or created", http.StatusBadRequest)
 			}

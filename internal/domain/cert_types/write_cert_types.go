@@ -13,7 +13,7 @@ import (
 
 func WriteNewCertType(state *internal.ApiState, ctx context.Context, params dto.ParamsAddCertificateType) (CertificateType, error) {
 
-	stcwRef := domain.ToNullString(params.StcwReference)
+	stcwRef := domain.ToNullStringFromPointer(params.StcwReference)
 	normalValidity := domain.ToNullInt32OrNil(params.NormalValidityMonths)
 
 	newCert := sqlc.CreateCertTypeParams{

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/adamjames870/seacert/internal/domain/users"
+	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -19,6 +19,7 @@ func loadSupabaseJWK(apiKey string) (jwk.Key, error) {
 
 	return key, nil
 }
+
 func getStringClaim(t jwt.Token, name string) (string, bool) {
 	v, ok := t.Get(name)
 	if !ok {
@@ -28,34 +29,52 @@ func getStringClaim(t jwt.Token, name string) (string, bool) {
 	return s, ok && s != ""
 }
 
-func userFromToken(t jwt.Token) (users.User, error) {
+func userFromToken(t jwt.Token) (dto.User, error) {
 	role, ok := getStringClaim(t, "role")
 	if !ok || role != "authenticated" {
-		return users.User{}, errors.New("invalid role")
+		return dto.User{}, errors.New("invalid role")
 	}
 
 	email, ok := getStringClaim(t, "email")
 	if !ok {
-		return users.User{}, errors.New("invalid email")
+		return dto.User{}, errors.New("invalid email")
 	}
 
 	sub := t.Subject()
 	if sub == "" {
-		return users.User{}, errors.New("missing subject")
+		return dto.User{}, errors.New("missing subject")
 	}
 
 	id, errId := uuid.Parse(sub)
 	if errId != nil {
-		return users.User{}, errId
+		return dto.User{}, errId
 	}
 
-	return users.User{
-		Id:    id,
+	return dto.User{
+		Id:    id.String(),
 		Email: email,
 	}, nil
 }
 
-func UserFromContext(ctx context.Context) (users.User, bool) {
-	user, ok := ctx.Value(userContextKey).(users.User)
+type userContextKeyType string
+
+const userContextKey userContextKeyType = "user"
+
+func UserFromContext(ctx context.Context) (dto.User, bool) {
+	user, ok := ctx.Value(userContextKey).(dto.User)
 	return user, ok
+}
+
+func UserIdFromContext(ctx context.Context) (uuid.UUID, error) {
+	authUser, ok := UserFromContext(ctx)
+	if !ok {
+		return uuid.UUID{}, errors.New("user not found in context")
+	}
+
+	uuidId, errParse := uuid.Parse(authUser.Id)
+	if errParse != nil {
+		return uuid.UUID{}, errParse
+	}
+
+	return uuidId, nil
 }

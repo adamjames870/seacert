@@ -93,3 +93,41 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	)
 	return i, err
 }
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET
+    forename = COALESCE($2, forename),
+    surname = COALESCE($3, surname),
+    nationality = COALESCE($4, nationality),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, forename, surname, email, nationality
+`
+
+type UpdateUserParams struct {
+	ID          uuid.UUID
+	Forename    sql.NullString
+	Surname     sql.NullString
+	Nationality sql.NullString
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUser,
+		arg.ID,
+		arg.Forename,
+		arg.Surname,
+		arg.Nationality,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Forename,
+		&i.Surname,
+		&i.Email,
+		&i.Nationality,
+	)
+	return i, err
+}

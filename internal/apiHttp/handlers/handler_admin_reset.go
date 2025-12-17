@@ -7,7 +7,7 @@ import (
 	"github.com/adamjames870/seacert/internal"
 )
 
-func HandlerApiReset(state *internal.ApiState) http.HandlerFunc {
+func HandlerAdminReset(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !state.IsDev {
