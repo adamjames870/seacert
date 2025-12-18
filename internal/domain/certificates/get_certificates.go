@@ -2,6 +2,7 @@
 
 import (
 	"context"
+	"time"
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
@@ -12,15 +13,15 @@ import (
 
 func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.UUID) ([]Certificate, error) {
 
-	certTypeMap, errCertTypeMap := getMapOfCertTypes(state, ctx)
-	if errCertTypeMap != nil {
-		return nil, errCertTypeMap
-	}
-
-	issuerMap, errIssuerMap := getMapOfIssuersToCertTypes(state, ctx)
-	if errIssuerMap != nil {
-		return nil, errIssuerMap
-	}
+	//certTypeMap, errCertTypeMap := getMapOfCertTypes(state, ctx)
+	//if errCertTypeMap != nil {
+	//	return nil, errCertTypeMap
+	//}
+	//
+	//issuerMap, errIssuerMap := getMapOfIssuersToCertTypes(state, ctx)
+	//if errIssuerMap != nil {
+	//	return nil, errIssuerMap
+	//}
 
 	uuidId, errParse := uuid.Parse(userId.String())
 	if errParse != nil {
@@ -34,9 +35,9 @@ func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.
 
 	apiCerts := make([]Certificate, 0, len(certs))
 	for _, cert := range certs {
-		certType, _ := certTypeMap[cert.CertTypeID]
-		issuer, _ := issuerMap[cert.IssuerID]
-		apiCerts = append(apiCerts, MapCertificateDbToDomain(cert, certType, issuer))
+		thisCert := MapCertificateViewDbToDomain(cert.ToCertView())
+		thisCert.calculateExpiryDate()
+		apiCerts = append(apiCerts, thisCert)
 	}
 
 	return apiCerts, nil
@@ -55,22 +56,16 @@ func GetCertificateFromId(state *internal.ApiState, ctx context.Context, certId 
 		UserID: userId,
 	}
 
-	cert, errCert := state.Queries.GetCertFromId(ctx, params)
+	dbCert, errCert := state.Queries.GetCertFromId(ctx, params)
 	if errCert != nil {
 		return Certificate{}, errCert
 	}
 
-	certType, errCertType := cert_types.GetCertTypeFromId(state, ctx, cert.CertTypeID.String())
-	if errCertType != nil {
-		return Certificate{}, errCertType
-	}
+	certView := dbCert.ToCertView()
+	apiCert := MapCertificateViewDbToDomain(certView)
+	apiCert.calculateExpiryDate()
 
-	issuer, errIssuer := issuers.GetIssuerFromId(state, ctx, cert.IssuerID.String())
-	if errIssuer != nil {
-		return Certificate{}, errIssuer
-	}
-
-	return MapCertificateDbToDomain(cert, certType, issuer), nil
+	return apiCert, nil
 
 }
 
@@ -104,4 +99,52 @@ func getMapOfIssuersToCertTypes(state *internal.ApiState, ctx context.Context) (
 
 	return issuerMap, nil
 
+}
+
+func (cert *Certificate) calculateExpiryDate() {
+
+	if !cert.ManualExpiry.IsZero() {
+		cert.ExpiryDate = cert.ManualExpiry
+	} else if cert.CertType.NormalValidityMonths != 0 {
+		cert.ExpiryDate = getExpiryAfterValidity(cert.IssuedDate, int(cert.CertType.NormalValidityMonths))
+	} else {
+		cert.ExpiryDate = time.Time{}
+	}
+
+}
+
+func getExpiryAfterValidity(issueDate time.Time, validityMonths int) time.Time {
+
+	issueDate = time.Date(
+		issueDate.Year(),
+		issueDate.Month(),
+		issueDate.Day(),
+		0, 0, 0, 0,
+		issueDate.Location(),
+	)
+
+	target := issueDate.AddDate(0, int(validityMonths), 0)
+	issueDay := issueDate.Day()
+	daysInTargetMonth := daysInMonth(target.Year(), target.Month())
+	if issueDay > daysInTargetMonth {
+		issueDay = daysInTargetMonth
+	}
+
+	targetSameDay := time.Date(
+		target.Year(),
+		target.Month(),
+		issueDay,
+		0, 0, 0, 0,
+		target.Location(),
+	)
+
+	return targetSameDay.AddDate(0, 0, -1)
+
+}
+
+func daysInMonth(year int, month time.Month) int {
+	// 1st of next month, minus one day
+	firstOfNext := time.Date(year, month+1, 1, 0, 0, 0, 0, time.UTC)
+	lastOfThis := firstOfNext.AddDate(0, 0, -1)
+	return lastOfThis.Day()
 }

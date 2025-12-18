@@ -1,15 +1,65 @@
 -- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks)
+INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks, manual_expiry)
 VALUES (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
        )
 RETURNING *;
 
 -- name: GetCerts :many
-SELECT * FROM certificates WHERE user_id=$1;
+SELECT
+    certificates.id AS id,
+    certificates.created_at AS created_at,
+    certificates.updated_at AS updated_at,
+    cert_number,
+    issued_date,
+    alternative_name,
+    remarks,
+    manual_expiry,
+    certificate_types.id AS cert_type_id,
+    certificate_types.created_at AS cert_type_created_at,
+    certificate_types.updated_at AS cert_type_updated_at,
+    certificate_types.name AS cert_type_name,
+    certificate_types.short_name AS cert_type_short_name,
+    certificate_types.stcw_reference AS cert_type_stcw_reference,
+    certificate_types.normal_validity_months AS normal_validity_months,
+    issuers.id AS issuer_id,
+    issuers.created_at AS issuer_created_at,
+    issuers.updated_at AS issuer_updated_at,
+    issuers.name AS issuer_name,
+    issuers.country AS issuer_country,
+    issuers.website AS issuer_website
+FROM certificates
+INNER JOIN certificate_types ON certificate_types.id=certificates.cert_type_id
+INNER JOIN issuers ON issuers.id=certificates.issuer_id
+WHERE user_id=$1;
 
 -- name: GetCertFromId :one
-SELECT * FROM certificates WHERE id=$1 AND user_id=$2;
+SELECT
+    certificates.id AS id,
+    certificates.created_at AS created_at,
+    certificates.updated_at AS updated_at,
+    cert_number,
+    issued_date,
+    alternative_name,
+    remarks,
+    manual_expiry,
+    certificate_types.id AS cert_type_id,
+    certificate_types.created_at AS cert_type_created_at,
+    certificate_types.updated_at AS cert_type_updated_at,
+    certificate_types.name AS cert_type_name,
+    certificate_types.short_name AS cert_type_short_name,
+    certificate_types.stcw_reference AS cert_type_stcw_reference,
+    certificate_types.normal_validity_months AS normal_validity_months,
+    issuers.id AS issuer_id,
+    issuers.created_at AS issuer_created_at,
+    issuers.updated_at AS issuer_updated_at,
+    issuers.name AS issuer_name,
+    issuers.country AS issuer_country,
+    issuers.website AS issuer_website
+FROM certificates
+INNER JOIN certificate_types ON certificate_types.id=certificates.cert_type_id
+INNER JOIN issuers ON issuers.id=certificates.issuer_id
+WHERE certificates.id=$1 AND certificates.user_id=$2;
 
 -- name: UpdateCertificate :one
 UPDATE certificates
@@ -20,6 +70,7 @@ SET
     alternative_name=COALESCE(sqlc.narg('alternative_name'), alternative_name),
     remarks=COALESCE(sqlc.narg('remarks'), remarks),
     issuer_id=COALESCE(sqlc.narg('issuer_id'), issuer_id),
+    manual_expiry=COALESCE(sqlc.narg('manual_expiry'), manual_expiry),
     updated_at=NOW()
 WHERE id=$1
 RETURNING *;

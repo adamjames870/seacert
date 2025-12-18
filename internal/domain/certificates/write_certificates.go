@@ -55,6 +55,7 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 	}
 
 	apiCert := MapCertificateDbToDomain(dbCert, apiCertType, apiIssuer)
+	apiCert.calculateExpiryDate()
 
 	return apiCert, nil
 
@@ -116,6 +117,9 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		return Certificate{}, errIssuer
 	}
 
-	return MapCertificateDbToDomain(dbCert, certType, issuer), nil
+	apiCert := MapCertificateDbToDomain(dbCert, certType, issuer)
+	apiCert.calculateExpiryDate()
+
+	return apiCert, nil
 
 }

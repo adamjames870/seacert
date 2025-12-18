@@ -22,6 +22,7 @@ type Certificate struct {
 	Remarks         sql.NullString
 	IssuerID        uuid.UUID
 	UserID          uuid.UUID
+	ManualExpiry    sql.NullTime
 }
 
 type CertificateType struct {

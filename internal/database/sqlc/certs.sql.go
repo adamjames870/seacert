@@ -14,11 +14,11 @@ import (
 )
 
 const createCert = `-- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks)
+INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks, manual_expiry)
 VALUES (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
        )
-RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id
+RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry
 `
 
 type CreateCertParams struct {
@@ -32,6 +32,7 @@ type CreateCertParams struct {
 	IssuedDate      time.Time
 	AlternativeName sql.NullString
 	Remarks         sql.NullString
+	ManualExpiry    sql.NullTime
 }
 
 func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certificate, error) {
@@ -46,6 +47,7 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		arg.IssuedDate,
 		arg.AlternativeName,
 		arg.Remarks,
+		arg.ManualExpiry,
 	)
 	var i Certificate
 	err := row.Scan(
@@ -59,12 +61,38 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		&i.Remarks,
 		&i.IssuerID,
 		&i.UserID,
+		&i.ManualExpiry,
 	)
 	return i, err
 }
 
 const getCertFromId = `-- name: GetCertFromId :one
-SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id FROM certificates WHERE id=$1 AND user_id=$2
+SELECT
+    certificates.id AS id,
+    certificates.created_at AS created_at,
+    certificates.updated_at AS updated_at,
+    cert_number,
+    issued_date,
+    alternative_name,
+    remarks,
+    manual_expiry,
+    certificate_types.id AS cert_type_id,
+    certificate_types.created_at AS cert_type_created_at,
+    certificate_types.updated_at AS cert_type_updated_at,
+    certificate_types.name AS cert_type_name,
+    certificate_types.short_name AS cert_type_short_name,
+    certificate_types.stcw_reference AS cert_type_stcw_reference,
+    certificate_types.normal_validity_months AS normal_validity_months,
+    issuers.id AS issuer_id,
+    issuers.created_at AS issuer_created_at,
+    issuers.updated_at AS issuer_updated_at,
+    issuers.name AS issuer_name,
+    issuers.country AS issuer_country,
+    issuers.website AS issuer_website
+FROM certificates
+INNER JOIN certificate_types ON certificate_types.id=certificates.cert_type_id
+INNER JOIN issuers ON issuers.id=certificates.issuer_id
+WHERE certificates.id=$1 AND certificates.user_id=$2
 `
 
 type GetCertFromIdParams struct {
@@ -72,48 +100,143 @@ type GetCertFromIdParams struct {
 	UserID uuid.UUID
 }
 
-func (q *Queries) GetCertFromId(ctx context.Context, arg GetCertFromIdParams) (Certificate, error) {
+type GetCertFromIdRow struct {
+	ID                    uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	CertNumber            string
+	IssuedDate            time.Time
+	AlternativeName       sql.NullString
+	Remarks               sql.NullString
+	ManualExpiry          sql.NullTime
+	CertTypeID            uuid.UUID
+	CertTypeCreatedAt     time.Time
+	CertTypeUpdatedAt     time.Time
+	CertTypeName          string
+	CertTypeShortName     string
+	CertTypeStcwReference sql.NullString
+	NormalValidityMonths  sql.NullInt32
+	IssuerID              uuid.UUID
+	IssuerCreatedAt       time.Time
+	IssuerUpdatedAt       time.Time
+	IssuerName            string
+	IssuerCountry         sql.NullString
+	IssuerWebsite         sql.NullString
+}
+
+func (q *Queries) GetCertFromId(ctx context.Context, arg GetCertFromIdParams) (GetCertFromIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getCertFromId, arg.ID, arg.UserID)
-	var i Certificate
+	var i GetCertFromIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CertNumber,
 		&i.IssuedDate,
-		&i.CertTypeID,
 		&i.AlternativeName,
 		&i.Remarks,
+		&i.ManualExpiry,
+		&i.CertTypeID,
+		&i.CertTypeCreatedAt,
+		&i.CertTypeUpdatedAt,
+		&i.CertTypeName,
+		&i.CertTypeShortName,
+		&i.CertTypeStcwReference,
+		&i.NormalValidityMonths,
 		&i.IssuerID,
-		&i.UserID,
+		&i.IssuerCreatedAt,
+		&i.IssuerUpdatedAt,
+		&i.IssuerName,
+		&i.IssuerCountry,
+		&i.IssuerWebsite,
 	)
 	return i, err
 }
 
 const getCerts = `-- name: GetCerts :many
-SELECT id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id FROM certificates WHERE user_id=$1
+SELECT
+    certificates.id AS id,
+    certificates.created_at AS created_at,
+    certificates.updated_at AS updated_at,
+    cert_number,
+    issued_date,
+    alternative_name,
+    remarks,
+    manual_expiry,
+    certificate_types.id AS cert_type_id,
+    certificate_types.created_at AS cert_type_created_at,
+    certificate_types.updated_at AS cert_type_updated_at,
+    certificate_types.name AS cert_type_name,
+    certificate_types.short_name AS cert_type_short_name,
+    certificate_types.stcw_reference AS cert_type_stcw_reference,
+    certificate_types.normal_validity_months AS normal_validity_months,
+    issuers.id AS issuer_id,
+    issuers.created_at AS issuer_created_at,
+    issuers.updated_at AS issuer_updated_at,
+    issuers.name AS issuer_name,
+    issuers.country AS issuer_country,
+    issuers.website AS issuer_website
+FROM certificates
+INNER JOIN certificate_types ON certificate_types.id=certificates.cert_type_id
+INNER JOIN issuers ON issuers.id=certificates.issuer_id
+WHERE user_id=$1
 `
 
-func (q *Queries) GetCerts(ctx context.Context, userID uuid.UUID) ([]Certificate, error) {
+type GetCertsRow struct {
+	ID                    uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	CertNumber            string
+	IssuedDate            time.Time
+	AlternativeName       sql.NullString
+	Remarks               sql.NullString
+	ManualExpiry          sql.NullTime
+	CertTypeID            uuid.UUID
+	CertTypeCreatedAt     time.Time
+	CertTypeUpdatedAt     time.Time
+	CertTypeName          string
+	CertTypeShortName     string
+	CertTypeStcwReference sql.NullString
+	NormalValidityMonths  sql.NullInt32
+	IssuerID              uuid.UUID
+	IssuerCreatedAt       time.Time
+	IssuerUpdatedAt       time.Time
+	IssuerName            string
+	IssuerCountry         sql.NullString
+	IssuerWebsite         sql.NullString
+}
+
+func (q *Queries) GetCerts(ctx context.Context, userID uuid.UUID) ([]GetCertsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCerts, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Certificate
+	var items []GetCertsRow
 	for rows.Next() {
-		var i Certificate
+		var i GetCertsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CertNumber,
 			&i.IssuedDate,
-			&i.CertTypeID,
 			&i.AlternativeName,
 			&i.Remarks,
+			&i.ManualExpiry,
+			&i.CertTypeID,
+			&i.CertTypeCreatedAt,
+			&i.CertTypeUpdatedAt,
+			&i.CertTypeName,
+			&i.CertTypeShortName,
+			&i.CertTypeStcwReference,
+			&i.NormalValidityMonths,
 			&i.IssuerID,
-			&i.UserID,
+			&i.IssuerCreatedAt,
+			&i.IssuerUpdatedAt,
+			&i.IssuerName,
+			&i.IssuerCountry,
+			&i.IssuerWebsite,
 		); err != nil {
 			return nil, err
 		}
@@ -137,9 +260,10 @@ SET
     alternative_name=COALESCE($5, alternative_name),
     remarks=COALESCE($6, remarks),
     issuer_id=COALESCE($7, issuer_id),
+    manual_expiry=COALESCE($8, manual_expiry),
     updated_at=NOW()
 WHERE id=$1
-RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id
+RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry
 `
 
 type UpdateCertificateParams struct {
@@ -150,6 +274,7 @@ type UpdateCertificateParams struct {
 	AlternativeName sql.NullString
 	Remarks         sql.NullString
 	IssuerID        uuid.NullUUID
+	ManualExpiry    sql.NullTime
 }
 
 func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificateParams) (Certificate, error) {
@@ -161,6 +286,7 @@ func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificatePa
 		arg.AlternativeName,
 		arg.Remarks,
 		arg.IssuerID,
+		arg.ManualExpiry,
 	)
 	var i Certificate
 	err := row.Scan(
@@ -174,6 +300,7 @@ func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificatePa
 		&i.Remarks,
 		&i.IssuerID,
 		&i.UserID,
+		&i.ManualExpiry,
 	)
 	return i, err
 }

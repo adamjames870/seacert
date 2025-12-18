@@ -9,13 +9,15 @@ import (
 )
 
 type Certificate struct {
-	ID              uuid.UUID                  `json:"id"`
-	CreatedAt       time.Time                  `json:"created-at"`
-	UpdatedAt       time.Time                  `json:"updated-at"`
-	CertType        cert_types.CertificateType `json:"cert-type-id"`
-	CertNumber      string                     `json:"cert-number"`
-	Issuer          issuers.Issuer             `json:"issuer"`
-	IssuedDate      time.Time                  `json:"issued-date"`
-	AlternativeName string                     `json:"alternative-name"`
-	Remarks         string                     `json:"remarks"`
+	Id              uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	CertType        cert_types.CertificateType
+	CertNumber      string
+	Issuer          issuers.Issuer
+	IssuedDate      time.Time
+	ExpiryDate      time.Time
+	AlternativeName string
+	Remarks         string
+	ManualExpiry    time.Time
 }
