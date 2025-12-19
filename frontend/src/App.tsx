@@ -1,118 +1,246 @@
-import { useEffect, useState } from "react";
-import "./App.css";
+import { useState, useContext, useEffect } from 'react'
+import { Routes, Route, Link as RouterLink, useNavigate } from 'react-router-dom'
+import { 
+  Typography, 
+  Button, 
+  AppBar, 
+  Toolbar, 
+  IconButton, 
+  Menu, 
+  MenuItem, 
+  Box,
+  ListItemIcon,
+  ListItemText,
+  Divider
+} from '@mui/material'
+import MenuIcon from '@mui/icons-material/Menu'
+import CheckIcon from '@mui/icons-material/Check'
+import LogoutIcon from '@mui/icons-material/Logout'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import { Anchor } from 'lucide-react'
+import Home from './pages/Home'
+import SignUp from './pages/SignUp'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import AddCertificate from './pages/AddCertificate'
+import './App.css'
+import { ColorModeContext } from './main'
+import { supabase } from './supabaseClient'
 
-interface Certificate {
-    id: string;
-    "cert-type-name": string;
-    "cert-number": string;
-    "issuer-name": string;
-    "issued-date": string;
+interface UserData {
+  id: string;
+  forename: string;
+  surname: string;
+  email: string;
+  nationality: string;
 }
 
-// Format date as dd-MMM-yyyy
-function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-    }).replace(/ /g, "-");
-}
+function App({ mode }: { mode: string }) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null)
+  const [session, setSession] = useState<any>(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const colorMode = useContext(ColorModeContext)
+  const navigate = useNavigate()
 
-type SortKey = keyof Certificate;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
 
-function App() {
-    const [certificates, setCertificates] = useState<Certificate[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [sortKey, setSortKey] = useState<SortKey | null>(null);
-    const [sortAsc, setSortAsc] = useState(true);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
 
-    const fetchCertificates = async () => {
-        setLoading(true);
-        setError(null);
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (session?.access_token) {
         try {
-            const res = await fetch("http://localhost:8080/api/certificates");
-            if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-            const data: Certificate[] = await res.json();
-            setCertificates(data);
-        } catch (err: unknown) {
-            if (err instanceof Error) setError(err.message);
-            else setError(String(err));
-        } finally {
-            setLoading(false);
+          const response = await fetch('/admin/users', {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          })
+          if (response.ok) {
+            const data = await response.json()
+            // The API returns a list of users, but based on instructions 
+            // "the user id will be retrieved automatically from the access token"
+            // If the endpoint returns the current user directly or a list where we can find the user.
+            // Usually such admin endpoints might return a list.
+            // However, the prompt says "show the user name and email address".
+            // If it returns a list, we might need to find the one matching session.user.id
+            if (Array.isArray(data)) {
+              const user = data.find(u => u.id === session.user.id)
+              setUserData(user || null)
+            } else {
+              setUserData(data)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error)
         }
-    };
+      } else {
+        setUserData(null)
+      }
+    }
 
-    useEffect(() => {
-        fetchCertificates();
-    }, []);
+    fetchUserData()
+  }, [session])
 
-    const handleSort = (key: SortKey) => {
-        if (sortKey === key) {
-            setSortAsc(!sortAsc); // toggle ascending/descending
-        } else {
-            setSortKey(key);
-            setSortAsc(true);
-        }
-    };
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
 
-    const sortedCertificates = [...certificates].sort((a, b) => {
-        if (!sortKey) return 0;
+  const handleAccountMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAccountAnchorEl(event.currentTarget)
+  }
 
-        if (sortKey === "issued-date") {
-            const aTime = new Date(a[sortKey]).getTime();
-            const bTime = new Date(b[sortKey]).getTime();
-            return sortAsc ? aTime - bTime : bTime - aTime;
-        }
+  const handleClose = () => {
+    setAnchorEl(null)
+    setAccountAnchorEl(null)
+  }
 
-        const aVal = a[sortKey] as string;
-        const bVal = b[sortKey] as string;
-        return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-    });
+  const handleToggleDarkMode = () => {
+    colorMode.toggleColorMode()
+    handleClose()
+  }
 
-    if (loading) return <p className="loading">Loading certificates...</p>;
-    if (error) return <p className="error">Error: {error}</p>;
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    handleClose()
+    navigate('/login')
+  }
 
-    return (
-        <div className="app-wrapper">
-        <div className="app-container">
-            <h1>Certificates</h1>
-            <button className="refresh-btn" onClick={fetchCertificates}>
-                Refresh
-            </button>
-            <table className="cert-table">
-                <thead>
-                <tr>
-                    <th onClick={() => handleSort("cert-type-name")}>
-                        Cert Type {sortKey === "cert-type-name" ? (sortAsc ? "↑" : "↓") : ""}
-                    </th>
-                    <th onClick={() => handleSort("cert-number")}>
-                        Cert Number {sortKey === "cert-number" ? (sortAsc ? "↑" : "↓") : ""}
-                    </th>
-                    <th onClick={() => handleSort("issuer-name")}>
-                        Issuer {sortKey === "issuer-name" ? (sortAsc ? "↑" : "↓") : ""}
-                    </th>
-                    <th onClick={() => handleSort("issued-date")}>
-                        Issued Date {sortKey === "issued-date" ? (sortAsc ? "↑" : "↓") : ""}
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                {sortedCertificates.map((cert) => (
-                    <tr key={cert.id}>
-                        <td>{cert["cert-type-name"]}</td>
-                        <td>{cert["cert-number"]}</td>
-                        <td>{cert["issuer-name"]}</td>
-                        <td>{formatDate(cert["issued-date"])}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </div>
-        </div>
-    );
+  return (
+    <>
+      <AppBar position="fixed" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Toolbar>
+          {session && (
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2 }}
+              onClick={handleMenu}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleClose}
+          >
+            <MenuItem onClick={handleClose} component={RouterLink} to="/dashboard">
+              Dashboard
+            </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
+              Add Certificate
+            </MenuItem>
+            <MenuItem onClick={handleToggleDarkMode}>
+              <ListItemIcon>
+                {mode === 'dark' && <CheckIcon fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText>Dark Mode</ListItemText>
+            </MenuItem>
+          </Menu>
+
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/"
+            sx={{ 
+              flexGrow: 1, 
+              textDecoration: 'none', 
+              color: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <Anchor size={24} />
+            SeaCert
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {session ? (
+              <>
+                <Button
+                  color="inherit"
+                  onClick={handleAccountMenu}
+                  startIcon={<AccountCircleIcon />}
+                  sx={{ textTransform: 'none' }}
+                >
+                  My Account
+                </Button>
+                <Menu
+                  anchorEl={accountAnchorEl}
+                  open={Boolean(accountAnchorEl)}
+                  onClose={handleClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                >
+                  <Box sx={{ px: 2, py: 1, minWidth: 200 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {userData ? `${userData.forename} ${userData.surname}` : 'User'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {userData?.email || session.user.email}
+                    </Typography>
+                  </Box>
+                  <Divider />
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Logout</ListItemText>
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button 
+                  color="inherit" 
+                  component={RouterLink} 
+                  to="/signup"
+                >
+                  Sign Up
+                </Button>
+                <Button 
+                  color="secondary" 
+                  variant="contained" 
+                  component={RouterLink} 
+                  to="/login"
+                >
+                  Login
+                </Button>
+              </>
+            )}
+          </Box>
+        </Toolbar>
+      </AppBar>
+      <Toolbar /> {/* Spacer to prevent content from being hidden under fixed AppBar */}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/add-certificate" element={<AddCertificate />} />
+      </Routes>
+    </>
+  )
 }
 
-export default App;
+export default App

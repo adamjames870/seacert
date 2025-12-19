@@ -1,0 +1,276 @@
+﻿import { useEffect, useState } from 'react';
+import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton } from '@mui/material';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { supabase } from '../supabaseClient';
+import { formatDate } from '../utils/dateUtils';
+
+interface Certificate {
+  id: string;
+  'created-at': string;
+  'updated-at': string;
+  'cert-type-id': string;
+  'cert-type-name': string;
+  'cert-type-short-name': string;
+  'cert-type-stcw-ref': string;
+  'cert-number': string;
+  'issuer-id': string;
+  'issuer-name': string;
+  'issuer-country': string;
+  'issuer-website': string;
+  'issued-date': string;
+  'expiry-date': string;
+  'alternative-name': string;
+  remarks: string;
+}
+
+type SortField = 'cert-type-name' | 'issuer-name' | 'issued-date' | 'expiry-date';
+type SortOrder = 'asc' | 'desc';
+
+const Dashboard = () => {
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortField>('expiry-date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCertificates = async (retry = true) => {
+      try {
+        if (retry) setLoading(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+        if (!session) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('/api/certificates', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (response.status === 401 && retry) {
+          // Token might be expired, attempt to refresh by calling getSession again
+          // Supabase getSession handles refreshing if it can.
+          // We can also try refreshSession explicitly if needed, but getSession is usually enough.
+          const { data: { session: newSession } } = await supabase.auth.refreshSession();
+          if (newSession) {
+            return fetchCertificates(false);
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(`Error fetching certificates: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setCertificates(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load certificates');
+      } finally {
+        if (retry) setLoading(false);
+      }
+    };
+
+    fetchCertificates();
+  }, []);
+
+  const sortedCertificates = [...certificates].sort((a, b) => {
+    if (sortBy === 'expiry-date') {
+      const dateA = new Date(a['expiry-date']);
+      const dateB = new Date(b['expiry-date']);
+      const isNoExpiryA = dateA.getFullYear() <= 1;
+      const isNoExpiryB = dateB.getFullYear() <= 1;
+
+      if (isNoExpiryA && isNoExpiryB) return 0;
+      if (isNoExpiryA) return 1; // Always bottom
+      if (isNoExpiryB) return -1; // Always bottom
+
+      const comparison = dateA.getTime() - dateB.getTime();
+      return sortOrder === 'asc' ? comparison : -comparison;
+    }
+
+    let comparison = 0;
+    if (sortBy === 'issued-date') {
+      const dateA = new Date(a[sortBy]).getTime();
+      const dateB = new Date(b[sortBy]).getTime();
+      comparison = dateA - dateB;
+    } else {
+      const valA = a[sortBy].toLowerCase();
+      const valB = b[sortBy].toLowerCase();
+      comparison = valA.localeCompare(valB);
+    }
+
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const handleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
+
+  return (
+    <Container>
+      <Box sx={{ mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1">
+            Certificates
+          </Typography>
+          
+          {!loading && !error && certificates.length > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel id="sort-by-label">Sort By</InputLabel>
+                <Select
+                  labelId="sort-by-label"
+                  value={sortBy}
+                  label="Sort By"
+                  onChange={(e) => setSortBy(e.target.value as SortField)}
+                >
+                  <MenuItem value="cert-type-name">Name</MenuItem>
+                  <MenuItem value="issuer-name">Issuer</MenuItem>
+                  <MenuItem value="issued-date">Issue Date</MenuItem>
+                  <MenuItem value="expiry-date">Expiry Date</MenuItem>
+                </Select>
+              </FormControl>
+              <Tooltip title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}>
+                <IconButton onClick={toggleSortOrder} color="primary">
+                  {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
+        </Box>
+
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {!loading && !error && certificates.length === 0 && (
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            No certificates found.
+          </Typography>
+        )}
+
+        {!loading && !error && certificates.length > 0 && (
+          <List sx={{ mt: 2 }}>
+            {sortedCertificates.map((cert) => (
+              <Paper key={cert.id} elevation={0} sx={{ mb: 2, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
+                <ListItemButton 
+                  onClick={() => handleExpand(cert.id)}
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 2
+                  }}
+                >
+                  <ListItemText 
+                    primary={cert['cert-type-name']}
+                    secondary={
+                      <>
+                        <Typography component="span" variant="body2" color="text.primary">
+                          Issuer: {cert['issuer-name']}
+                        </Typography>
+                        {` — Issued on: ${formatDate(cert['issued-date'])}`}
+                      </>
+                    }
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {cert['expiry-date'] && new Date(cert['expiry-date']).getFullYear() > 1 && (
+                      <Box sx={{ textAlign: 'right', mr: 2 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.7rem' }}>
+                          Expires
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                          {formatDate(cert['expiry-date'])}
+                        </Typography>
+                      </Box>
+                    )}
+                    <IconButton size="small">
+                      {expandedId === cert.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </IconButton>
+                  </Box>
+                </ListItemButton>
+                <Collapse in={expandedId === cert.id} timeout="auto" unmountOnExit>
+                  <Divider />
+                  <Box sx={{ p: 2, bgcolor: 'action.hover' }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Short Name
+                        </Typography>
+                        <Typography variant="body2">
+                          {cert['cert-type-short-name'] || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          STCW Reference
+                        </Typography>
+                        <Typography variant="body2">
+                          {cert['cert-type-stcw-ref'] || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Issuer Country
+                        </Typography>
+                        <Typography variant="body2">
+                          {cert['issuer-country'] || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Issuer Website
+                        </Typography>
+                        {cert['issuer-website'] ? (
+                          <Link href={cert['issuer-website'].startsWith('http') ? cert['issuer-website'] : `https://${cert['issuer-website']}`} target="_blank" rel="noopener" variant="body2">
+                            {cert['issuer-website']}
+                          </Link>
+                        ) : (
+                          <Typography variant="body2">N/A</Typography>
+                        )}
+                      </Box>
+                    </Box>
+                    {cert.remarks && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Remarks
+                        </Typography>
+                        <Typography variant="body2">
+                          {cert.remarks}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Collapse>
+              </Paper>
+            ))}
+          </List>
+        )}
+      </Box>
+    </Container>
+  );
+};
+
+export default Dashboard;
