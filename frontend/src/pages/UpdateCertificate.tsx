@@ -7,48 +7,29 @@ import {
   Button, 
   Paper, 
   Alert, 
-  Link,
   CircularProgress,
-  Autocomplete,
   Grid
 } from '@mui/material';
-import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-interface CertType {
-  id: string;
-  name: string;
-  'short-name': string;
-  'stcw-ref': string;
-}
-
-interface Issuer {
-  id: string;
-  name: string;
-  country: string;
-  website: string;
-}
-
-const AddCertificate = () => {
-  const [certTypes, setCertTypes] = useState<CertType[]>([]);
-  const [issuers, setIssuers] = useState<Issuer[]>([]);
+const UpdateCertificate = () => {
+  const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    certTypeId: '',
-    issuerId: '',
     certNumber: '',
     issuedDate: '',
     remarks: ''
   });
+  const [certTypeName, setCertTypeName] = useState('');
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCertificate = async () => {
       try {
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
@@ -59,33 +40,30 @@ const AddCertificate = () => {
           return;
         }
 
-        const headers = {
-          'Authorization': `Bearer ${session.access_token}`,
-        };
+        const response = await fetch('/api/certificates', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
 
-        const [certTypesRes, issuersRes] = await Promise.all([
-          fetch('/api/cert-types', { headers }),
-          fetch('/api/issuers', { headers })
-        ]);
-
-        if (!certTypesRes.ok || !issuersRes.ok) {
-          throw new Error('Failed to fetch required data');
+        if (!response.ok) {
+          throw new Error('Failed to fetch certificate details');
         }
 
-        const [certTypesData, issuersData] = await Promise.all([
-          certTypesRes.json(),
-          issuersRes.json()
-        ]);
+        const data = await response.json();
+        const certs = Array.isArray(data) ? data : (data.certificates || []);
+        const cert = certs.find((c: any) => c.id === id);
 
-        setCertTypes(certTypesData);
-        setIssuers(issuersData);
-
-        // If we came back from Add Issuer with a new issuer ID, select it automatically
-        if (location.state?.newIssuerId) {
-          setFormData(prev => ({ ...prev, issuerId: location.state.newIssuerId }));
-          // Clear the state so it doesn't persist if they navigate away and back
-          navigate(location.pathname, { replace: true, state: {} });
+        if (!cert) {
+          throw new Error('Certificate not found');
         }
+
+        setFormData({
+          certNumber: cert['cert-number'] || '',
+          issuedDate: cert['issued-date'] ? cert['issued-date'].split('T')[0] : '',
+          remarks: cert.remarks || ''
+        });
+        setCertTypeName(cert['cert-type-name'] || '');
       } catch (err: any) {
         setError(err.message || 'An error occurred while fetching data');
       } finally {
@@ -93,8 +71,8 @@ const AddCertificate = () => {
       }
     };
 
-    fetchData();
-  }, [location.state, location.pathname, navigate]);
+    fetchCertificate();
+  }, [id]);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -110,35 +88,44 @@ const AddCertificate = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
+      const payload = {
+        id: id,
+        'cert-number': formData.certNumber,
+        'issued-date': formData.issuedDate ? new Date(formData.issuedDate).toISOString() : null,
+        remarks: formData.remarks
+      };
+      console.log('Sending update payload:', payload);
+
       const response = await fetch('/api/certificates', {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          'cert-type-id': formData.certTypeId,
-          'issuer-id': formData.issuerId,
-          'cert-number': formData.certNumber,
-          'issued-date': formData.issuedDate,
-          remarks: formData.remarks
-        }),
+        body: JSON.stringify(payload),
       });
 
       const responseData = await response.json().catch(() => ({}));
-      console.log('Add response:', responseData);
+      console.log('Update response:', responseData);
 
       if (!response.ok) {
+        // Extract as much error information as possible
         const errorMessage = responseData.message || 
                            responseData.error || 
                            (responseData.errors && typeof responseData.errors === 'object' ? JSON.stringify(responseData.errors) : null) ||
-                           'Failed to add certificate';
+                           'Failed to update certificate';
         throw new Error(errorMessage);
       }
 
+      // Check if the returned certificate matches expectations (e.g. has updated fields)
+      console.log('Successfully updated certificate:', responseData);
+      
+      // We could optionally verify if the returned data matches formData here,
+      // but if the response is OK, we assume the backend handled it or returned the new state.
+
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during submission');
+      setError(err.message || 'An error occurred during update');
     } finally {
       setSubmitting(false);
     }
@@ -156,8 +143,11 @@ const AddCertificate = () => {
     <Container maxWidth="md">
       <Box sx={{ mt: 4, mb: 4 }}>
         <Paper elevation={0} sx={{ p: 4, border: 1, borderColor: 'divider', borderRadius: 2 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            Add New Certificate
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+            Update Certificate
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+            {certTypeName}
           </Typography>
 
           {error && (
@@ -168,58 +158,6 @@ const AddCertificate = () => {
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Autocomplete
-                  id="certTypeId"
-                  options={certTypes}
-                  getOptionLabel={(option) => option.name}
-                  autoHighlight
-                  autoSelect
-                  value={certTypes.find(type => type.id === formData.certTypeId) || null}
-                  onChange={(_event, newValue) => {
-                    setFormData(prev => ({ ...prev, certTypeId: newValue ? newValue.id : '' }));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Certificate Type"
-                      required
-                      error={!formData.certTypeId && submitting}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Autocomplete
-                  id="issuerId"
-                  options={issuers}
-                  getOptionLabel={(option) => option.name}
-                  autoHighlight
-                  autoSelect
-                  value={issuers.find(issuer => issuer.id === formData.issuerId) || null}
-                  onChange={(_event, newValue) => {
-                    setFormData(prev => ({ ...prev, issuerId: newValue ? newValue.id : '' }));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Issuer"
-                      required
-                      error={!formData.issuerId && submitting}
-                    />
-                  )}
-                />
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption">
-                    Can't find your issuer?{' '}
-                    <Link component={RouterLink} to="/add-issuer" sx={{ textDecoration: 'none' }}>
-                      Add New Issuer
-                    </Link>
-                  </Typography>
-                </Box>
-              </Grid>
-
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   required
@@ -273,7 +211,7 @@ const AddCertificate = () => {
                   color="primary"
                   disabled={submitting}
                 >
-                  {submitting ? 'Saving...' : 'Add Certificate'}
+                  {submitting ? 'Updating...' : 'Update Certificate'}
                 </Button>
               </Grid>
             </Grid>
@@ -284,4 +222,4 @@ const AddCertificate = () => {
   );
 };
 
-export default AddCertificate;
+export default UpdateCertificate;

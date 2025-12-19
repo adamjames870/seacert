@@ -1,5 +1,5 @@
-import { useState, useContext, useEffect } from 'react'
-import { Routes, Route, Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Routes, Route, Link as RouterLink, useNavigate, Navigate } from 'react-router-dom'
 import { 
   Typography, 
   Button, 
@@ -14,7 +14,6 @@ import {
   Divider
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
-import CheckIcon from '@mui/icons-material/Check'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { Anchor } from 'lucide-react'
@@ -23,8 +22,9 @@ import SignUp from './pages/SignUp'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import AddCertificate from './pages/AddCertificate'
+import AddIssuer from './pages/AddIssuer'
+import UpdateCertificate from './pages/UpdateCertificate'
 import './App.css'
-import { ColorModeContext } from './main'
 import { supabase } from './supabaseClient'
 
 interface UserData {
@@ -35,12 +35,11 @@ interface UserData {
   nationality: string;
 }
 
-function App({ mode }: { mode: string }) {
+function App() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null)
   const [session, setSession] = useState<any>(null)
   const [userData, setUserData] = useState<UserData | null>(null)
-  const colorMode = useContext(ColorModeContext)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -105,11 +104,6 @@ function App({ mode }: { mode: string }) {
     setAccountAnchorEl(null)
   }
 
-  const handleToggleDarkMode = () => {
-    colorMode.toggleColorMode()
-    handleClose()
-  }
-
   const handleLogout = async () => {
     await supabase.auth.signOut()
     handleClose()
@@ -142,12 +136,6 @@ function App({ mode }: { mode: string }) {
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
-            </MenuItem>
-            <MenuItem onClick={handleToggleDarkMode}>
-              <ListItemIcon>
-                {mode === 'dark' && <CheckIcon fontSize="small" />}
-              </ListItemIcon>
-              <ListItemText>Dark Mode</ListItemText>
             </MenuItem>
           </Menu>
 
@@ -233,11 +221,13 @@ function App({ mode }: { mode: string }) {
       </AppBar>
       <Toolbar /> {/* Spacer to prevent content from being hidden under fixed AppBar */}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Home />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
+        <Route path="/add-issuer" element={<AddIssuer />} />
+        <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
       </Routes>
     </>
   )

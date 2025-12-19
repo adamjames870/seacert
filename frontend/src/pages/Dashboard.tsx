@@ -1,11 +1,16 @@
 ﻿import { useEffect, useState } from 'react';
-import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton } from '@mui/material';
+import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton, Button, TextField, InputAdornment } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import { supabase } from '../supabaseClient';
 import { formatDate } from '../utils/dateUtils';
+import { getCountryName } from '../utils/countryData';
+import { Link as RouterLink } from 'react-router-dom';
 
 interface Certificate {
   id: string;
@@ -36,6 +41,7 @@ const Dashboard = () => {
   const [sortBy, setSortBy] = useState<SortField>('expiry-date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchCertificates = async (retry = true) => {
@@ -83,7 +89,15 @@ const Dashboard = () => {
     fetchCertificates();
   }, []);
 
-  const sortedCertificates = [...certificates].sort((a, b) => {
+  const filteredCertificates = certificates.filter((cert) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      cert['cert-type-name'].toLowerCase().includes(query) ||
+      cert['issuer-name'].toLowerCase().includes(query)
+    );
+  });
+
+  const sortedCertificates = [...filteredCertificates].sort((a, b) => {
     if (sortBy === 'expiry-date') {
       const dateA = new Date(a['expiry-date']);
       const dateB = new Date(b['expiry-date']);
@@ -128,29 +142,55 @@ const Dashboard = () => {
             Certificates
           </Typography>
           
-          {!loading && !error && certificates.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel id="sort-by-label">Sort By</InputLabel>
-                <Select
-                  labelId="sort-by-label"
-                  value={sortBy}
-                  label="Sort By"
-                  onChange={(e) => setSortBy(e.target.value as SortField)}
-                >
-                  <MenuItem value="cert-type-name">Name</MenuItem>
-                  <MenuItem value="issuer-name">Issuer</MenuItem>
-                  <MenuItem value="issued-date">Issue Date</MenuItem>
-                  <MenuItem value="expiry-date">Expiry Date</MenuItem>
-                </Select>
-              </FormControl>
-              <Tooltip title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}>
-                <IconButton onClick={toggleSortOrder} color="primary">
-                  {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Search certificates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 250 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              component={RouterLink}
+              to="/add-certificate"
+            >
+              Add Certificate
+            </Button>
+
+            {!loading && !error && certificates.length > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel id="sort-by-label">Sort By</InputLabel>
+                  <Select
+                    labelId="sort-by-label"
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={(e) => setSortBy(e.target.value as SortField)}
+                  >
+                    <MenuItem value="cert-type-name">Name</MenuItem>
+                    <MenuItem value="issuer-name">Issuer</MenuItem>
+                    <MenuItem value="issued-date">Issue Date</MenuItem>
+                    <MenuItem value="expiry-date">Expiry Date</MenuItem>
+                  </Select>
+                </FormControl>
+                <Tooltip title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}>
+                  <IconButton onClick={toggleSortOrder} color="primary">
+                    {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
+          </Box>
         </Box>
 
         {loading && (
@@ -171,7 +211,13 @@ const Dashboard = () => {
           </Typography>
         )}
 
-        {!loading && !error && certificates.length > 0 && (
+        {!loading && !error && certificates.length > 0 && filteredCertificates.length === 0 && (
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            No certificates match your search.
+          </Typography>
+        )}
+
+        {!loading && !error && filteredCertificates.length > 0 && (
           <List sx={{ mt: 2 }}>
             {sortedCertificates.map((cert) => (
               <Paper key={cert.id} elevation={0} sx={{ mb: 2, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
@@ -191,7 +237,7 @@ const Dashboard = () => {
                         <Typography component="span" variant="body2" color="text.primary">
                           Issuer: {cert['issuer-name']}
                         </Typography>
-                        {` — Issued on: ${formatDate(cert['issued-date'])}`}
+                        {` — No. ${cert['cert-number']} — Issued on: ${formatDate(cert['issued-date'])}`}
                       </>
                     }
                   />
@@ -236,7 +282,7 @@ const Dashboard = () => {
                           Issuer Country
                         </Typography>
                         <Typography variant="body2">
-                          {cert['issuer-country'] || 'N/A'}
+                          {getCountryName(cert['issuer-country'])}
                         </Typography>
                       </Box>
                       <Box>
@@ -262,6 +308,18 @@ const Dashboard = () => {
                         </Typography>
                       </Box>
                     )}
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<EditIcon />}
+                        component={RouterLink}
+                        to={`/update-certificate/${cert.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Update
+                      </Button>
+                    </Box>
                   </Box>
                 </Collapse>
               </Paper>
