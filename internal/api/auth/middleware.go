@@ -3,6 +3,7 @@
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -81,6 +82,10 @@ func NewAuthMiddleware(authInfo Info, userStore UserProvider) (func(http.Handler
 
 			// Store claims in context for handlers
 			ctx := WithUser(r.Context(), user)
+
+			// Add user info to logger for this request
+			slog.SetDefault(slog.Default().With("user_id", user.Id, "email", user.Email))
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}, nil

@@ -24,7 +24,7 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		if idParam == "" && nameParam == "" {
 			rv, err := getAllCertTypes(state, r.Context())
 			if err != nil {
-				handlers.RespondWithError(w, 500, err.Error())
+				handlers.RespondWithError(w, 500, "Error fetching certificate types", err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -34,7 +34,8 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		if idParam != "" {
 			rv, err := getCertTypeFromId(state, r.Context(), idParam)
 			if err != nil {
-				handlers.RespondWithError(w, 404, err.Error())
+				handlers.RespondWithError(w, 404, "Certificate type not found", err)
+				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
 			return
@@ -43,7 +44,8 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		if nameParam != "" {
 			rv, err := getCertTypeFromName(state, r.Context(), nameParam)
 			if err != nil {
-				handlers.RespondWithError(w, 404, err.Error())
+				handlers.RespondWithError(w, 404, "Certificate type not found", err)
+				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
 		}

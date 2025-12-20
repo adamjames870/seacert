@@ -19,13 +19,13 @@ func HandlerApiAddCert(state *internal.ApiState) http.HandlerFunc {
 		params := dto.ParamsAddCertificate{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "unable to decode json: "+errDecode.Error())
+			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
 			return
 		}
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			handlers.RespondWithError(w, 401, "user not found in context")
+			handlers.RespondWithError(w, 401, "Unauthorized", errId)
 			return
 		}
 
@@ -33,9 +33,11 @@ func HandlerApiAddCert(state *internal.ApiState) http.HandlerFunc {
 
 		cert, certErr := certificates.WriteNewCert(state, r.Context(), params)
 		if certErr != nil {
-			handlers.RespondWithError(w, 500, "error writing cert: "+certErr.Error())
+			handlers.RespondWithError(w, 500, "Error creating certificate", certErr)
 			return
 		}
+
+		state.Logger.Info("Certificate created", "user_id", userId, "certificate_id", cert.Id)
 
 		rv := certificates.MapCertificateDomainToDto(cert)
 

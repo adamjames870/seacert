@@ -23,14 +23,14 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			handlers.RespondWithError(w, 401, "user not found in context")
+			handlers.RespondWithError(w, 401, "Unauthorized", errId)
 			return
 		}
 
 		if idParam == "" {
 			rv, err := getAllCertificates(state, r.Context(), userId)
 			if err != nil {
-				handlers.RespondWithError(w, 500, err.Error())
+				handlers.RespondWithError(w, 500, "Error fetching certificates", err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -40,7 +40,8 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 		if idParam != "" {
 			rv, err := certificates.GetCertificateFromId(state, r.Context(), idParam, userId)
 			if err != nil {
-				handlers.RespondWithError(w, 404, err.Error())
+				handlers.RespondWithError(w, 404, "Certificate not found", err)
+				return
 			}
 			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(rv))
 			return

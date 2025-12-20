@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
+	"github.com/adamjames870/seacert/internal/logging"
 	"github.com/joho/godotenv"
 )
 
@@ -18,6 +20,9 @@ func LoadState(state *internal.ApiState) error {
 	if errEnv != nil {
 		log.Printf("Warning: error loading .env file: %v", errEnv)
 	}
+
+	state.Logger = logging.NewLogger()
+	slog.SetDefault(state.Logger)
 
 	err := loadDb(state)
 	if err != nil {

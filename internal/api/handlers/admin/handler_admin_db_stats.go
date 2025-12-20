@@ -13,27 +13,32 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !state.IsDev {
-			handlers.RespondWithError(w, 403, "")
+			handlers.RespondWithError(w, 403, "Forbidden", nil)
+			return
 		}
 
 		countCert, errCountCert := state.Queries.CountCertificates(r.Context())
 		if errCountCert != nil {
-			handlers.RespondWithError(w, 500, errCountCert.Error())
+			handlers.RespondWithError(w, 500, "Error counting certificates", errCountCert)
+			return
 		}
 
 		countCertType, errCountCertType := state.Queries.CountCertTypes(r.Context())
 		if errCountCertType != nil {
-			handlers.RespondWithError(w, 500, errCountCertType.Error())
+			handlers.RespondWithError(w, 500, "Error counting certificate types", errCountCertType)
+			return
 		}
 
 		countIssuers, errCountIssuers := state.Queries.CountIssuers(r.Context())
 		if errCountIssuers != nil {
-			handlers.RespondWithError(w, 500, errCountIssuers.Error())
+			handlers.RespondWithError(w, 500, "Error counting issuers", errCountIssuers)
+			return
 		}
 
 		countUsers, errCountUsers := state.Queries.CountUsers(r.Context())
 		if errCountUsers != nil {
-			handlers.RespondWithError(w, 500, errCountUsers.Error())
+			handlers.RespondWithError(w, 500, "Error counting users", errCountUsers)
+			return
 		}
 
 		user, ok := auth.UserFromContext(r.Context())

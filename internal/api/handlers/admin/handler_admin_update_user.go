@@ -21,13 +21,13 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 		params := dto.ParamsUpdateUser{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "unable to decode json: "+errDecode.Error())
+			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
 			return
 		}
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			handlers.RespondWithError(w, 401, "user not found in context")
+			handlers.RespondWithError(w, 401, "Unauthorized", errId)
 			return
 		}
 
@@ -35,8 +35,11 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 
 		user, userErr := users.UpdateUser(state, r.Context(), params)
 		if userErr != nil {
-			handlers.RespondWithError(w, 500, userErr.Error())
+			handlers.RespondWithError(w, 500, "Error updating user", userErr)
+			return
 		}
+
+		state.Logger.Info("User updated", "user_id", user.Id)
 
 		userDto := users.MapUserDomainToDto(user)
 

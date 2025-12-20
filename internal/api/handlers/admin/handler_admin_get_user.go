@@ -18,19 +18,19 @@ func HandlerAdminGetUser(state *internal.ApiState) http.HandlerFunc {
 
 		authUser, ok := auth.UserFromContext(r.Context())
 		if !ok {
-			handlers.RespondWithError(w, 401, "user not found in context")
+			handlers.RespondWithError(w, 401, "Unauthorized", nil)
 			return
 		}
 
 		uuidId, errParse := uuid.Parse(authUser.Id)
 		if errParse != nil {
-			handlers.RespondWithError(w, 500, errParse.Error())
+			handlers.RespondWithError(w, 500, "Invalid user ID format", errParse)
 			return
 		}
 
 		apiUser, errUser := users.GetUser(state, r.Context(), uuidId)
 		if errUser != nil {
-			handlers.RespondWithError(w, 500, errUser.Error())
+			handlers.RespondWithError(w, 500, "Error fetching user", errUser)
 			return
 		}
 

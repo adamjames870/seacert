@@ -35,6 +35,8 @@ func run(state *internal.ApiState) error {
 		return fmt.Errorf("error loading initial api state: %w", errState)
 	}
 
+	logger := state.Logger
+
 	mux, errEndpoints := api.BuildRouter(state)
 	if errEndpoints != nil {
 		return fmt.Errorf("error creating endpoints: %w", errEndpoints)
@@ -57,15 +59,16 @@ func run(state *internal.ApiState) error {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("Starting server on port %s", port)
+		logger.Info("Starting server", "port", port)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("error starting server: %v", err)
+			logger.Error("error starting server", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	<-stop
 
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -74,6 +77,6 @@ func run(state *internal.ApiState) error {
 		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
 
-	log.Println("Server exiting")
+	logger.Info("Server exiting")
 	return nil
 }
