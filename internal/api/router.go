@@ -1,6 +1,7 @@
 ﻿package api
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -8,7 +9,17 @@ import (
 	"github.com/adamjames870/seacert/internal/api/auth"
 	"github.com/adamjames870/seacert/internal/api/handlers/admin"
 	"github.com/adamjames870/seacert/internal/api/handlers/api"
+	"github.com/adamjames870/seacert/internal/domain/users"
+	"github.com/google/uuid"
 )
+
+type userStoreAdapter struct {
+	state *internal.ApiState
+}
+
+func (a *userStoreAdapter) EnsureUserExists(ctx context.Context, id uuid.UUID, email string) (users.User, error) {
+	return users.EnsureUserExists(a.state, ctx, id, email)
+}
 
 func BuildRouter(state *internal.ApiState) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
@@ -27,7 +38,9 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 		ExpectedAudience: os.Getenv("SUPABASE_AUDIENCE"),
 	}
 
-	authMw, errAuthMw := auth.NewAuthMiddleware(authInfo, state)
+	adapter := &userStoreAdapter{state: state}
+
+	authMw, errAuthMw := auth.NewAuthMiddleware(authInfo, adapter)
 	if errAuthMw != nil {
 		panic(errAuthMw)
 	}

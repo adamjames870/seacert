@@ -1,11 +1,11 @@
 ﻿package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
 
-	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/domain/users"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -17,7 +17,11 @@ var (
 	ErrInternalServer = errors.New("internal server error")
 )
 
-func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handler) http.Handler, error) {
+type UserProvider interface {
+	EnsureUserExists(ctx context.Context, id uuid.UUID, email string) (users.User, error)
+}
+
+func NewAuthMiddleware(authInfo Info, userStore UserProvider) (func(http.Handler) http.Handler, error) {
 
 	key, err := loadSupabaseJWK(authInfo.PublicKey)
 	if err != nil {
@@ -69,7 +73,7 @@ func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handl
 				return
 			}
 
-			_, errUserExists := users.EnsureUserExists(state, r.Context(), uuidId, user.Email)
+			_, errUserExists := userStore.EnsureUserExists(r.Context(), uuidId, user.Email)
 			if errUserExists != nil {
 				http.Error(w, ErrInternalServer.Error(), http.StatusInternalServerError)
 				return
