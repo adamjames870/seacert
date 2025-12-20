@@ -2,8 +2,13 @@ import { StrictMode, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
 import { BrowserRouter } from 'react-router-dom'
+import { PostHogProvider } from 'posthog-js/react'
 import './index.css'
 import App from './App.tsx'
+
+const posthogOptions = {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+}
 
 function Main() {
   const theme = useMemo(
@@ -26,10 +31,15 @@ function Main() {
   );
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+    <PostHogProvider 
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY} 
+      options={posthogOptions}
+    >
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </PostHogProvider>
   );
 }
 

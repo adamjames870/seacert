@@ -16,6 +16,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import EditIcon from '@mui/icons-material/Edit'
 import { Anchor } from 'lucide-react'
 import Home from './pages/Home'
 import SignUp from './pages/SignUp'
@@ -24,6 +25,7 @@ import Dashboard from './pages/Dashboard'
 import AddCertificate from './pages/AddCertificate'
 import AddIssuer from './pages/AddIssuer'
 import UpdateCertificate from './pages/UpdateCertificate'
+import EditAccount from './pages/EditAccount'
 import './App.css'
 import { supabase } from './supabaseClient'
 
@@ -189,6 +191,12 @@ function App() {
                     </Typography>
                   </Box>
                   <Divider />
+                  <MenuItem onClick={handleClose} component={RouterLink} to="/edit-account">
+                    <ListItemIcon>
+                      <EditIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Edit Account</ListItemText>
+                  </MenuItem>
                   <MenuItem onClick={handleLogout}>
                     <ListItemIcon>
                       <LogoutIcon fontSize="small" />
@@ -228,6 +236,7 @@ function App() {
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
+        <Route path="/edit-account" element={<EditAccount />} />
       </Routes>
     </>
   )
