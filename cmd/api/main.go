@@ -1,9 +1,15 @@
 ﻿package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/api"
@@ -18,12 +24,8 @@ func main() {
 
 	err := run(&state)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		log.Fatalf("Fatal error: %v", err)
 	}
-
-	fmt.Println("Hello, world!")
-
 }
 
 func run(state *internal.ApiState) error {
@@ -42,15 +44,36 @@ func run(state *internal.ApiState) error {
 	if port == "" {
 		port = "8080"
 	}
-	server := http.Server{
-		Handler: mux,
-		Addr:    ":" + port,
+	server := &http.Server{
+		Handler:      mux,
+		Addr:         ":" + port,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
-	errServe := server.ListenAndServe()
-	if errServe != nil {
-		return fmt.Errorf("error starting server: %w", errServe)
+	// Create a channel to listen for interrupt signals
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		log.Printf("Starting server on port %s", port)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("error starting server: %v", err)
+		}
+	}()
+
+	<-stop
+
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
 
+	log.Println("Server exiting")
 	return nil
 }

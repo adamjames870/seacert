@@ -22,8 +22,7 @@ func BuildRouter(state *internal.ApiState) (*http.ServeMux, error) {
 func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 
 	authInfo := auth.Info{
-		JwksUrl:          os.Getenv("SUPABASE_JWKS_URL"),
-		ApiKey:           os.Getenv("SUPABASE_PUBLIC_JWK"),
+		PublicKey:        os.Getenv("SUPABASE_PUBLIC_JWK"),
 		ExpectedIssuer:   os.Getenv("SUPABASE_ISSUER"),
 		ExpectedAudience: os.Getenv("SUPABASE_AUDIENCE"),
 	}

@@ -1,7 +1,6 @@
 ﻿package auth
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -9,18 +8,18 @@ import (
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/domain/users"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
 var (
-	ErrNoAuthHeader = errors.New("no authorization header provided")
-	ErrInvalidToken = errors.New("invalid token")
+	ErrNoAuthHeader   = errors.New("no authorization header provided")
+	ErrInvalidToken   = errors.New("invalid token")
+	ErrInternalServer = errors.New("internal server error")
 )
 
 func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handler) http.Handler, error) {
 
-	key, err := loadSupabaseJWK(authInfo.ApiKey)
+	key, err := loadSupabaseJWK(authInfo.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +45,9 @@ func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handl
 				return
 			}
 
-			// Parse and validate token
 			token, err := jwt.ParseString(
 				tokenString,
-				jwt.WithKey(jwa.ES256, key),
+				jwt.WithKey(key.Algorithm(), key),
 				jwt.WithValidate(true),
 				jwt.WithIssuer(authInfo.ExpectedIssuer),
 				jwt.WithAudience(authInfo.ExpectedAudience),
@@ -67,17 +65,18 @@ func NewAuthMiddleware(authInfo Info, state *internal.ApiState) (func(http.Handl
 
 			uuidId, errParse := uuid.Parse(user.Id)
 			if errParse != nil {
-				http.Error(w, "user id is not a valid uuid", http.StatusBadRequest)
+				http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
 				return
 			}
 
 			_, errUserExists := users.EnsureUserExists(state, r.Context(), uuidId, user.Email)
 			if errUserExists != nil {
-				http.Error(w, "user cannot be found or created", http.StatusBadRequest)
+				http.Error(w, ErrInternalServer.Error(), http.StatusInternalServerError)
+				return
 			}
 
 			// Store claims in context for handlers
-			ctx := context.WithValue(r.Context(), userContextKey, user)
+			ctx := WithUser(r.Context(), user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}, nil

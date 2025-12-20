@@ -1,8 +1,7 @@
 ﻿package auth
 
 type Info struct {
-	JwksUrl          string
-	ApiKey           string
+	PublicKey        string
 	ExpectedIssuer   string
 	ExpectedAudience string
 }

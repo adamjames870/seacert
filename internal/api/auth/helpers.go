@@ -10,15 +10,12 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-func loadSupabaseJWK(apiKey string) (jwk.Key, error) {
-
-	key, err := jwk.ParseKey([]byte(apiKey))
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
+var (
+	ErrInvalidRole       = errors.New("invalid role")
+	ErrInvalidEmail      = errors.New("invalid email")
+	ErrMissingSubject    = errors.New("missing subject")
+	ErrUserNotFoundInCtx = errors.New("user not found in context")
+)
 
 func getStringClaim(t jwt.Token, name string) (string, bool) {
 	v, ok := t.Get(name)
@@ -32,17 +29,17 @@ func getStringClaim(t jwt.Token, name string) (string, bool) {
 func userFromToken(t jwt.Token) (dto.User, error) {
 	role, ok := getStringClaim(t, "role")
 	if !ok || role != "authenticated" {
-		return dto.User{}, errors.New("invalid role")
+		return dto.User{}, ErrInvalidRole
 	}
 
 	email, ok := getStringClaim(t, "email")
 	if !ok {
-		return dto.User{}, errors.New("invalid email")
+		return dto.User{}, ErrInvalidEmail
 	}
 
 	sub := t.Subject()
 	if sub == "" {
-		return dto.User{}, errors.New("missing subject")
+		return dto.User{}, ErrMissingSubject
 	}
 
 	id, errId := uuid.Parse(sub)
@@ -56,19 +53,37 @@ func userFromToken(t jwt.Token) (dto.User, error) {
 	}, nil
 }
 
-type userContextKeyType string
+func loadSupabaseJWK(jwkStr string) (jwk.Key, error) {
+	key, err := jwk.ParseKey([]byte(jwkStr))
+	if err != nil {
+		return nil, err
+	}
 
-const userContextKey userContextKeyType = "user"
+	// Ensure the algorithm is set, default to ES256 if not specified
+	if key.Algorithm().String() == "" {
+		key.Set(jwk.AlgorithmKey, "ES256")
+	}
+
+	return key, nil
+}
+
+type contextKey struct{}
+
+var userKey = contextKey{}
+
+func WithUser(ctx context.Context, user dto.User) context.Context {
+	return context.WithValue(ctx, userKey, user)
+}
 
 func UserFromContext(ctx context.Context) (dto.User, bool) {
-	user, ok := ctx.Value(userContextKey).(dto.User)
+	user, ok := ctx.Value(userKey).(dto.User)
 	return user, ok
 }
 
 func UserIdFromContext(ctx context.Context) (uuid.UUID, error) {
 	authUser, ok := UserFromContext(ctx)
 	if !ok {
-		return uuid.UUID{}, errors.New("user not found in context")
+		return uuid.UUID{}, ErrUserNotFoundInCtx
 	}
 
 	uuidId, errParse := uuid.Parse(authUser.Id)
