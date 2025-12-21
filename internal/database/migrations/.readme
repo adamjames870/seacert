@@ -1,1 +1,2 @@
 goose postgres "postgres://postgres:postgres@localhost:5432/seacert" up
+goose postgres "postgresql://seacert_user:OgXGBaVSHyTmNUPd3U5SeKMDin6LkBOj@dpg-d53h1lchg0os738s75ng-a.singapore-postgres.render.com/seacert" up

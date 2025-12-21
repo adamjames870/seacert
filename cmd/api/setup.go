@@ -35,7 +35,7 @@ func LoadState(state *internal.ApiState) error {
 func setDevFlag(state *internal.ApiState) {
 	platform := os.Getenv("PLATFORM")
 	log.Printf("platform = %s", platform)
-	state.IsDev = platform == "dev"
+	state.IsDev = platform == "dev" || platform == "test"
 }
 
 func loadDb(state *internal.ApiState) error {

@@ -12,10 +12,6 @@ import (
 func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !state.IsDev {
-			handlers.RespondWithError(w, 403, "Forbidden", nil)
-			return
-		}
 
 		countCert, errCountCert := state.Queries.CountCertificates(r.Context())
 		if errCountCert != nil {
