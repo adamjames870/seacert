@@ -1,6 +1,8 @@
 ﻿package middleware
 
 import (
+	"bytes"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -32,6 +34,18 @@ func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
+		var body []byte
+		if r.Body != nil {
+			var err error
+			// Limit the amount we read for logging to 2KB
+			const maxLogSize = 2048
+			body, err = io.ReadAll(io.LimitReader(r.Body, maxLogSize))
+			if err != nil {
+				slog.Error("Failed to read request body", "error", err)
+			}
+			r.Body = io.NopCloser(io.MultiReader(bytes.NewBuffer(body), r.Body))
+		}
+
 		rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 
 		next.ServeHTTP(rw, r)
@@ -45,5 +59,9 @@ func Logging(next http.Handler) http.Handler {
 			"duration", duration,
 			"ip", r.RemoteAddr,
 		)
+
+		if len(body) > 0 {
+			slog.Debug("HTTP request body", "body", string(body))
+		}
 	})
 }

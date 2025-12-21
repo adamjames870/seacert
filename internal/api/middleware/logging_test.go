@@ -1,8 +1,10 @@
 ﻿package middleware
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -28,19 +30,44 @@ func TestResponseWriter(t *testing.T) {
 }
 
 func TestLoggingMiddleware(t *testing.T) {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("ok"))
+	t.Run("Empty body", func(t *testing.T) {
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusAccepted)
+			w.Write([]byte("ok"))
+		})
+
+		loggingHandler := Logging(handler)
+
+		req := httptest.NewRequest("GET", "/test", nil)
+		rec := httptest.NewRecorder()
+
+		loggingHandler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusAccepted {
+			t.Errorf("expected status %d, got %d", http.StatusAccepted, rec.Code)
+		}
 	})
 
-	loggingHandler := Logging(handler)
+	t.Run("With body", func(t *testing.T) {
+		bodyText := "test body content"
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Verify body is still readable
+			body, _ := io.ReadAll(r.Body)
+			if string(body) != bodyText {
+				t.Errorf("expected body %q, got %q", bodyText, string(body))
+			}
+			w.WriteHeader(http.StatusOK)
+		})
 
-	req := httptest.NewRequest("GET", "/test", nil)
-	rec := httptest.NewRecorder()
+		loggingHandler := Logging(handler)
 
-	loggingHandler.ServeHTTP(rec, req)
+		req := httptest.NewRequest("POST", "/test", strings.NewReader(bodyText))
+		rec := httptest.NewRecorder()
 
-	if rec.Code != http.StatusAccepted {
-		t.Errorf("expected status %d, got %d", http.StatusAccepted, rec.Code)
-	}
+		loggingHandler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+		}
+	})
 }
