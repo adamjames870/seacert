@@ -2,6 +2,8 @@
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -34,7 +36,11 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		if idParam != "" {
 			rv, err := getCertTypeFromId(state, r.Context(), idParam)
 			if err != nil {
-				handlers.RespondWithError(w, 404, "Certificate type not found", err)
+				if errors.Is(err, sql.ErrNoRows) {
+					handlers.RespondWithError(w, 404, "Certificate type not found", err)
+				} else {
+					handlers.RespondWithError(w, 500, "Error fetching certificate type", err)
+				}
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -44,7 +50,11 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		if nameParam != "" {
 			rv, err := getCertTypeFromName(state, r.Context(), nameParam)
 			if err != nil {
-				handlers.RespondWithError(w, 404, "Certificate type not found", err)
+				if errors.Is(err, sql.ErrNoRows) {
+					handlers.RespondWithError(w, 404, "Certificate type not found", err)
+				} else {
+					handlers.RespondWithError(w, 500, "Error fetching certificate type", err)
+				}
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)

@@ -2,6 +2,8 @@
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -40,7 +42,11 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 		if idParam != "" {
 			rv, err := certificates.GetCertificateFromId(state, r.Context(), idParam, userId)
 			if err != nil {
-				handlers.RespondWithError(w, 404, "Certificate not found", err)
+				if errors.Is(err, sql.ErrNoRows) {
+					handlers.RespondWithError(w, 404, "Certificate not found", err)
+				} else {
+					handlers.RespondWithError(w, 500, "Error fetching certificate", err)
+				}
 				return
 			}
 			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(rv))
