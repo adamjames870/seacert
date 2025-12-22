@@ -17,7 +17,7 @@ func BuildRouter(state *internal.ApiState) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return middleware.Logging(mux), nil
+	return middleware.Cors(middleware.Logging(mux)), nil
 }
 
 func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
