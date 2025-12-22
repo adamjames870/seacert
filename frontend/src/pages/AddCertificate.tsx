@@ -64,8 +64,8 @@ const AddCertificate = () => {
         };
 
         const [certTypesRes, issuersRes] = await Promise.all([
-          fetch('/api/cert-types', { headers }),
-          fetch('/api/issuers', { headers })
+          fetch(`${API_BASE_URL}/api/cert-types`, { headers }),
+          fetch(`${API_BASE_URL}/api/issuers`, { headers })
         ]);
 
         if (!certTypesRes.ok || !issuersRes.ok) {
@@ -110,7 +110,7 @@ const AddCertificate = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/certificates', {
+      const response = await fetch(`${API_BASE_URL}/api/certificates`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

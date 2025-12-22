@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { API_BASE_URL } from '../config';
 import { countries } from '../utils/countryData';
 
 const EditAccount = () => {
@@ -38,7 +39,7 @@ const EditAccount = () => {
           return;
         }
 
-        const response = await fetch('/admin/users', {
+        const response = await fetch(`${API_BASE_URL}/admin/users`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
           },
@@ -83,7 +84,7 @@ const EditAccount = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch('/admin/users', {
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -28,6 +28,7 @@ import UpdateCertificate from './pages/UpdateCertificate'
 import EditAccount from './pages/EditAccount'
 import './App.css'
 import { supabase } from './supabaseClient'
+import { API_BASE_URL } from './config'
 
 interface UserData {
   id: string;
@@ -62,7 +63,7 @@ function App() {
     const fetchUserData = async () => {
       if (session?.access_token) {
         try {
-          const response = await fetch('/admin/users', {
+          const response = await fetch(`${API_BASE_URL}/admin/users`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },

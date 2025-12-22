@@ -8,6 +8,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import { supabase } from '../supabaseClient';
+import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
 import { getCountryName } from '../utils/countryData';
 import { Link as RouterLink } from 'react-router-dom';
@@ -56,7 +57,7 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await fetch('/api/certificates', {
+        const response = await fetch(`${API_BASE_URL}/api/certificates`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
           },

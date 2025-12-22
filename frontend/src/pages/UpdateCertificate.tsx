@@ -40,7 +40,7 @@ const UpdateCertificate = () => {
           return;
         }
 
-        const response = await fetch('/api/certificates', {
+        const response = await fetch(`${API_BASE_URL}/api/certificates`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
           },
@@ -96,7 +96,7 @@ const UpdateCertificate = () => {
       };
       console.log('Sending update payload:', payload);
 
-      const response = await fetch('/api/certificates', {
+      const response = await fetch(`${API_BASE_URL}/api/certificates`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

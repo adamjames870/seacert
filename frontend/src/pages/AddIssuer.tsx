@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { API_BASE_URL } from '../config';
 import { countries } from '../utils/countryData';
 
 const AddIssuer = () => {
@@ -39,7 +40,7 @@ const AddIssuer = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/issuers', {
+      const response = await fetch(`${API_BASE_URL}/api/issuers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
