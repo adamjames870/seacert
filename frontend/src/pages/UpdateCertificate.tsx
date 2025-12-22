@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { API_BASE_URL } from '../config';
 
 const UpdateCertificate = () => {
   const { id } = useParams<{ id: string }>();
