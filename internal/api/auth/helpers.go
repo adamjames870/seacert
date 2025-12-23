@@ -47,9 +47,21 @@ func userFromToken(t jwt.Token) (dto.User, error) {
 		return dto.User{}, errId
 	}
 
+	// Extract user role from app_metadata
+	userRole := "user" // default role
+	appMetadata, ok := t.Get("app_metadata")
+	if ok {
+		if metadata, ok := appMetadata.(map[string]interface{}); ok {
+			if r, ok := metadata["role"].(string); ok {
+				userRole = r
+			}
+		}
+	}
+
 	return dto.User{
 		Id:    id.String(),
 		Email: email,
+		Role:  userRole,
 	}, nil
 }
 

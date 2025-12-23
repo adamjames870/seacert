@@ -35,12 +35,14 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 		panic(errAuthMw)
 	}
 
+	adminMw := auth.RequireRole("admin")
+
 	// ----------- ADMIN Handlers ----------------
 	mux.Handle("GET /admin/healthz", admin.HandlerAdminHealthz())
-	mux.Handle("POST /admin/reset", authMw(admin.HandlerAdminReset(state)))
-	mux.Handle("GET /admin/dbstats", authMw(admin.HandlerAdminDbStats(state)))
-	mux.Handle("PUT /admin/users", authMw(admin.HandlerAdminUpdateUser(state)))
-	mux.Handle("GET /admin/users", authMw(admin.HandlerAdminGetUser(state)))
+	mux.Handle("POST /admin/reset", authMw(adminMw(admin.HandlerAdminReset(state))))
+	mux.Handle("GET /admin/dbstats", authMw(adminMw(admin.HandlerAdminDbStats(state))))
+	mux.Handle("PUT /admin/users", authMw(adminMw(admin.HandlerAdminUpdateUser(state))))
+	mux.Handle("GET /admin/users", authMw(adminMw(admin.HandlerAdminGetUser(state))))
 
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates", authMw(api.HandlerApiAddCert(state)))
@@ -48,12 +50,12 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("PUT /api/certificates", authMw(api.HandlerApiUpdateCert(state)))
 
 	mux.Handle("GET /api/cert-types", authMw(api.HandlerApiGetCertTypes(state)))
-	mux.Handle("POST /api/cert-types", authMw(api.HandlerApiAddCertType(state)))
-	mux.Handle("PUT /api/cert-types", authMw(api.HandlerUpdateCertType(state)))
+	mux.Handle("POST /api/cert-types", authMw(adminMw(api.HandlerApiAddCertType(state))))
+	mux.Handle("PUT /api/cert-types", authMw(adminMw(api.HandlerUpdateCertType(state))))
 
 	mux.Handle("GET /api/issuers", authMw(api.HandlerApiGetIssuers(state)))
 	mux.Handle("POST /api/issuers", authMw(api.HandlerApiAddIssuer(state)))
-	mux.Handle("PUT /api/issuers", authMw(api.HandlerUpdateIssuer(state)))
+	mux.Handle("PUT /api/issuers", authMw(adminMw(api.HandlerUpdateIssuer(state))))
 
 	return nil
 }

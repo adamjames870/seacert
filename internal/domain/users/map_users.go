@@ -31,6 +31,7 @@ func MapUserDomainToDto(user User) dto.User {
 		Surname:     user.Surname,
 		Email:       user.Email,
 		Nationality: user.Nationality,
+		Role:        user.Role,
 	}
 
 }
@@ -47,6 +48,7 @@ func MapUserDtoToDomain(user dto.User) User {
 		Surname:     user.Surname,
 		Email:       user.Email,
 		Nationality: user.Nationality,
+		Role:        user.Role,
 	}
 
 }

@@ -17,8 +17,20 @@ func main() {
 
 	url := os.Getenv("SUPABASE_URL")
 	apiKey := os.Getenv("SUPABASE_PERISHABLE_KEY") //("SUPABASE_ANON_KEY")
-	email := os.Getenv("TEST_USER_EMAIL")
 	password := os.Getenv("TEST_USER_PASSWORD")
+
+	var email string
+	if len(os.Args) > 1 {
+		email = os.Args[1]
+	} else {
+		email = os.Getenv("TEST_USER_EMAIL")
+	}
+
+	if email == "" {
+		fmt.Println("Usage: go run ./cmd/get_token <email>")
+		fmt.Println("Or set TEST_USER_EMAIL environment variable")
+		return
+	}
 
 	client, errClient := supabase.NewClient(url, apiKey, nil)
 	if errClient != nil {

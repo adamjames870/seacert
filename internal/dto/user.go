@@ -10,6 +10,7 @@ type User struct {
 	Surname     string    `json:"surname"`
 	Email       string    `json:"email"`
 	Nationality string    `json:"nationality"`
+	Role        string    `json:"role"`
 }
 
 type ParamsAddUser struct {
