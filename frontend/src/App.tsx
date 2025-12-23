@@ -11,7 +11,8 @@ import {
   Box,
   ListItemIcon,
   ListItemText,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
@@ -26,6 +27,11 @@ import AddCertificate from './pages/AddCertificate'
 import AddIssuer from './pages/AddIssuer'
 import UpdateCertificate from './pages/UpdateCertificate'
 import EditAccount from './pages/EditAccount'
+import CertTypes from './pages/CertTypes'
+import AddCertType from './pages/AddCertType'
+import EditCertType from './pages/EditCertType'
+import Issuers from './pages/Issuers'
+import EditIssuer from './pages/EditIssuer'
 import './App.css'
 import { supabase } from './supabaseClient'
 import { API_BASE_URL } from './config'
@@ -36,24 +42,31 @@ interface UserData {
   surname: string;
   email: string;
   nationality: string;
+  role?: string;
 }
 
 function App() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null)
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<any>(undefined)
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [loadingUserData, setLoadingUserData] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      if (!session) setLoadingUserData(false)
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (!session) {
+        setUserData(null)
+        setLoadingUserData(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -62,6 +75,7 @@ function App() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (session?.access_token) {
+        setLoadingUserData(true)
         try {
           const response = await fetch(`${API_BASE_URL}/admin/users`, {
             headers: {
@@ -70,12 +84,6 @@ function App() {
           })
           if (response.ok) {
             const data = await response.json()
-            // The API returns a list of users, but based on instructions 
-            // "the user id will be retrieved automatically from the access token"
-            // If the endpoint returns the current user directly or a list where we can find the user.
-            // Usually such admin endpoints might return a list.
-            // However, the prompt says "show the user name and email address".
-            // If it returns a list, we might need to find the one matching session.user.id
             if (Array.isArray(data)) {
               const user = data.find(u => u.id === session.user.id)
               setUserData(user || null)
@@ -85,9 +93,12 @@ function App() {
           }
         } catch (error) {
           console.error('Error fetching user data:', error)
+        } finally {
+          setLoadingUserData(false)
         }
       } else {
         setUserData(null)
+        setLoadingUserData(false)
       }
     }
 
@@ -111,6 +122,18 @@ function App() {
     await supabase.auth.signOut()
     handleClose()
     navigate('/login')
+  }
+
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+
+  // Only block the whole app if we're waiting for the initial session check
+  // or if we have a session but haven't started fetching user data yet.
+  if (session === undefined || (session && loadingUserData && !userData)) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   return (
@@ -140,6 +163,17 @@ function App() {
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
             </MenuItem>
+            {isAdmin && (
+              <>
+                <Divider />
+                <MenuItem onClick={handleClose} component={RouterLink} to="/cert-types">
+                  Certificate Types
+                </MenuItem>
+                <MenuItem onClick={handleClose} component={RouterLink} to="/issuers">
+                  Issuers
+                </MenuItem>
+              </>
+            )}
           </Menu>
 
           <Typography
@@ -237,6 +271,14 @@ function App() {
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
+        
+        {/* Admin only routes */}
+        <Route path="/cert-types" element={isAdmin ? <CertTypes /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/add-cert-type" element={isAdmin ? <AddCertType /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/edit-cert-type/:id" element={isAdmin ? <EditCertType /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/issuers" element={isAdmin ? <Issuers /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/edit-issuer/:id" element={<EditIssuer />} />
+        
         <Route path="/edit-account" element={<EditAccount />} />
       </Routes>
     </>

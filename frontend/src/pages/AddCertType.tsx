@@ -8,26 +8,23 @@ import {
   Paper, 
   Alert, 
   Grid,
-  CircularProgress,
-  Autocomplete
+  CircularProgress
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
-import { countries } from '../utils/countryData';
 
-const AddIssuer = () => {
+const AddCertType = () => {
   const [formData, setFormData] = useState({
     name: '',
-    country: '',
-    website: ''
+    shortName: '',
+    stcwReference: '',
+    normalValidityMonths: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const from = location.state?.from || 'add-certificate';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,7 +40,7 @@ const AddIssuer = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch(`${API_BASE_URL}/api/issuers`, {
+      const response = await fetch(`${API_BASE_URL}/api/cert-types`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,8 +48,9 @@ const AddIssuer = () => {
         },
         body: JSON.stringify({
           name: formData.name,
-          country: formData.country || null,
-          website: formData.website || null
+          'short-name': formData.shortName,
+          'stcw-reference': formData.stcwReference || null,
+          'normal-validity-months': parseInt(formData.normalValidityMonths)
         }),
       });
 
@@ -62,16 +60,12 @@ const AddIssuer = () => {
         const errorMessage = responseData.message || 
                            responseData.error || 
                            (responseData.errors && typeof responseData.errors === 'object' ? JSON.stringify(responseData.errors) : null) ||
-                           'Failed to add issuer';
+                           'Failed to add certificate type';
         throw new Error(errorMessage);
       }
 
-      // Navigate back to the caller
-      if (from === 'issuers') {
-        navigate('/issuers');
-      } else {
-        navigate('/add-certificate', { state: { newIssuerId: responseData.id } });
-      }
+      // Navigate back to CertTypes list
+      navigate('/cert-types');
     } catch (err: any) {
       setError(err.message || 'An error occurred during submission');
     } finally {
@@ -84,7 +78,7 @@ const AddIssuer = () => {
       <Box sx={{ mt: 4, mb: 4 }}>
         <Paper elevation={0} sx={{ p: 4, border: 1, borderColor: 'divider', borderRadius: 2 }}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            Add New Issuer
+            Add New Certificate Type
           </Typography>
 
           {error && (
@@ -100,7 +94,7 @@ const AddIssuer = () => {
                   required
                   fullWidth
                   id="name"
-                  label="Issuer Name"
+                  label="Name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
@@ -109,44 +103,45 @@ const AddIssuer = () => {
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Autocomplete
-                  id="country-select"
-                  options={countries}
-                  autoHighlight
-                  getOptionLabel={(option) => option.label}
-                  value={countries.find(c => c.code === formData.country) || null}
-                  onChange={(_event, newValue) => {
-                    setFormData(prev => ({ ...prev, country: newValue ? newValue.code : '' }));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Country"
-                      inputProps={{
-                        ...params.inputProps,
-                        autoComplete: 'new-password', // disable autocomplete and autofill
-                      }}
-                    />
-                  )}
+                <TextField
+                  required
+                  fullWidth
+                  id="shortName"
+                  label="Short Name"
+                  name="shortName"
+                  value={formData.shortName}
+                  onChange={handleChange}
                 />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
-                  id="website"
-                  label="Website"
-                  name="website"
-                  value={formData.website}
+                  id="stcwReference"
+                  label="STCW Reference"
+                  name="stcwReference"
+                  value={formData.stcwReference}
                   onChange={handleChange}
-                  placeholder="https://example.com"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  id="normalValidityMonths"
+                  label="Normal Validity Months"
+                  name="normalValidityMonths"
+                  type="number"
+                  value={formData.normalValidityMonths}
+                  onChange={handleChange}
                 />
               </Grid>
 
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate(from === 'issuers' ? '/issuers' : '/add-certificate')}
+                  onClick={() => navigate('/cert-types')}
                   disabled={submitting}
                 >
                   Cancel
@@ -157,7 +152,7 @@ const AddIssuer = () => {
                   color="primary"
                   disabled={submitting}
                 >
-                  {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Issuer'}
+                  {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Certificate Type'}
                 </Button>
               </Grid>
             </Grid>
@@ -168,4 +163,4 @@ const AddIssuer = () => {
   );
 };
 
-export default AddIssuer;
+export default AddCertType;

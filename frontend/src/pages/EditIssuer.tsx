@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   Typography, 
   Container, 
@@ -7,27 +7,64 @@ import {
   Button, 
   Paper, 
   Alert, 
-  Grid,
   CircularProgress,
+  Grid,
   Autocomplete
 } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { countries } from '../utils/countryData';
 
-const AddIssuer = () => {
+const EditIssuer = () => {
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     name: '',
     country: '',
     website: ''
   });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const from = location.state?.from || 'add-certificate';
+  const fromDashboard = location.state?.from === 'dashboard';
+
+  useEffect(() => {
+    const fetchIssuer = async () => {
+      try {
+        setLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_BASE_URL}/api/issuers`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch issuer');
+
+        const data = await response.json();
+        const issuer = data.find((i: any) => i.id === id);
+
+        if (!issuer) throw new Error('Issuer not found');
+
+        setFormData({
+          name: issuer.name || '',
+          country: issuer.country || '',
+          website: issuer.website || ''
+        });
+      } catch (err: any) {
+        setError(err.message || 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIssuer();
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,34 +80,31 @@ const AddIssuer = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch(`${API_BASE_URL}/api/issuers`, {
-        method: 'POST',
+      const body: any = {
+        id: id,
+        name: formData.name,
+        country: formData.country || null,
+        website: formData.website || null
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/issuers?id=${id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          name: formData.name,
-          country: formData.country || null,
-          website: formData.website || null
-        }),
+        body: JSON.stringify(body),
       });
 
-      const responseData = await response.json().catch(() => ({}));
-
       if (!response.ok) {
-        const errorMessage = responseData.message || 
-                           responseData.error || 
-                           (responseData.errors && typeof responseData.errors === 'object' ? JSON.stringify(responseData.errors) : null) ||
-                           'Failed to add issuer';
-        throw new Error(errorMessage);
+        const responseData = await response.json().catch(() => ({}));
+        throw new Error(responseData.message || 'Failed to update issuer');
       }
 
-      // Navigate back to the caller
-      if (from === 'issuers') {
-        navigate('/issuers');
+      if (fromDashboard) {
+        navigate('/dashboard');
       } else {
-        navigate('/add-certificate', { state: { newIssuerId: responseData.id } });
+        navigate('/issuers');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during submission');
@@ -79,12 +113,20 @@ const AddIssuer = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Container maxWidth="md">
       <Box sx={{ mt: 4, mb: 4 }}>
         <Paper elevation={0} sx={{ p: 4, border: 1, borderColor: 'divider', borderRadius: 2 }}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            Add New Issuer
+            Edit Issuer
           </Typography>
 
           {error && (
@@ -104,7 +146,6 @@ const AddIssuer = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  autoFocus
                 />
               </Grid>
 
@@ -124,7 +165,7 @@ const AddIssuer = () => {
                       label="Country"
                       inputProps={{
                         ...params.inputProps,
-                        autoComplete: 'new-password', // disable autocomplete and autofill
+                        autoComplete: 'new-password',
                       }}
                     />
                   )}
@@ -146,7 +187,7 @@ const AddIssuer = () => {
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate(from === 'issuers' ? '/issuers' : '/add-certificate')}
+                  onClick={() => fromDashboard ? navigate('/dashboard') : navigate('/issuers')}
                   disabled={submitting}
                 >
                   Cancel
@@ -157,7 +198,7 @@ const AddIssuer = () => {
                   color="primary"
                   disabled={submitting}
                 >
-                  {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Issuer'}
+                  {submitting ? <CircularProgress size={24} color="inherit" /> : 'Update Issuer'}
                 </Button>
               </Grid>
             </Grid>
@@ -168,4 +209,4 @@ const AddIssuer = () => {
   );
 };
 
-export default AddIssuer;
+export default EditIssuer;

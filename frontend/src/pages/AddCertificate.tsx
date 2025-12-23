@@ -214,7 +214,7 @@ const AddCertificate = () => {
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="caption">
                     Can't find your issuer?{' '}
-                    <Link component={RouterLink} to="/add-issuer" sx={{ textDecoration: 'none' }}>
+                    <Link component={RouterLink} to="/add-issuer" state={{ from: 'add-certificate' }} sx={{ textDecoration: 'none' }}>
                       Add New Issuer
                     </Link>
                   </Typography>

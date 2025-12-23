@@ -297,6 +297,17 @@ const Dashboard = () => {
                         ) : (
                           <Typography variant="body2">N/A</Typography>
                         )}
+                        <Box sx={{ mt: 0.5 }}>
+                          <Link 
+                            component={RouterLink} 
+                            to={`/edit-issuer/${cert['issuer-id']}`} 
+                            state={{ from: 'dashboard' }}
+                            variant="caption"
+                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, textDecoration: 'none' }}
+                          >
+                            <EditIcon sx={{ fontSize: '0.8rem' }} /> Edit Issuer
+                          </Link>
+                        </Box>
                       </Box>
                     </Box>
                     {cert.remarks && (

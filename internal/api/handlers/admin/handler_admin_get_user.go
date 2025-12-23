@@ -34,6 +34,8 @@ func HandlerAdminGetUser(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
+		apiUser.Role = authUser.Role
+
 		userDto := users.MapUserDomainToDto(apiUser)
 
 		handlers.RespondWithJSON(w, 200, userDto)
