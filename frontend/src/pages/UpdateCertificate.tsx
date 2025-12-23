@@ -124,7 +124,7 @@ const UpdateCertificate = () => {
       // We could optionally verify if the returned data matches formData here,
       // but if the response is OK, we assume the backend handled it or returned the new state.
 
-      navigate('/dashboard');
+      navigate('/certificates');
     } catch (err: any) {
       setError(err.message || 'An error occurred during update');
     } finally {
@@ -201,7 +201,7 @@ const UpdateCertificate = () => {
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/certificates')}
                   disabled={submitting}
                 >
                   Cancel

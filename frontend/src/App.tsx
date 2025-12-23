@@ -22,7 +22,7 @@ import { Anchor } from 'lucide-react'
 import Home from './pages/Home'
 import SignUp from './pages/SignUp'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
+import Certificates from './pages/Certificates.tsx'
 import AddCertificate from './pages/AddCertificate'
 import AddIssuer from './pages/AddIssuer'
 import UpdateCertificate from './pages/UpdateCertificate'
@@ -157,8 +157,8 @@ function App() {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            <MenuItem onClick={handleClose} component={RouterLink} to="/dashboard">
-              Dashboard
+            <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
+              Certificates
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
@@ -264,19 +264,19 @@ function App() {
       </AppBar>
       <Toolbar /> {/* Spacer to prevent content from being hidden under fixed AppBar */}
       <Routes>
-        <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Home />} />
+        <Route path="/" element={session ? <Navigate to="/certificates" replace /> : <Home />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/certificates" element={<Certificates />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
         
         {/* Admin only routes */}
-        <Route path="/cert-types" element={isAdmin ? <CertTypes /> : <Navigate to="/dashboard" replace />} />
-        <Route path="/add-cert-type" element={isAdmin ? <AddCertType /> : <Navigate to="/dashboard" replace />} />
-        <Route path="/edit-cert-type/:id" element={isAdmin ? <EditCertType /> : <Navigate to="/dashboard" replace />} />
-        <Route path="/issuers" element={isAdmin ? <Issuers /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/cert-types" element={isAdmin ? <CertTypes /> : <Navigate to="/certificates" replace />} />
+        <Route path="/add-cert-type" element={isAdmin ? <AddCertType /> : <Navigate to="/certificates" replace />} />
+        <Route path="/edit-cert-type/:id" element={isAdmin ? <EditCertType /> : <Navigate to="/certificates" replace />} />
+        <Route path="/issuers" element={isAdmin ? <Issuers /> : <Navigate to="/certificates" replace />} />
         <Route path="/edit-issuer/:id" element={<EditIssuer />} />
         
         <Route path="/edit-account" element={<EditAccount />} />

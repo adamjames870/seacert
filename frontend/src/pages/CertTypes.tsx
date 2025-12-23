@@ -25,7 +25,7 @@ interface CertType {
   id: string;
   name: string;
   'short-name': string;
-  'stcw-ref': string;
+  'stcw-reference': string;
   'normal-validity-months': number;
 }
 
@@ -34,6 +34,37 @@ const CertTypes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const getMissingFieldsStatus = (type: CertType) => {
+    const missing = [];
+    if (!type['short-name']) missing.push('short-name');
+    if (!type['stcw-reference']) missing.push('stcw-reference');
+    if (!type['normal-validity-months']) missing.push('normal-validity-months');
+    
+    if (missing.length > 0) return 'incomplete';
+    return 'normal';
+  };
+
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case 'incomplete':
+        return {
+          bgcolor: '#fffbeb', // Amber 50
+          borderColor: '#fef3c7', // Amber 100
+          textColor: '#92400e', // Amber 800
+          secondaryTextColor: '#b45309', // Amber 700
+          labelColor: '#d97706', // Amber 600
+        };
+      default:
+        return {
+          bgcolor: 'background.paper',
+          borderColor: 'divider',
+          textColor: 'text.primary',
+          secondaryTextColor: 'text.secondary',
+          labelColor: 'primary.main',
+        };
+    }
+  };
 
   useEffect(() => {
     const fetchCertTypes = async () => {
@@ -75,7 +106,7 @@ const CertTypes = () => {
     return (
       type.name.toLowerCase().includes(query) ||
       type['short-name']?.toLowerCase().includes(query) ||
-      type['stcw-ref']?.toLowerCase().includes(query)
+      type['stcw-reference']?.toLowerCase().includes(query)
     );
   });
 
@@ -144,43 +175,76 @@ const CertTypes = () => {
 
         {!loading && !error && filteredCertTypes.length > 0 && (
           <List sx={{ mt: 2 }}>
-            {sortedCertTypes.map((type) => (
-              <Paper key={type.id} elevation={0} sx={{ mb: 1, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
-                <Box 
+            {sortedCertTypes.map((type) => {
+              const status = getMissingFieldsStatus(type);
+              const styles = getStatusStyles(status);
+
+              return (
+                <Paper 
+                  key={type.id} 
+                  elevation={0} 
                   sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    p: 2
+                    mb: 1, 
+                    border: 1, 
+                    borderColor: styles.borderColor, 
+                    bgcolor: styles.bgcolor,
+                    overflow: 'hidden' 
                   }}
                 >
-                  <ListItemText 
-                    primary={type.name}
-                    secondary={
-                      <>
-                        <Typography component="span" variant="body2" color="text.secondary">
-                          Short Name: {type['short-name'] || 'N/A'} | STCW: {type['stcw-ref'] || 'N/A'}
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      p: 2
+                    }}
+                  >
+                    <ListItemText 
+                      primary={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
+                          {type.name}
                         </Typography>
-                        {type['normal-validity-months'] && (
-                          <Typography variant="body2" color="text.secondary">
-                            Validity: {type['normal-validity-months']} months
+                      }
+                      secondary={
+                        <>
+                          <Typography component="span" variant="body2" sx={{ color: styles.secondaryTextColor }}>
+                            Short Name: {type['short-name'] || (
+                              <Box component="span" sx={{ fontStyle: 'italic', fontWeight: 'bold', color: styles.labelColor }}>
+                                Missing
+                              </Box>
+                            )}
+                            {' | '}
+                            STCW: {type['stcw-reference'] || (
+                              <Box component="span" sx={{ fontStyle: 'italic', fontWeight: 'bold', color: styles.labelColor }}>
+                                Missing
+                              </Box>
+                            )}
                           </Typography>
-                        )}
-                      </>
-                    }
-                  />
-                  <Tooltip title="Edit Certificate Type">
-                    <IconButton 
-                      component={RouterLink} 
-                      to={`/edit-cert-type/${type.id}`}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Paper>
-            ))}
+                          {type['normal-validity-months'] ? (
+                            <Typography variant="body2" sx={{ color: styles.secondaryTextColor }}>
+                              Validity: {type['normal-validity-months']} months
+                            </Typography>
+                          ) : (
+                            <Typography variant="body2" sx={{ fontStyle: 'italic', fontWeight: 'bold', color: styles.labelColor }}>
+                              Validity: Missing
+                            </Typography>
+                          )}
+                        </>
+                      }
+                    />
+                    <Tooltip title="Edit Certificate Type">
+                      <IconButton 
+                        component={RouterLink} 
+                        to={`/edit-cert-type/${type.id}`}
+                        sx={{ color: styles.labelColor }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Paper>
+              );
+            })}
           </List>
         )}
       </Box>

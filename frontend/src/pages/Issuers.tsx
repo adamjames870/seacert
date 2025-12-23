@@ -36,6 +36,36 @@ const Issuers = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const getMissingFieldsStatus = (issuer: Issuer) => {
+    const missing = [];
+    if (!issuer.country) missing.push('country');
+    if (!issuer.website) missing.push('website');
+    
+    if (missing.length > 0) return 'incomplete';
+    return 'normal';
+  };
+
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case 'incomplete':
+        return {
+          bgcolor: '#fffbeb', // Amber 50
+          borderColor: '#fef3c7', // Amber 100
+          textColor: '#92400e', // Amber 800
+          secondaryTextColor: '#b45309', // Amber 700
+          labelColor: '#d97706', // Amber 600
+        };
+      default:
+        return {
+          bgcolor: 'background.paper',
+          borderColor: 'divider',
+          textColor: 'text.primary',
+          secondaryTextColor: 'text.secondary',
+          labelColor: 'primary.main',
+        };
+    }
+  };
+
   useEffect(() => {
     const fetchIssuers = async () => {
       try {
@@ -146,45 +176,78 @@ const Issuers = () => {
 
         {!loading && !error && filteredIssuers.length > 0 && (
           <List sx={{ mt: 2 }}>
-            {sortedIssuers.map((issuer) => (
-              <Paper key={issuer.id} elevation={0} sx={{ mb: 1, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
-                <Box 
+            {sortedIssuers.map((issuer) => {
+              const status = getMissingFieldsStatus(issuer);
+              const styles = getStatusStyles(status);
+
+              return (
+                <Paper 
+                  key={issuer.id} 
+                  elevation={0} 
                   sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    p: 2
+                    mb: 1, 
+                    border: 1, 
+                    borderColor: styles.borderColor, 
+                    bgcolor: styles.bgcolor,
+                    overflow: 'hidden' 
                   }}
                 >
-                  <ListItemText 
-                    primary={issuer.name}
-                    secondary={
-                      <>
-                        <Typography component="span" variant="body2" color="text.secondary">
-                          Country: {getCountryName(issuer.country)}
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      p: 2
+                    }}
+                  >
+                    <ListItemText 
+                      primary={
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
+                          {issuer.name}
                         </Typography>
-                        {issuer.website && (
-                          <Box component="span" sx={{ display: 'block' }}>
-                            <Link href={issuer.website.startsWith('http') ? issuer.website : `https://${issuer.website}`} target="_blank" rel="noopener" variant="body2">
-                              {issuer.website}
-                            </Link>
-                          </Box>
-                        )}
-                      </>
-                    }
-                  />
-                  <Tooltip title="Edit Issuer">
-                    <IconButton 
-                      component={RouterLink} 
-                      to={`/edit-issuer/${issuer.id}`}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Paper>
-            ))}
+                      }
+                      secondary={
+                        <>
+                          <Typography component="span" variant="body2" sx={{ color: styles.secondaryTextColor }}>
+                            Country: {issuer.country ? getCountryName(issuer.country) : (
+                              <Box component="span" sx={{ fontStyle: 'italic', fontWeight: 'bold', color: styles.labelColor }}>
+                                Missing
+                              </Box>
+                            )}
+                          </Typography>
+                          {issuer.website ? (
+                            <Box component="span" sx={{ display: 'block' }}>
+                              <Link 
+                                href={issuer.website.startsWith('http') ? issuer.website : `https://${issuer.website}`} 
+                                target="_blank" 
+                                rel="noopener" 
+                                variant="body2"
+                                sx={{ color: styles.labelColor }}
+                              >
+                                {issuer.website}
+                              </Link>
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" sx={{ display: 'block', fontStyle: 'italic', fontWeight: 'bold', color: styles.labelColor }}>
+                              Website: Missing
+                            </Typography>
+                          )}
+                        </>
+                      }
+                    />
+                    <Tooltip title="Edit Issuer">
+                      <IconButton 
+                        component={RouterLink} 
+                        to={`/edit-issuer/${issuer.id}`}
+                        sx={{ color: styles.labelColor }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Paper>
+              );
+            })}
           </List>
         )}
       </Box>

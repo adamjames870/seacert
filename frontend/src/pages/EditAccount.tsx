@@ -106,7 +106,7 @@ const EditAccount = () => {
         throw new Error(errorMessage);
       }
 
-      navigate('/dashboard');
+      navigate('/certificates');
     } catch (err: any) {
       setError(err.message || 'An error occurred during update');
     } finally {

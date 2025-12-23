@@ -29,7 +29,7 @@ const EditIssuer = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const fromDashboard = location.state?.from === 'dashboard';
+  const fromCertificates = location.state?.from === 'certificates';
 
   useEffect(() => {
     const fetchIssuer = async () => {
@@ -101,8 +101,8 @@ const EditIssuer = () => {
         throw new Error(responseData.message || 'Failed to update issuer');
       }
 
-      if (fromDashboard) {
-        navigate('/dashboard');
+      if (fromCertificates) {
+        navigate('/certificates');
       } else {
         navigate('/issuers');
       }
@@ -187,7 +187,7 @@ const EditIssuer = () => {
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => fromDashboard ? navigate('/dashboard') : navigate('/issuers')}
+                  onClick={() => fromCertificates ? navigate('/certificates') : navigate('/issuers')}
                   disabled={submitting}
                 >
                   Cancel

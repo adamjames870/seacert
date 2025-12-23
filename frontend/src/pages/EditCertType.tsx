@@ -50,7 +50,7 @@ const EditCertType = () => {
         setFormData({
           name: certType.name || '',
           shortName: certType['short-name'] || '',
-          stcwReference: certType['stcw-ref'] || '',
+          stcwReference: certType['stcw-reference'] || '',
           normalValidityMonths: certType['normal-validity-months']?.toString() || ''
         });
       } catch (err: any) {

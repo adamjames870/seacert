@@ -20,7 +20,7 @@ interface CertType {
   id: string;
   name: string;
   'short-name': string;
-  'stcw-ref': string;
+  'stcw-reference': string;
 }
 
 interface Issuer {
@@ -137,7 +137,7 @@ const AddCertificate = () => {
         throw new Error(errorMessage);
       }
 
-      navigate('/dashboard');
+      navigate('/certificates');
     } catch (err: any) {
       setError(err.message || 'An error occurred during submission');
     } finally {
@@ -263,7 +263,7 @@ const AddCertificate = () => {
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/certificates')}
                   disabled={submitting}
                 >
                   Cancel
