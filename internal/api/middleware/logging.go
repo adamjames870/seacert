@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/adamjames870/seacert/internal/api/auth"
 )
 
 type responseWriter struct {
@@ -52,7 +54,12 @@ func Logging(next http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		slog.Info("HTTP request",
+		logger := slog.Default()
+		if user, ok := auth.UserFromContext(r.Context()); ok {
+			logger = logger.With("user_id", user.Id, "email", user.Email)
+		}
+
+		logger.Info("HTTP request",
 			"method", r.Method,
 			"path", r.URL.Path,
 			"status", rw.status,
@@ -61,7 +68,7 @@ func Logging(next http.Handler) http.Handler {
 		)
 
 		if len(body) > 0 {
-			slog.Debug("HTTP request body", "body", string(body))
+			logger.Debug("HTTP request body", "body", string(body))
 		}
 	})
 }

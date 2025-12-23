@@ -36,3 +36,33 @@ func WriteNewCertType(state *internal.ApiState, ctx context.Context, params dto.
 	return apiCertType, nil
 
 }
+
+func UpdateCertificateType(state *internal.ApiState, ctx context.Context, params dto.ParamsUpdateCertificateType) (CertificateType, error) {
+
+	uuidId, errParse := uuid.Parse(params.Id)
+	if errParse != nil {
+		return CertificateType{}, errParse
+	}
+
+	name := domain.ToNullStringFromPointer(params.Name)
+	shortName := domain.ToNullStringFromPointer(params.ShortName)
+	stcwRef := domain.ToNullStringFromPointer(params.StcwReference)
+	normalValidity := domain.ToNullInt32FromPointer(params.NormalValidityMonths)
+
+	updateCert := sqlc.UpdateCertTypeParams{
+		ID:                   uuidId,
+		Name:                 name,
+		ShortName:            shortName,
+		StcwReference:        stcwRef,
+		NormalValidityMonths: normalValidity,
+	}
+
+	dbCertType, errUpdateCertType := state.Queries.UpdateCertType(ctx, updateCert)
+	if errUpdateCertType != nil {
+		return CertificateType{}, errUpdateCertType
+	}
+
+	apiCertType := MapCertificateTypeDbToDomain(dbCertType)
+	return apiCertType, nil
+
+}

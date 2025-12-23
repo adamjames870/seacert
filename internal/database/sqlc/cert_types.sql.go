@@ -124,3 +124,43 @@ func (q *Queries) GetCertTypes(ctx context.Context) ([]CertificateType, error) {
 	}
 	return items, nil
 }
+
+const updateCertType = `-- name: UpdateCertType :one
+UPDATE certificate_types
+SET
+    name = COALESCE($2, name),
+    short_name = COALESCE($3, short_name),
+    stcw_reference = COALESCE($4, stcw_reference),
+    normal_validity_months = COALESCE($5, normal_validity_months)
+WHERE id=$1
+RETURNING id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months
+`
+
+type UpdateCertTypeParams struct {
+	ID                   uuid.UUID
+	Name                 sql.NullString
+	ShortName            sql.NullString
+	StcwReference        sql.NullString
+	NormalValidityMonths sql.NullInt32
+}
+
+func (q *Queries) UpdateCertType(ctx context.Context, arg UpdateCertTypeParams) (CertificateType, error) {
+	row := q.db.QueryRowContext(ctx, updateCertType,
+		arg.ID,
+		arg.Name,
+		arg.ShortName,
+		arg.StcwReference,
+		arg.NormalValidityMonths,
+	)
+	var i CertificateType
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.ShortName,
+		&i.StcwReference,
+		&i.NormalValidityMonths,
+	)
+	return i, err
+}

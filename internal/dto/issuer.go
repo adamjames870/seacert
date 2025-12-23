@@ -16,3 +16,10 @@ type ParamsAddIssuer struct {
 	Country *string `json:"country,omitempty"`
 	Website *string `json:"website,omitempty"`
 }
+
+type ParamsUpdateIssuer struct {
+	Id      string  `json:"id"`
+	Name    *string `json:"name,omitempty"`
+	Country *string `json:"country,omitempty"`
+	Website *string `json:"website,omitempty"`
+}

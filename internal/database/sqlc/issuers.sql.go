@@ -119,3 +119,39 @@ func (q *Queries) GetIssuers(ctx context.Context) ([]Issuer, error) {
 	}
 	return items, nil
 }
+
+const updateIssuer = `-- name: UpdateIssuer :one
+UPDATE issuers
+SET
+    name = COALESCE($2, name),
+    country = COALESCE($3, country),
+    website = COALESCE($4, website)
+WHERE id = $1
+RETURNING id, created_at, updated_at, name, country, website
+`
+
+type UpdateIssuerParams struct {
+	ID      uuid.UUID
+	Name    sql.NullString
+	Country sql.NullString
+	Website sql.NullString
+}
+
+func (q *Queries) UpdateIssuer(ctx context.Context, arg UpdateIssuerParams) (Issuer, error) {
+	row := q.db.QueryRowContext(ctx, updateIssuer,
+		arg.ID,
+		arg.Name,
+		arg.Country,
+		arg.Website,
+	)
+	var i Issuer
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Country,
+		&i.Website,
+	)
+	return i, err
+}

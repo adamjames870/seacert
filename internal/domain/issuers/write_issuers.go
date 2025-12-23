@@ -35,3 +35,31 @@ func WriteNewIssuer(state *internal.ApiState, ctx context.Context, params dto.Pa
 	return apiIssuer, nil
 
 }
+
+func UpdateIssuer(state *internal.ApiState, ctx context.Context, params dto.ParamsUpdateIssuer) (Issuer, error) {
+
+	uuidId, errParse := uuid.Parse(params.Id)
+	if errParse != nil {
+		return Issuer{}, errParse
+	}
+
+	name := domain.ToNullStringFromPointer(params.Name)
+	country := domain.ToNullStringFromPointer(params.Country)
+	website := domain.ToNullStringFromPointer(params.Website)
+
+	updateIssuer := sqlc.UpdateIssuerParams{
+		ID:      uuidId,
+		Name:    name,
+		Country: country,
+		Website: website,
+	}
+
+	dbIssuer, errUpdateIssuer := state.Queries.UpdateIssuer(ctx, updateIssuer)
+	if errUpdateIssuer != nil {
+		return Issuer{}, errUpdateIssuer
+	}
+
+	apiIssuer := MapIssuerDbToDomain(dbIssuer)
+	return apiIssuer, nil
+
+}

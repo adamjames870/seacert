@@ -18,3 +18,11 @@ type ParamsAddCertificateType struct {
 	StcwReference        *string `json:"stcw-reference,omitempty"`
 	NormalValidityMonths int32   `json:"normal-validity-months"`
 }
+
+type ParamsUpdateCertificateType struct {
+	Id                   string  `json:"id"`
+	Name                 *string `json:"name,omitempty"`
+	ShortName            *string `json:"short-name,omitempty"`
+	StcwReference        *string `json:"stcw-reference,omitempty"`
+	NormalValidityMonths *int32  `json:"normal-validity-months,omitempty"`
+}

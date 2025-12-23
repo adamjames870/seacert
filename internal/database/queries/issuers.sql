@@ -12,3 +12,12 @@ SELECT * FROM issuers WHERE id = $1;
 
 -- name: GetIssuerByName :one
 SELECT * FROM issuers WHERE name = $1;
+
+-- name: UpdateIssuer :one
+UPDATE issuers
+SET
+    name = COALESCE(sqlc.narg('name'), name),
+    country = COALESCE(sqlc.narg('country'), country),
+    website = COALESCE(sqlc.narg('website'), website)
+WHERE id = $1
+RETURNING *;

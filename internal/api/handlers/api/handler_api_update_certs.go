@@ -19,13 +19,6 @@ func HandlerApiUpdateCert(state *internal.ApiState) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		params := dto.ParamsUpdateCertificate{}
 
-		//body, err := io.ReadAll(r.Body)
-		//if err != nil {
-		//	handlers.RespondWithError(w, 400, "unable to read body: "+err.Error())
-		//	return
-		//}
-		//defer r.Body.Close()
-
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
 			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
