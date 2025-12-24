@@ -163,17 +163,15 @@ function App() {
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
             </MenuItem>
-            {isAdmin && (
-              <>
-                <Divider />
-                <MenuItem onClick={handleClose} component={RouterLink} to="/cert-types">
-                  Certificate Types
-                </MenuItem>
-                <MenuItem onClick={handleClose} component={RouterLink} to="/issuers">
-                  Issuers
-                </MenuItem>
-              </>
-            )}
+            {isAdmin && [
+              <Divider key="divider" />,
+              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
+                Certificate Types
+              </MenuItem>,
+              <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers">
+                Issuers
+              </MenuItem>
+            ]}
           </Menu>
 
           <Typography
@@ -186,11 +184,13 @@ function App() {
               color: 'inherit',
               display: 'flex',
               alignItems: 'center',
-              gap: 1
+              gap: 1,
+              fontSize: { xs: '1.1rem', sm: '1.25rem' }
             }}
           >
-            <Anchor size={24} />
-            SeaCert
+            <Anchor size={20} />
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, fontWeight: 700 }}>SeaCert</Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' }, fontWeight: 700 }}>SC</Box>
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -202,7 +202,7 @@ function App() {
                   startIcon={<AccountCircleIcon />}
                   sx={{ textTransform: 'none' }}
                 >
-                  My Account
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>My Account</Box>
                 </Button>
                 <Menu
                   anchorEl={accountAnchorEl}

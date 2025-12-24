@@ -13,7 +13,8 @@ import {
   TextField,
   InputAdornment,
   Link,
-  Button
+  Button,
+  Stack
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
@@ -117,12 +118,22 @@ const Issuers = () => {
   return (
     <Container>
       <Box sx={{ mt: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Stack 
+          direction={{ xs: 'column', md: 'row' }} 
+          spacing={2} 
+          justifyContent="space-between" 
+          alignItems={{ xs: 'stretch', md: 'center' }} 
+          sx={{ mb: 3 }}
+        >
           <Typography variant="h4" component="h1">
             Issuers
           </Typography>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={2} 
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+          >
             <TextField
               size="small"
               placeholder="Search issuers..."
@@ -135,7 +146,7 @@ const Issuers = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ width: 250 }}
+              sx={{ minWidth: { xs: '100%', sm: 250 } }}
             />
             <Button
               variant="contained"
@@ -144,11 +155,12 @@ const Issuers = () => {
               component={RouterLink}
               to="/add-issuer"
               state={{ from: 'issuers' }}
+              sx={{ whiteSpace: 'nowrap' }}
             >
               Add Issuer
             </Button>
-          </Box>
-        </Box>
+          </Stack>
+        </Stack>
 
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

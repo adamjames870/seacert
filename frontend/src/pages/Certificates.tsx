@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton, Button, TextField, InputAdornment } from '@mui/material';
+import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton, Button, TextField, InputAdornment, Stack } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -180,12 +180,22 @@ const Certificates = () => {
   return (
     <Container>
       <Box sx={{ mt: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Stack 
+          direction={{ xs: 'column', md: 'row' }} 
+          spacing={2} 
+          justifyContent="space-between" 
+          alignItems={{ xs: 'stretch', md: 'center' }} 
+          sx={{ mb: 3 }}
+        >
           <Typography variant="h4" component="h1">
             Certificates
           </Typography>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={2} 
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+          >
             <TextField
               size="small"
               placeholder="Search certificates..."
@@ -198,7 +208,7 @@ const Certificates = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ width: 250 }}
+              sx={{ minWidth: { xs: '100%', sm: 250 } }}
             />
             <Button
               variant="contained"
@@ -206,13 +216,14 @@ const Certificates = () => {
               startIcon={<AddIcon />}
               component={RouterLink}
               to="/add-certificate"
+              sx={{ whiteSpace: 'nowrap' }}
             >
               Add Certificate
             </Button>
 
             {!loading && !error && certificates.length > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <FormControl size="small" sx={{ minWidth: 150 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FormControl size="small" sx={{ minWidth: 120, flexGrow: { xs: 1, sm: 0 } }}>
                   <InputLabel id="sort-by-label">Sort By</InputLabel>
                   <Select
                     labelId="sort-by-label"
@@ -227,14 +238,14 @@ const Certificates = () => {
                   </Select>
                 </FormControl>
                 <Tooltip title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}>
-                  <IconButton onClick={toggleSortOrder} color="primary">
+                  <IconButton onClick={toggleSortOrder} color="primary" size="small">
                     {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
                   </IconButton>
                 </Tooltip>
               </Box>
             )}
-          </Box>
-        </Box>
+          </Stack>
+        </Stack>
 
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -282,9 +293,11 @@ const Certificates = () => {
                     onClick={() => handleExpand(cert.id)}
                     sx={{ 
                       display: 'flex', 
+                      flexDirection: { xs: 'column', sm: 'row' },
                       justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      p: 2
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      p: 2,
+                      gap: 2
                     }}
                   >
                     <ListItemText 
@@ -295,16 +308,18 @@ const Certificates = () => {
                       }
                       secondary={
                         <Box component="span" sx={{ color: styles.secondaryTextColor }}>
-                          <Typography component="span" variant="body2" sx={{ color: 'inherit' }}>
+                          <Typography component="span" variant="body2" sx={{ color: 'inherit', display: 'block' }}>
                             Issuer: {cert['issuer-name']}
                           </Typography>
-                          {` — No. ${cert['cert-number']} — Issued on: ${formatDate(cert['issued-date'])}`}
+                          <Typography component="span" variant="caption" sx={{ color: 'inherit' }}>
+                            {`No. ${cert['cert-number']} — Issued: ${formatDate(cert['issued-date'])}`}
+                          </Typography>
                         </Box>
                       }
                     />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'flex-end' } }}>
                       {cert['expiry-date'] && new Date(cert['expiry-date']).getFullYear() > 1 && (
-                        <Box sx={{ textAlign: 'right', mr: 2 }}>
+                        <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
                           <Typography variant="caption" sx={{ display: 'block', textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.7rem', color: styles.secondaryTextColor }}>
                             Expires
                           </Typography>

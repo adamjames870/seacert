@@ -54,7 +54,7 @@ const Login = () => {
         <Paper 
           elevation={0} 
           sx={{ 
-            p: 4, 
+            p: { xs: 2, sm: 4 }, 
             width: '100%', 
             border: 1, 
             borderColor: 'divider',
