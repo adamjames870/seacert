@@ -1,4 +1,4 @@
-﻿import { Typography, Container, Box, Button, Grid, Paper, Stack } from '@mui/material';
+﻿import { Typography, Container, Box, Button, Grid, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Anchor, ShieldCheck, Bell, Smartphone, Clock } from 'lucide-react';
 
@@ -83,7 +83,7 @@ const Home = () => {
                 description: "No more digging through folders. Find issuer details and certificate numbers in seconds."
               }
             ].map((feature, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index} sx={{ display: 'flex' }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} sx={{ display: 'flex' }}>
                 <Stack 
                   spacing={2} 
                   alignItems="center" 
