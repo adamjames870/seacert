@@ -23,6 +23,7 @@ type Certificate struct {
 	IssuerID        uuid.UUID
 	UserID          uuid.UUID
 	ManualExpiry    sql.NullTime
+	Deleted         bool
 }
 
 type CertificateType struct {
@@ -42,6 +43,13 @@ type Issuer struct {
 	Name      string
 	Country   sql.NullString
 	Website   sql.NullString
+}
+
+type Succession struct {
+	ID      uuid.UUID
+	NewCert uuid.UUID
+	OldCert uuid.UUID
+	Reason  string
 }
 
 type User struct {

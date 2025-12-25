@@ -1,0 +1,48 @@
+name,short-name,stcw-reference,normal-validity-months
+Certificate of Competency Deck (OOW),CoC-OOW,A-II / 1,60
+Certificate of Competency Deck (Chief Mate),CoC-CM,A-II / 2,60
+Certificate of Competency Deck (Master),CoC-MS,A-II / 2,60
+Certificate of Competency Engine (EOOW),CoC-EOOW,A-III / 1,60
+Certificate of Competency Engine (Second Eng),CoC-2EO,A-III / 2,60
+Certificate of Competency Engine (Chief Engineer),CoC-CE,A-III / 2,60
+Certificate of Competency Engine (ETO),CoC-ETO,A-III / 6,60
+Seafarer Medical Certificate,MED,A-I / 9,24
+Seafarer Medical Certificate (UK),ENG-1,A-I / 9,24
+GMDSS General Operator,GMDSS,A-IV / 2,60
+GMDSS General Operator (Revalidation),GMDSS-U,A-IV / 2,60
+STCW Basic Training,BT,A-VI / 1,60
+STCW Basic Training (Update),BT-U,A-VI / 1,60
+Personal Survival Techniques,PST,A-VI / 1-1,60
+Personal Survival Techniques (Update),PST-U,A-VI / 1-1,60
+Fire Fighting & Prevention,FFP,A-VI / 1-2,60
+Fire Fighting & Prevention (Update),FFP-U,A-VI / 1-2,60
+Elementary First Aid,EFA,A-VI / 1-3,
+Personal Safety & Social Responsibility,PSSR,A-VI / 1-4,
+Advanced Fire Fighting,AFF,A-VI / 3,60
+"Tanker Fire Fighting (Oil, Chemical, LG)",TFF,A-V / 1,
+Proficiency in Survival Craft & Rescue Boats,PSCRB,A-VI / 2-1,60
+Proficiency in Survival Craft & Rescue Boats (Update),PSCRB-U,A-VI / 2-1,60
+Proficiency in Fast Rescue Boats,FRC,A-VI / 2-1,60
+Proficiency in Fast Rescue Boats (Update),FRC-U,A-VI / 2-1,60
+Proficiency in Medical First Aid,MFA,A-VI / 4-1,
+Proficiency in Medical Care,PMC,A-VI / 4-2,60
+Proficiency in Medical Care (Update),PMC-U,A-VI / 4-2,60
+Proficiency in Security Awareness,PSA,A-VI / 6-1,
+Proficiency in Designated Security Duties,DSD,A-VI / 6-2,
+Ship Security Officer,SSO,A-VI / 5,
+Ship Safety Officer,SAFO,,
+Navigation Aids & Equipment Simulator (Operational),NAEST(O),A-II / 1,
+Navigation Aids & Equipment Simulator (Management),NAEST(M),A-II / 2,
+Electronic Chart Display & Information Systems (Generic),ECDIS,A-II / 1,
+ECDIS Type Specific (TRANSAS),ECDIS-Transas,A-II / 1,
+ECDIS Type Specific (Kongsberg),ECDIS-Kongsberg,A-II / 1,
+ECDIS Type Specific (Nacos Platinum),ECDIS-NACOS,A-II / 1,
+Proficiency in Crowd Management,PCM,A-V / 2,60
+Proficiency in Crisis Management & Human Behaviour,CM&HB,A-V / 2,60
+Polar Code (Basic),PC(B),A-V / 4,60
+Polar Code (Management),PC(M),A-V / 4,60
+Human Element Leadership & Management (Management),HELM(M),A-II / 2,
+ISM Lead Auditor,ISM,,
+Efficient Deck Hand,EDH,A-II / 5,
+MCA Signals,Signals,MCA,
+Train the Trainer,TTT,A-1 / 6,

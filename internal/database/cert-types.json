@@ -1,0 +1,284 @@
+[
+  {
+    "name": "Certificate of Competency Deck (OOW)",
+    "short-name": "CoC-OOW",
+    "stcw-reference": "A-II / 1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Certificate of Competency Deck (Chief Mate)",
+    "short-name": "CoC-CM",
+    "stcw-reference": "A-II / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Certificate of Competency Deck (Master)",
+    "short-name": "CoC-MS",
+    "stcw-reference": "A-II / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Certificate of Competency Engine (EOOW)",
+    "short-name": "CoC-EOOW",
+    "stcw-reference": "A-III / 1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Certificate of Competency Engine (Second Eng)",
+    "short-name": "CoC-2EO",
+    "stcw-reference": "A-III / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Certificate of Competency Engine (Chief Engineer)",
+    "short-name": "CoC-CE",
+    "stcw-reference": "A-III / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Certificate of Competency Engine (ETO)",
+    "short-name": "CoC-ETO",
+    "stcw-reference": "A-III / 6",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Seafarer Medical Certificate",
+    "short-name": "MED",
+    "stcw-reference": "A-I / 9",
+    "normal-validity-months": 24
+  },
+  {
+    "name": "Seafarer Medical Certificate (UK)",
+    "short-name": "ENG-1",
+    "stcw-reference": "A-I / 9",
+    "normal-validity-months": 24
+  },
+  {
+    "name": "GMDSS General Operator",
+    "short-name": "GMDSS",
+    "stcw-reference": "A-IV / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "GMDSS General Operator (Revalidation)",
+    "short-name": "GMDSS-U",
+    "stcw-reference": "A-IV / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "STCW Basic Training",
+    "short-name": "BT",
+    "stcw-reference": "A-VI / 1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "STCW Basic Training (Update)",
+    "short-name": "BT-U",
+    "stcw-reference": "A-VI / 1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Personal Survival Techniques",
+    "short-name": "PST",
+    "stcw-reference": "A-VI / 1-1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Personal Survival Techniques (Update)",
+    "short-name": "PST-U",
+    "stcw-reference": "A-VI / 1-1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Fire Fighting & Prevention",
+    "short-name": "FFP",
+    "stcw-reference": "A-VI / 1-2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Fire Fighting & Prevention (Update)",
+    "short-name": "FFP-U",
+    "stcw-reference": "A-VI / 1-2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Elementary First Aid",
+    "short-name": "EFA",
+    "stcw-reference": "A-VI / 1-3",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Personal Safety & Social Responsibility",
+    "short-name": "PSSR",
+    "stcw-reference": "A-VI / 1-4",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Advanced Fire Fighting",
+    "short-name": "AFF",
+    "stcw-reference": "A-VI / 3",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Tanker Fire Fighting (Oil, Chemical, LG)",
+    "short-name": "TFF",
+    "stcw-reference": "A-V / 1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Proficiency in Survival Craft & Rescue Boats",
+    "short-name": "PSCRB",
+    "stcw-reference": "A-VI / 2-1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Survival Craft & Rescue Boats (Update)",
+    "short-name": "PSCRB-U",
+    "stcw-reference": "A-VI / 2-1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Fast Rescue Boats",
+    "short-name": "FRC",
+    "stcw-reference": "A-VI / 2-1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Fast Rescue Boats (Update)",
+    "short-name": "FRC-U",
+    "stcw-reference": "A-VI / 2-1",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Medical First Aid",
+    "short-name": "MFA",
+    "stcw-reference": "A-VI / 4-1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Proficiency in Medical Care",
+    "short-name": "PMC",
+    "stcw-reference": "A-VI / 4-2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Medical Care (Update)",
+    "short-name": "PMC-U",
+    "stcw-reference": "A-VI / 4-2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Security Awareness",
+    "short-name": "PSA",
+    "stcw-reference": "A-VI / 6-1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Proficiency in Designated Security Duties",
+    "short-name": "DSD",
+    "stcw-reference": "A-VI / 6-2",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Ship Security Officer",
+    "short-name": "SSO",
+    "stcw-reference": "A-VI / 5",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Ship Safety Officer",
+    "short-name": "SAFO",
+    "stcw-reference": "",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Navigation Aids & Equipment Simulator (Operational)",
+    "short-name": "NAEST(O)",
+    "stcw-reference": "A-II / 1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Navigation Aids & Equipment Simulator (Management)",
+    "short-name": "NAEST(M)",
+    "stcw-reference": "A-II / 2",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Electronic Chart Display & Information Systems (Generic)",
+    "short-name": "ECDIS",
+    "stcw-reference": "A-II / 1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "ECDIS Type Specific (TRANSAS)",
+    "short-name": "ECDIS-Transas",
+    "stcw-reference": "A-II / 1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "ECDIS Type Specific (Kongsberg)",
+    "short-name": "ECDIS-Kongsberg",
+    "stcw-reference": "A-II / 1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "ECDIS Type Specific (Nacos Platinum)",
+    "short-name": "ECDIS-NACOS",
+    "stcw-reference": "A-II / 1",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Proficiency in Crowd Management",
+    "short-name": "PCM",
+    "stcw-reference": "A-V / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Proficiency in Crisis Management & Human Behaviour",
+    "short-name": "CM&HB",
+    "stcw-reference": "A-V / 2",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Polar Code (Basic)",
+    "short-name": "PC(B)",
+    "stcw-reference": "A-V / 4",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Polar Code (Management)",
+    "short-name": "PC(M)",
+    "stcw-reference": "A-V / 4",
+    "normal-validity-months": 60
+  },
+  {
+    "name": "Human Element Leadership & Management (Management)",
+    "short-name": "HELM(M)",
+    "stcw-reference": "A-II / 2",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "ISM Lead Auditor",
+    "short-name": "ISM",
+    "stcw-reference": "",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Efficient Deck Hand",
+    "short-name": "EDH",
+    "stcw-reference": "A-II / 5",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "MCA Signals",
+    "short-name": "Signals",
+    "stcw-reference": "MCA",
+    "normal-validity-months": ""
+  },
+  {
+    "name": "Train the Trainer",
+    "short-name": "TTT",
+    "stcw-reference": "A-1 / 6",
+    "normal-validity-months": ""
+  }
+]

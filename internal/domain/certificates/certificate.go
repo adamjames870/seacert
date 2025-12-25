@@ -20,4 +20,7 @@ type Certificate struct {
 	AlternativeName string
 	Remarks         string
 	ManualExpiry    time.Time
+	Deleted         bool
+	HasSuccessor    bool
+	HasPredecessors bool
 }

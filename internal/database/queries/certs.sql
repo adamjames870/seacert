@@ -15,6 +15,17 @@ SELECT
     alternative_name,
     remarks,
     manual_expiry,
+    deleted,
+    EXISTS (
+        SELECT true
+        FROM successions s
+        WHERE s.new_cert = certificates.id
+    ) as has_predecessors,
+    EXISTS (
+        SELECT true
+        FROM successions s
+        WHERE s.old_cert = certificates.id
+    ) as has_successor,
     certificate_types.id AS cert_type_id,
     certificate_types.created_at AS cert_type_created_at,
     certificate_types.updated_at AS cert_type_updated_at,
@@ -43,6 +54,17 @@ SELECT
     alternative_name,
     remarks,
     manual_expiry,
+    deleted,
+    EXISTS (
+        SELECT true
+        FROM successions s
+        WHERE s.new_cert = certificates.id
+    ) as has_predecessors,
+    EXISTS (
+        SELECT true
+        FROM successions s
+        WHERE s.old_cert = certificates.id
+    ) as has_successor,
     certificate_types.id AS cert_type_id,
     certificate_types.created_at AS cert_type_created_at,
     certificate_types.updated_at AS cert_type_updated_at,
@@ -71,6 +93,7 @@ SET
     remarks=COALESCE(sqlc.narg('remarks'), remarks),
     issuer_id=COALESCE(sqlc.narg('issuer_id'), issuer_id),
     manual_expiry=COALESCE(sqlc.narg('manual_expiry'), manual_expiry),
+    deleted=COALESCE(sqlc.narg('deleted'), deleted),
     updated_at=NOW()
 WHERE id=$1
 RETURNING *;

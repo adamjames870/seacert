@@ -29,6 +29,9 @@ type CertView struct {
 	IssuerName            string
 	IssuerCountry         sql.NullString
 	IssuerWebsite         sql.NullString
+	Deleted               bool
+	HasSuccessor          bool
+	HasPredecessors       bool
 }
 
 func (r GetCertsRow) ToCertView() CertView {
@@ -54,6 +57,9 @@ func (r GetCertsRow) ToCertView() CertView {
 		IssuerName:            r.IssuerName,
 		IssuerCountry:         r.IssuerCountry,
 		IssuerWebsite:         r.IssuerWebsite,
+		Deleted:               r.Deleted,
+		HasSuccessor:          r.HasSuccessor,
+		HasPredecessors:       r.HasPredecessors,
 	}
 }
 
@@ -80,5 +86,8 @@ func (r GetCertFromIdRow) ToCertView() CertView {
 		IssuerName:            r.IssuerName,
 		IssuerCountry:         r.IssuerCountry,
 		IssuerWebsite:         r.IssuerWebsite,
+		Deleted:               r.Deleted,
+		HasSuccessor:          r.HasSuccessor,
+		HasPredecessors:       r.HasPredecessors,
 	}
 }

@@ -22,6 +22,7 @@ func MapCertificateDbToDomain(cert sqlc.Certificate, certType cert_types.Certifi
 		AlternativeName: cert.AlternativeName.String,
 		Remarks:         cert.Remarks.String,
 		ManualExpiry:    cert.ManualExpiry.Time,
+		Deleted:         cert.Deleted,
 	}
 }
 
@@ -57,6 +58,9 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 		AlternativeName: dbCert.AlternativeName.String,
 		Remarks:         dbCert.Remarks.String,
 		ManualExpiry:    dbCert.ManualExpiry.Time,
+		Deleted:         dbCert.Deleted,
+		HasPredecessors: dbCert.HasPredecessors,
+		HasSuccessor:    dbCert.HasSuccessor,
 	}
 
 	apiCert.calculateExpiryDate()
@@ -83,6 +87,9 @@ func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 		ExpiryDate:        cert.ExpiryDate,
 		AlternativeName:   cert.AlternativeName,
 		Remarks:           cert.Remarks,
+		Deleted:           cert.Deleted,
+		HasSuccessor:      cert.HasSuccessor,
+		HasPredecessors:   cert.HasPredecessors,
 	}
 
 }
@@ -117,6 +124,9 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		IssuedDate:      cert.IssuedDate,
 		AlternativeName: cert.AlternativeName,
 		Remarks:         cert.Remarks,
+		Deleted:         cert.Deleted,
+		HasSuccessor:    cert.HasSuccessor,
+		HasPredecessors: cert.HasPredecessors,
 	}
 
 }
@@ -136,6 +146,7 @@ func MapCertificateDomainToDb(cert Certificate) sqlc.Certificate {
 		AlternativeName: alternativeName,
 		Remarks:         remarks,
 		IssuerID:        cert.Issuer.Id,
+		Deleted:         cert.Deleted,
 	}
 
 }

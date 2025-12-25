@@ -19,6 +19,9 @@ type Certificate struct {
 	ExpiryDate        time.Time `json:"expiry-date"`
 	AlternativeName   string    `json:"alternative-name"`
 	Remarks           string    `json:"remarks"`
+	Deleted           bool      `json:"deleted"`
+	HasSuccessor      bool      `json:"has-successor"`
+	HasPredecessors   bool      `json:"has-predecessors"`
 }
 
 type ParamsAddCertificate struct {
