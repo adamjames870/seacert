@@ -286,6 +286,60 @@ func (q *Queries) GetCerts(ctx context.Context, userID uuid.UUID) ([]GetCertsRow
 	return items, nil
 }
 
+const getPredecessors = `-- name: GetPredecessors :many
+SELECT old_cert FROM successions WHERE new_cert=$1
+`
+
+func (q *Queries) GetPredecessors(ctx context.Context, newCert uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getPredecessors, newCert)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var old_cert uuid.UUID
+		if err := rows.Scan(&old_cert); err != nil {
+			return nil, err
+		}
+		items = append(items, old_cert)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSuccessors = `-- name: GetSuccessors :many
+SELECT new_cert FROM successions WHERE old_cert=$1
+`
+
+func (q *Queries) GetSuccessors(ctx context.Context, oldCert uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getSuccessors, oldCert)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var new_cert uuid.UUID
+		if err := rows.Scan(&new_cert); err != nil {
+			return nil, err
+		}
+		items = append(items, new_cert)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateCertificate = `-- name: UpdateCertificate :one
 UPDATE certificates
 SET

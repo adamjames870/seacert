@@ -21,6 +21,6 @@ type Certificate struct {
 	Remarks         string
 	ManualExpiry    time.Time
 	Deleted         bool
-	HasSuccessor    bool
-	HasPredecessors bool
+	Successors      []Certificate
+	Predecessors    []Certificate
 }

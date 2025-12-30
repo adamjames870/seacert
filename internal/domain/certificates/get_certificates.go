@@ -13,16 +13,6 @@ import (
 
 func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.UUID) ([]Certificate, error) {
 
-	//certTypeMap, errCertTypeMap := getMapOfCertTypes(state, ctx)
-	//if errCertTypeMap != nil {
-	//	return nil, errCertTypeMap
-	//}
-	//
-	//issuerMap, errIssuerMap := getMapOfIssuersToCertTypes(state, ctx)
-	//if errIssuerMap != nil {
-	//	return nil, errIssuerMap
-	//}
-
 	uuidId, errParse := uuid.Parse(userId.String())
 	if errParse != nil {
 		return nil, errParse
@@ -37,6 +27,31 @@ func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.
 	for _, cert := range certs {
 		thisCert := MapCertificateViewDbToDomain(cert.ToCertView())
 		thisCert.calculateExpiryDate()
+		if thisCert.Deleted {
+			continue
+		}
+		if cert.HasPredecessors {
+			predecessorIds, errPredecessorIds := state.Queries.GetPredecessors(ctx, thisCert.Id)
+			if errPredecessorIds != nil {
+				return nil, errPredecessorIds
+			}
+			predecessors, errPredecessors := GetCertificateFromListOfIds(state, ctx, predecessorIds, userId)
+			if errPredecessors != nil {
+				return nil, errPredecessors
+			}
+			thisCert.Predecessors = predecessors
+		}
+		if cert.HasSuccessor {
+			successorIds, errSuccessorIds := state.Queries.GetSuccessors(ctx, thisCert.Id)
+			if errSuccessorIds != nil {
+				return nil, errSuccessorIds
+			}
+			successors, errSuccessors := GetCertificateFromListOfIds(state, ctx, successorIds, userId)
+			if errSuccessors != nil {
+				return nil, errSuccessors
+			}
+			thisCert.Successors = successors
+		}
 		apiCerts = append(apiCerts, thisCert)
 	}
 
@@ -66,6 +81,20 @@ func GetCertificateFromId(state *internal.ApiState, ctx context.Context, certId 
 	apiCert.calculateExpiryDate()
 
 	return apiCert, nil
+
+}
+
+func GetCertificateFromListOfIds(state *internal.ApiState, ctx context.Context, certIds []uuid.UUID, userId uuid.UUID) ([]Certificate, error) {
+
+	certs := make([]Certificate, 0, len(certIds))
+	for _, certId := range certIds {
+		cert, errCert := GetCertificateFromId(state, ctx, certId.String(), userId)
+		if errCert != nil {
+			return nil, errCert
+		}
+		certs = append(certs, cert)
+	}
+	return certs, nil
 
 }
 

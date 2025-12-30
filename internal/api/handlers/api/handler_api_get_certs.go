@@ -21,7 +21,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 		// GET api/certificates
 		// GET api/certificates?id=<uuid>
 
-		idParam := r.URL.Query().Get("id")
+		idsParam := r.URL.Query()["id"]
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
@@ -29,7 +29,10 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		if idParam == "" {
+		switch len(idsParam) {
+
+		case 0:
+			// No IDs -> Fetch all certificates
 			rv, err := getAllCertificates(state, r.Context(), userId)
 			if err != nil {
 				handlers.RespondWithError(w, 500, "Error fetching certificates", err)
@@ -37,10 +40,10 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 			}
 			handlers.RespondWithJSON(w, 200, rv)
 			return
-		}
 
-		if idParam != "" {
-			rv, err := certificates.GetCertificateFromId(state, r.Context(), idParam, userId)
+		case 1:
+			// 1 ID -> Fetch certificate by ID
+			rv, err := certificates.GetCertificateFromId(state, r.Context(), idsParam[0], userId)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					handlers.RespondWithError(w, 404, "Certificate not found", err)
@@ -51,6 +54,11 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 			}
 			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(rv))
 			return
+
+		default:
+			handlers.RespondWithError(w, 400, "Too many ids", nil)
+			return
+
 		}
 
 	}

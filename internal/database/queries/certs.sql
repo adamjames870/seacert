@@ -97,3 +97,9 @@ SET
     updated_at=NOW()
 WHERE id=$1
 RETURNING *;
+
+-- name: GetPredecessors :many
+SELECT old_cert FROM successions WHERE new_cert=$1;
+
+-- name: GetSuccessors :many
+SELECT new_cert FROM successions WHERE old_cert=$1;

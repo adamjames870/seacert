@@ -59,8 +59,6 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 		Remarks:         dbCert.Remarks.String,
 		ManualExpiry:    dbCert.ManualExpiry.Time,
 		Deleted:         dbCert.Deleted,
-		HasPredecessors: dbCert.HasPredecessors,
-		HasSuccessor:    dbCert.HasSuccessor,
 	}
 
 	apiCert.calculateExpiryDate()
@@ -70,7 +68,7 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 
 func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 
-	return dto.Certificate{
+	rv := dto.Certificate{
 		Id:                cert.Id.String(),
 		CreatedAt:         cert.CreatedAt,
 		UpdatedAt:         cert.UpdatedAt,
@@ -88,9 +86,19 @@ func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 		AlternativeName:   cert.AlternativeName,
 		Remarks:           cert.Remarks,
 		Deleted:           cert.Deleted,
-		HasSuccessor:      cert.HasSuccessor,
-		HasPredecessors:   cert.HasPredecessors,
+		Successors:        []dto.Certificate{},
+		Predecessors:      []dto.Certificate{},
 	}
+
+	for _, successor := range cert.Successors {
+		rv.Successors = append(rv.Successors, MapCertificateDomainToDto(successor))
+	}
+
+	for _, predecessor := range cert.Predecessors {
+		rv.Predecessors = append(rv.Predecessors, MapCertificateDomainToDto(predecessor))
+	}
+
+	return rv
 
 }
 
@@ -114,7 +122,7 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 	certType := cert_types.MapCertificateTypeDtoToDomain(certTypeDto)
 	issuer := issuers.MapIssuerDtoToDomain(issuerDto)
 
-	return Certificate{
+	rv := Certificate{
 		Id:              id,
 		CreatedAt:       cert.CreatedAt,
 		UpdatedAt:       cert.UpdatedAt,
@@ -125,9 +133,19 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		AlternativeName: cert.AlternativeName,
 		Remarks:         cert.Remarks,
 		Deleted:         cert.Deleted,
-		HasSuccessor:    cert.HasSuccessor,
-		HasPredecessors: cert.HasPredecessors,
+		Successors:      []Certificate{},
+		Predecessors:    []Certificate{},
 	}
+
+	for _, successor := range cert.Successors {
+		rv.Successors = append(rv.Successors, MapCertificateDtoToDomain(successor))
+	}
+
+	for _, predecessor := range cert.Predecessors {
+		rv.Predecessors = append(rv.Predecessors, MapCertificateDtoToDomain(predecessor))
+	}
+
+	return rv
 
 }
 

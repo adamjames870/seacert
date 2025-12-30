@@ -3,25 +3,25 @@
 import "time"
 
 type Certificate struct {
-	Id                string    `json:"id"`
-	CreatedAt         time.Time `json:"created-at"`
-	UpdatedAt         time.Time `json:"updated-at"`
-	CertTypeId        string    `json:"cert-type-id"`
-	CertTypeName      string    `json:"cert-type-name"`
-	CertTypeShortName string    `json:"cert-type-short-name"`
-	CertTypeStcwRef   string    `json:"cert-type-stcw-ref"`
-	CertNumber        string    `json:"cert-number"`
-	IssuerId          string    `json:"issuer-id"`
-	IssuerName        string    `json:"issuer-name"`
-	IssuerCountry     string    `json:"issuer-country"`
-	IssuerWebsite     string    `json:"issuer-website"`
-	IssuedDate        time.Time `json:"issued-date"`
-	ExpiryDate        time.Time `json:"expiry-date"`
-	AlternativeName   string    `json:"alternative-name"`
-	Remarks           string    `json:"remarks"`
-	Deleted           bool      `json:"deleted"`
-	HasSuccessor      bool      `json:"has-successor"`
-	HasPredecessors   bool      `json:"has-predecessors"`
+	Id                string        `json:"id"`
+	CreatedAt         time.Time     `json:"created-at"`
+	UpdatedAt         time.Time     `json:"updated-at"`
+	CertTypeId        string        `json:"cert-type-id"`
+	CertTypeName      string        `json:"cert-type-name"`
+	CertTypeShortName string        `json:"cert-type-short-name"`
+	CertTypeStcwRef   string        `json:"cert-type-stcw-ref"`
+	CertNumber        string        `json:"cert-number"`
+	IssuerId          string        `json:"issuer-id"`
+	IssuerName        string        `json:"issuer-name"`
+	IssuerCountry     string        `json:"issuer-country"`
+	IssuerWebsite     string        `json:"issuer-website"`
+	IssuedDate        time.Time     `json:"issued-date"`
+	ExpiryDate        time.Time     `json:"expiry-date"`
+	AlternativeName   string        `json:"alternative-name"`
+	Remarks           string        `json:"remarks"`
+	Deleted           bool          `json:"deleted"`
+	Successors        []Certificate `json:"successors"`
+	Predecessors      []Certificate `json:"predecessors"`
 }
 
 type ParamsAddCertificate struct {
