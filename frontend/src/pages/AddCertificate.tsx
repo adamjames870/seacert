@@ -41,8 +41,10 @@ const AddCertificate = () => {
     certTypeId: '',
     issuerId: '',
     certNumber: '',
-    issuedDate: '',
-    remarks: ''
+    issuedDate: new Date().toISOString().split('T')[0],
+    remarks: '',
+    supersedes: '',
+    supersedeReason: ''
   });
 
   const navigate = useNavigate();
@@ -80,6 +82,16 @@ const AddCertificate = () => {
 
         setCertTypes(certTypesData);
         setIssuers(issuersData);
+
+        // Pre-fill from location state (Update/Replace from Certificates page)
+        if (location.state?.certTypeId || location.state?.supersedes || location.state?.supersedeReason) {
+          setFormData(prev => ({
+            ...prev,
+            certTypeId: location.state.certTypeId || prev.certTypeId,
+            supersedes: location.state.supersedes || prev.supersedes,
+            supersedeReason: location.state.supersedeReason || prev.supersedeReason
+          }));
+        }
 
         // If we came back from Add Issuer with a new issuer ID, select it automatically
         if (location.state?.newIssuerId) {
@@ -122,7 +134,9 @@ const AddCertificate = () => {
           'issuer-id': formData.issuerId,
           'cert-number': formData.certNumber,
           'issued-date': formData.issuedDate,
-          remarks: formData.remarks
+          remarks: formData.remarks,
+          'supersedes': formData.supersedes || undefined,
+          'supersede-reason': formData.supersedeReason || undefined
         }),
       });
 
@@ -157,9 +171,16 @@ const AddCertificate = () => {
     <Container maxWidth="md">
       <Box sx={{ mt: 4, mb: 4 }}>
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            Add New Certificate
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+            {formData.supersedes 
+              ? `${formData.supersedeReason === 'updated' ? 'Update' : 'Replace'} Certificate` 
+              : 'Add New Certificate'}
           </Typography>
+          {formData.supersedes && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              This will {formData.supersedeReason} the existing certificate.
+            </Typography>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
@@ -274,7 +295,7 @@ const AddCertificate = () => {
                   color="primary"
                   disabled={submitting}
                 >
-                  {submitting ? 'Saving...' : 'Add Certificate'}
+                  {submitting ? 'Saving...' : (formData.supersedes ? (formData.supersedeReason === 'updated' ? 'Update Certificate' : 'Replace Certificate') : 'Add Certificate')}
                 </Button>
               </Grid>
             </Grid>

@@ -10,6 +10,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
@@ -531,7 +532,7 @@ const Certificates = () => {
                               <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
                                 Predecessors
                               </Typography>
-                              <List size="small" sx={{ p: 0 }}>
+                              <List sx={{ p: 0 }}>
                                 {flattenPredecessors(cert).map((pred) => (
                                   <Box key={pred.id} sx={{ mb: 0.5 }}>
                                     <Typography variant="body2" sx={{ color: styles.textColor }}>
@@ -544,11 +545,34 @@ const Certificates = () => {
                           )}
                           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                             <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<EditIcon />}
+                              component={RouterLink}
+                              to={`/update-certificate/${cert.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              sx={{
+                                color: styles.textColor,
+                                borderColor: styles.borderColor,
+                                '&:hover': {
+                                  borderColor: styles.textColor,
+                                  bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
                                 variant="outlined"
                                 size="small"
-                                startIcon={<EditIcon />}
+                                startIcon={<AddIcon />}
                                 component={RouterLink}
-                                to={`/update-certificate/${cert.id}`}
+                                to="/add-certificate"
+                                state={{ 
+                                  certTypeId: cert['cert-type-id'],
+                                  supersedes: cert.id,
+                                  supersedeReason: 'updated'
+                                }}
                                 onClick={(e) => e.stopPropagation()}
                                 sx={{
                                   color: styles.textColor,
@@ -559,7 +583,30 @@ const Certificates = () => {
                                   }
                                 }}
                             >
-                              Update
+                              Update with New
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<AutorenewIcon />}
+                                component={RouterLink}
+                                to="/add-certificate"
+                                state={{ 
+                                  certTypeId: cert['cert-type-id'],
+                                  supersedes: cert.id,
+                                  supersedeReason: 'replaced'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                sx={{
+                                  color: styles.textColor,
+                                  borderColor: styles.borderColor,
+                                  '&:hover': {
+                                    borderColor: styles.textColor,
+                                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                  }
+                                }}
+                            >
+                              Replace with New
                             </Button>
                             <Button
                               variant="outlined"
@@ -733,7 +780,7 @@ const Certificates = () => {
                                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                                     Predecessors
                                   </Typography>
-                                  <List size="small" sx={{ p: 0 }}>
+                                  <List sx={{ p: 0 }}>
                                     {flattenPredecessors(cert).map((pred) => (
                                       <Box key={pred.id} sx={{ mb: 0.5 }}>
                                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -791,6 +838,36 @@ const Certificates = () => {
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   Edit
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<AddIcon />}
+                                  component={RouterLink}
+                                  to="/add-certificate"
+                                  state={{ 
+                                    certTypeId: cert['cert-type-id'],
+                                    supersedes: cert.id,
+                                    supersedeReason: 'updated'
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Update with New
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<AutorenewIcon />}
+                                  component={RouterLink}
+                                  to="/add-certificate"
+                                  state={{ 
+                                    certTypeId: cert['cert-type-id'],
+                                    supersedes: cert.id,
+                                    supersedeReason: 'replaced'
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Replace with New
                                 </Button>
                               </Box>
                             </Box>

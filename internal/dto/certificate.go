@@ -34,6 +34,7 @@ type ParamsAddCertificate struct {
 	Remarks         *string `json:"remarks,omitempty"`
 	ManualExpiry    *string `json:"manual-expiry,omitempty"`
 	Supersedes      *string `json:"supersedes,omitempty"`
+	SupersedeReason *string `json:"supersede-reason,omitempty"`
 }
 
 type ParamsUpdateCertificate struct {

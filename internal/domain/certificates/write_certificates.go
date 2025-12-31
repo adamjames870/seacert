@@ -65,6 +65,10 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 			return Certificate{}, errParse
 		}
 
+		if params.SupersedeReason == nil {
+			return Certificate{}, errors.New("supersede reason is required")
+		}
+
 		predecessor, errPredecessor := GetCertificateFromId(state, ctx, uuidSupersedes.String(), uuidId)
 		if errPredecessor != nil {
 			return Certificate{}, errPredecessor
@@ -74,7 +78,7 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 			ID:      uuid.New(),
 			OldCert: predecessor.Id,
 			NewCert: dbCert.ID,
-			Reason:  "",
+			Reason:  *params.SupersedeReason,
 		}
 
 		_, errSuccession := state.Queries.CreateSuccession(ctx, paramsSuccession)
