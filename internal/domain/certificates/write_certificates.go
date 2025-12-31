@@ -38,10 +38,12 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 		return Certificate{}, errParse
 	}
 
+	timeNow := time.Now()
+
 	newCert := sqlc.CreateCertParams{
 		ID:         uuid.New(),
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		CreatedAt:  timeNow,
+		UpdatedAt:  timeNow,
 		UserID:     uuidId,
 		CertTypeID: apiCertType.Id,
 		CertNumber: params.CertNumber,
@@ -55,6 +57,35 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 	}
 
 	apiCert := MapCertificateDbToDomain(dbCert, apiCertType, apiIssuer)
+
+	if params.Supersedes != nil {
+
+		uuidSupersedes, errParse := uuid.Parse(*params.Supersedes)
+		if errParse != nil {
+			return Certificate{}, errParse
+		}
+
+		predecessor, errPredecessor := GetCertificateFromId(state, ctx, uuidSupersedes.String(), uuidId)
+		if errPredecessor != nil {
+			return Certificate{}, errPredecessor
+		}
+
+		paramsSuccession := sqlc.CreateSuccessionParams{
+			ID:      uuid.New(),
+			OldCert: predecessor.Id,
+			NewCert: dbCert.ID,
+			Reason:  "",
+		}
+
+		_, errSuccession := state.Queries.CreateSuccession(ctx, paramsSuccession)
+		if errSuccession != nil {
+			return Certificate{}, errSuccession
+		}
+
+		apiCert.Predecessors = append(apiCert.Predecessors, predecessor)
+
+	}
+
 	apiCert.calculateExpiryDate()
 
 	return apiCert, nil

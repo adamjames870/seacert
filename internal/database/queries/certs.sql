@@ -5,6 +5,10 @@ VALUES (
        )
 RETURNING *;
 
+-- name: CreateSuccession :one
+INSERT INTO successions (id, old_cert, new_cert, reason) VALUES ($1, $2, $3, $4)
+RETURNING *;
+
 -- name: GetCerts :many
 SELECT
     certificates.id AS id,

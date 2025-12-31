@@ -36,6 +36,15 @@ func (q *Queries) ResetIssuers(ctx context.Context) error {
 	return err
 }
 
+const resetSuccessions = `-- name: ResetSuccessions :exec
+DELETE from successions
+`
+
+func (q *Queries) ResetSuccessions(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetSuccessions)
+	return err
+}
+
 const resetUsers = `-- name: ResetUsers :exec
 DELETE from users
 `

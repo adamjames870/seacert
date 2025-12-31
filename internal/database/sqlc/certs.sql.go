@@ -67,6 +67,35 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 	return i, err
 }
 
+const createSuccession = `-- name: CreateSuccession :one
+INSERT INTO successions (id, old_cert, new_cert, reason) VALUES ($1, $2, $3, $4)
+RETURNING id, new_cert, old_cert, reason
+`
+
+type CreateSuccessionParams struct {
+	ID      uuid.UUID
+	OldCert uuid.UUID
+	NewCert uuid.UUID
+	Reason  string
+}
+
+func (q *Queries) CreateSuccession(ctx context.Context, arg CreateSuccessionParams) (Succession, error) {
+	row := q.db.QueryRowContext(ctx, createSuccession,
+		arg.ID,
+		arg.OldCert,
+		arg.NewCert,
+		arg.Reason,
+	)
+	var i Succession
+	err := row.Scan(
+		&i.ID,
+		&i.NewCert,
+		&i.OldCert,
+		&i.Reason,
+	)
+	return i, err
+}
+
 const deleteCert = `-- name: DeleteCert :exec
 DELETE FROM certificates WHERE id=$1 AND user_id=$2
 `

@@ -33,6 +33,7 @@ type ParamsAddCertificate struct {
 	AlternativeName *string `json:"alternative-name,omitempty"`
 	Remarks         *string `json:"remarks,omitempty"`
 	ManualExpiry    *string `json:"manual-expiry,omitempty"`
+	Supersedes      *string `json:"supersedes,omitempty"`
 }
 
 type ParamsUpdateCertificate struct {

@@ -15,6 +15,11 @@ func HandlerAdminReset(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
+		errResetSuccessions := state.Queries.ResetSuccessions(r.Context())
+		if errResetSuccessions != nil {
+			handlers.RespondWithError(w, 500, "Error resetting successions", errResetSuccessions)
+		}
+
 		errResetCerts := state.Queries.ResetCerts(r.Context())
 		if errResetCerts != nil {
 			handlers.RespondWithError(w, 500, "Error resetting certificates", errResetCerts)

@@ -1,3 +1,6 @@
+-- name: ResetSuccessions :exec
+DELETE from successions;
+
 -- name: ResetCerts :exec
 DELETE from certificates;
 
