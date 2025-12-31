@@ -616,8 +616,6 @@ const Certificates = () => {
                 <AccordionDetails sx={{ p: 0, mt: 2 }}>
                   <List>
                     {retiredCertificates.map((cert) => {
-                      const styles = getStatusStyles('normal');
-                      
                       return (
                         <Paper 
                           key={cert.id} 
