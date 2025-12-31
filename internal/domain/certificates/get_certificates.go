@@ -77,6 +77,18 @@ func GetCertificateFromId(state *internal.ApiState, ctx context.Context, certId 
 	apiCert := MapCertificateViewDbToDomain(certView)
 	apiCert.calculateExpiryDate()
 
+	if certView.HasPredecessors {
+		predecessorIds, errPredecessorIds := state.Queries.GetPredecessors(ctx, apiCert.Id)
+		if errPredecessorIds != nil {
+			return Certificate{}, errPredecessorIds
+		}
+		predecessors, errPredecessors := GetCertificateFromListOfIds(state, ctx, predecessorIds, userId)
+		if errPredecessors != nil {
+			return Certificate{}, errPredecessors
+		}
+		apiCert.Predecessors = predecessors
+	}
+
 	return apiCert, nil
 
 }

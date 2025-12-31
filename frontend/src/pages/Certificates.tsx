@@ -34,6 +34,8 @@ interface Certificate {
   'alternative-name': string;
   remarks: string;
   deleted?: boolean;
+  predecessors?: Certificate[];
+  successors?: Certificate[];
 }
 
 type SortField = 'cert-type-name' | 'issuer-name' | 'issued-date' | 'expiry-date';
@@ -138,6 +140,19 @@ const Certificates = () => {
     }
   };
 
+  const flattenPredecessors = (cert: Certificate): Certificate[] => {
+    if (!cert.predecessors || cert.predecessors.length === 0) return [];
+    
+    let result: Certificate[] = [];
+    for (const pred of cert.predecessors) {
+      // Add direct predecessor
+      result.push(pred);
+      // Recursively add its predecessors
+      result = [...result, ...flattenPredecessors(pred)];
+    }
+    return result;
+  };
+
   const handleRetireClick = (cert: Certificate) => {
     setSelectedCert(cert);
     setRetireDialogOpen(true);
@@ -239,6 +254,11 @@ const Certificates = () => {
   };
 
   const filteredCertificates = certificates.filter((cert) => {
+    // If a certificate has any successors, it should not be displayed in the main list
+    if (cert.successors && cert.successors.length > 0) {
+      return false;
+    }
+
     const query = searchQuery.toLowerCase();
     return (
       cert['cert-type-name'].toLowerCase().includes(query) ||
@@ -506,6 +526,22 @@ const Certificates = () => {
                               </Typography>
                             </Box>
                           )}
+                          {flattenPredecessors(cert).length > 0 && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
+                                Predecessors
+                              </Typography>
+                              <List size="small" sx={{ p: 0 }}>
+                                {flattenPredecessors(cert).map((pred) => (
+                                  <Box key={pred.id} sx={{ mb: 0.5 }}>
+                                    <Typography variant="body2" sx={{ color: styles.textColor }}>
+                                      {pred['cert-type-name']} ({pred['cert-number']}) • Issued: {formatDate(pred['issued-date'])}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </List>
+                            </Box>
+                          )}
                           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                             <Button
                                 variant="outlined"
@@ -692,6 +728,22 @@ const Certificates = () => {
                                   </Typography>
                                 </Box>
                               </Box>
+                              {flattenPredecessors(cert).length > 0 && (
+                                <Box sx={{ mt: 2 }}>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                                    Predecessors
+                                  </Typography>
+                                  <List size="small" sx={{ p: 0 }}>
+                                    {flattenPredecessors(cert).map((pred) => (
+                                      <Box key={pred.id} sx={{ mb: 0.5 }}>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                          {pred['cert-type-name']} ({pred['cert-number']}) • Issued: {formatDate(pred['issued-date'])}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </List>
+                                </Box>
+                              )}
                               <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                                 <Button
                                   variant="outlined"
