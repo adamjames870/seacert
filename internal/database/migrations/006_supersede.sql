@@ -7,10 +7,12 @@ CREATE TABLE successions (
     reason varchar(12) NOT NULL,
     CONSTRAINT fk_new_cert_id
         FOREIGN KEY (new_cert)
-        REFERENCES certificates(id),
+        REFERENCES certificates(id)
+        ON DELETE CASCADE,
     CONSTRAINT fk_old_cert_id
         FOREIGN KEY (old_cert)
         REFERENCES certificates(id)
+        ON DELETE CASCADE
 );
 
 CREATE INDEX idx_successions_new_cert_id ON successions (new_cert);
