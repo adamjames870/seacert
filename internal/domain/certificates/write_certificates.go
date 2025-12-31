@@ -100,6 +100,7 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		AlternativeName: domain.ToNullStringFromPointer(params.AlternativeName),
 		Remarks:         domain.ToNullStringFromPointer(params.Remarks),
 		IssuerID:        domain.ToNullUUIDFromStringPointer(params.IssuerId),
+		Deleted:         domain.ToNullBoolFromPointer(params.Deleted),
 	}
 
 	dbCert, errUpdateCert := state.Queries.UpdateCertificate(ctx, updatedCertificate)

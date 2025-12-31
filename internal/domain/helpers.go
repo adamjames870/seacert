@@ -21,6 +21,13 @@ func ToNullInt32FromPointer(i *int32) sql.NullInt32 {
 	return sql.NullInt32{Int32: *i, Valid: true}
 }
 
+func ToNullBoolFromPointer(b *bool) sql.NullBool {
+	if b == nil {
+		return sql.NullBool{Valid: false}
+	}
+	return sql.NullBool{Bool: *b, Valid: true}
+}
+
 func ToNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }

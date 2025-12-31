@@ -103,3 +103,6 @@ SELECT old_cert FROM successions WHERE new_cert=$1;
 
 -- name: GetSuccessors :many
 SELECT new_cert FROM successions WHERE old_cert=$1;
+
+-- name: DeleteCert :exec
+DELETE FROM certificates WHERE id=$1 AND user_id=$2;

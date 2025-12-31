@@ -27,9 +27,6 @@ func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.
 	for _, cert := range certs {
 		thisCert := MapCertificateViewDbToDomain(cert.ToCertView())
 		thisCert.calculateExpiryDate()
-		if thisCert.Deleted {
-			continue
-		}
 		if cert.HasPredecessors {
 			predecessorIds, errPredecessorIds := state.Queries.GetPredecessors(ctx, thisCert.Id)
 			if errPredecessorIds != nil {

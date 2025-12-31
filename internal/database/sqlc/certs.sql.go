@@ -67,6 +67,20 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 	return i, err
 }
 
+const deleteCert = `-- name: DeleteCert :exec
+DELETE FROM certificates WHERE id=$1 AND user_id=$2
+`
+
+type DeleteCertParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteCert(ctx context.Context, arg DeleteCertParams) error {
+	_, err := q.db.ExecContext(ctx, deleteCert, arg.ID, arg.UserID)
+	return err
+}
+
 const getCertFromId = `-- name: GetCertFromId :one
 SELECT
     certificates.id AS id,

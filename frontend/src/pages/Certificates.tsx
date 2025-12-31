@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton, Button, TextField, InputAdornment, Stack } from '@mui/material';
+import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton, Button, TextField, InputAdornment, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -7,6 +7,9 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
@@ -30,6 +33,7 @@ interface Certificate {
   'expiry-date': string;
   'alternative-name': string;
   remarks: string;
+  deleted?: boolean;
 }
 
 type SortField = 'cert-type-name' | 'issuer-name' | 'issued-date' | 'expiry-date';
@@ -43,6 +47,54 @@ const Certificates = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [retireDialogOpen, setRetireDialogOpen] = useState(false);
+  const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchCertificates = async (retry = true) => {
+    try {
+      if (retry) setLoading(true);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw sessionError;
+      if (!session) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/certificates`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.status === 401 && retry) {
+        const { data: { session: newSession } } = await supabase.auth.refreshSession();
+        if (newSession) {
+          return fetchCertificates(false);
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(`Error fetching certificates: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setCertificates(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load certificates');
+    } finally {
+      if (retry) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCertificates();
+  }, []);
 
   const getExpiryStatus = (expiryDate: string) => {
     if (!expiryDate || new Date(expiryDate).getFullYear() <= 1) return 'normal';
@@ -86,51 +138,105 @@ const Certificates = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchCertificates = async (retry = true) => {
-      try {
-        if (retry) setLoading(true);
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
-        if (!session) {
-          setError('Not authenticated');
-          setLoading(false);
-          return;
-        }
+  const handleRetireClick = (cert: Certificate) => {
+    setSelectedCert(cert);
+    setRetireDialogOpen(true);
+  };
 
-        const response = await fetch(`${API_BASE_URL}/api/certificates`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        });
+  const handleActivateClick = (cert: Certificate) => {
+    setSelectedCert(cert);
+    setActivateDialogOpen(true);
+  };
 
-        if (response.status === 401 && retry) {
-          // Token might be expired, attempt to refresh by calling getSession again
-          // Supabase getSession handles refreshing if it can.
-          // We can also try refreshSession explicitly if needed, but getSession is usually enough.
-          const { data: { session: newSession } } = await supabase.auth.refreshSession();
-          if (newSession) {
-            return fetchCertificates(false);
-          }
-        }
+  const handleDeleteClick = (cert: Certificate) => {
+    setSelectedCert(cert);
+    setDeleteDialogOpen(true);
+  };
 
-        if (!response.ok) {
-          throw new Error(`Error fetching certificates: ${response.statusText}`);
-        }
+  const handleRetireConfirm = async () => {
+    if (!selectedCert) return;
+    setActionLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
 
-        const data = await response.json();
-        setCertificates(data);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load certificates');
-      } finally {
-        if (retry) setLoading(false);
-      }
-    };
+      const response = await fetch(`${API_BASE_URL}/api/certificates`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedCert.id,
+          deleted: true,
+        }),
+      });
 
-    fetchCertificates();
-  }, []);
+      if (!response.ok) throw new Error('Failed to retire certificate');
+
+      setRetireDialogOpen(false);
+      fetchCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleActivateConfirm = async () => {
+    if (!selectedCert) return;
+    setActionLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_BASE_URL}/api/certificates`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedCert.id,
+          deleted: false,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to activate certificate');
+
+      setActivateDialogOpen(false);
+      fetchCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedCert) return;
+    setActionLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_BASE_URL}/api/certificates?id=${selectedCert.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete certificate');
+
+      setDeleteDialogOpen(false);
+      fetchCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const filteredCertificates = certificates.filter((cert) => {
     const query = searchQuery.toLowerCase();
@@ -168,6 +274,9 @@ const Certificates = () => {
 
     return sortOrder === 'asc' ? comparison : -comparison;
   });
+
+  const activeCertificates = sortedCertificates.filter(cert => !cert.deleted);
+  const retiredCertificates = sortedCertificates.filter(cert => cert.deleted);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -272,157 +381,445 @@ const Certificates = () => {
         )}
 
         {!loading && !error && filteredCertificates.length > 0 && (
-          <List sx={{ mt: 2 }}>
-            {sortedCertificates.map((cert) => {
-              const status = getExpiryStatus(cert['expiry-date']);
-              const styles = getStatusStyles(status);
-              
-              return (
-                <Paper 
-                  key={cert.id} 
-                  elevation={0} 
-                  sx={{ 
-                    mb: 2, 
-                    border: 1, 
-                    borderColor: styles.borderColor, 
-                    bgcolor: styles.bgcolor,
-                    overflow: 'hidden' 
-                  }}
-                >
-                  <ListItemButton 
-                    onClick={() => handleExpand(cert.id)}
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: { xs: 'column', sm: 'row' },
-                      justifyContent: 'space-between', 
-                      alignItems: { xs: 'flex-start', sm: 'center' },
-                      p: 2,
-                      gap: 2
-                    }}
-                  >
-                    <ListItemText 
-                      primary={
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
-                          {cert['cert-type-name']}
-                        </Typography>
-                      }
-                      secondary={
-                        <Box component="span" sx={{ color: styles.secondaryTextColor }}>
-                          <Typography component="span" variant="body2" sx={{ color: 'inherit', display: 'block' }}>
-                            Issuer: {cert['issuer-name']}
-                          </Typography>
-                          <Typography component="span" variant="caption" sx={{ color: 'inherit' }}>
-                            {`No. ${cert['cert-number']} — Issued: ${formatDate(cert['issued-date'])}`}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'flex-end' } }}>
-                      {cert['expiry-date'] && new Date(cert['expiry-date']).getFullYear() > 1 && (
-                        <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-                          <Typography variant="caption" sx={{ display: 'block', textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.7rem', color: styles.secondaryTextColor }}>
-                            Expires
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: styles.labelColor }}>
-                            {formatDate(cert['expiry-date'])}
-                          </Typography>
-                        </Box>
-                      )}
-                      <IconButton size="small" sx={{ color: styles.textColor }}>
-                        {expandedId === cert.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                      </IconButton>
-                    </Box>
-                  </ListItemButton>
-                  <Collapse in={expandedId === cert.id} timeout="auto" unmountOnExit>
-                    <Divider sx={{ borderColor: styles.borderColor }} />
-                    <Box sx={{ p: 2, bgcolor: status === 'normal' ? 'action.hover' : 'rgba(0, 0, 0, 0.02)' }}>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
-                            Short Name
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: styles.textColor }}>
-                            {cert['cert-type-short-name'] || 'N/A'}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
-                            STCW Reference
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: styles.textColor }}>
-                            {cert['cert-type-stcw-ref'] || 'N/A'}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
-                            Issuer Country
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: styles.textColor }}>
-                            {getCountryName(cert['issuer-country'])}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
-                            Issuer Website
-                          </Typography>
-                          {cert['issuer-website'] ? (
-                            <Link href={cert['issuer-website'].startsWith('http') ? cert['issuer-website'] : `https://${cert['issuer-website']}`} target="_blank" rel="noopener" variant="body2" sx={{ color: styles.labelColor }}>
-                              {cert['issuer-website']}
-                            </Link>
-                          ) : (
-                            <Typography variant="body2" sx={{ color: styles.textColor }}>N/A</Typography>
+          <>
+            {activeCertificates.length > 0 ? (
+              <List sx={{ mt: 2 }}>
+                {activeCertificates.map((cert) => {
+                  const status = getExpiryStatus(cert['expiry-date']);
+                  const styles = getStatusStyles(status);
+                  
+                  return (
+                    <Paper 
+                      key={cert.id} 
+                      elevation={0} 
+                      sx={{ 
+                        mb: 2, 
+                        border: 1, 
+                        borderColor: styles.borderColor, 
+                        bgcolor: styles.bgcolor,
+                        overflow: 'hidden' 
+                      }}
+                    >
+                      <ListItemButton 
+                        onClick={() => handleExpand(cert.id)}
+                        sx={{ 
+                          display: 'flex', 
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          justifyContent: 'space-between', 
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          p: 2,
+                          gap: 2
+                        }}
+                      >
+                        <ListItemText 
+                          primary={
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
+                              {cert['cert-type-name']}
+                            </Typography>
+                          }
+                          secondary={
+                            <Box component="span" sx={{ color: styles.secondaryTextColor }}>
+                              <Typography component="span" variant="body2" sx={{ color: 'inherit', display: 'block' }}>
+                                Issuer: {cert['issuer-name']}
+                              </Typography>
+                              <Typography component="span" variant="caption" sx={{ color: 'inherit' }}>
+                                {`No. ${cert['cert-number']} — Issued: ${formatDate(cert['issued-date'])}`}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'flex-end' } }}>
+                          {cert['expiry-date'] && new Date(cert['expiry-date']).getFullYear() > 1 && (
+                            <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                              <Typography variant="caption" sx={{ display: 'block', textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.7rem', color: styles.secondaryTextColor }}>
+                                Expires
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontWeight: 'bold', color: styles.labelColor }}>
+                                {formatDate(cert['expiry-date'])}
+                              </Typography>
+                            </Box>
                           )}
-                          <Box sx={{ mt: 0.5 }}>
-                            <Link 
-                              component={RouterLink} 
-                              to={`/edit-issuer/${cert['issuer-id']}`} 
-                              state={{ from: 'certificates' }}
-                              variant="caption"
-                              sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, textDecoration: 'none', color: styles.labelColor }}
+                          <IconButton size="small" sx={{ color: styles.textColor }}>
+                            {expandedId === cert.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          </IconButton>
+                        </Box>
+                      </ListItemButton>
+                      <Collapse in={expandedId === cert.id} timeout="auto" unmountOnExit>
+                        <Divider sx={{ borderColor: styles.borderColor }} />
+                        <Box sx={{ p: 2, bgcolor: status === 'normal' ? 'action.hover' : 'rgba(0, 0, 0, 0.02)' }}>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                            <Box>
+                              <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
+                                Short Name
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: styles.textColor }}>
+                                {cert['cert-type-short-name'] || 'N/A'}
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
+                                STCW Reference
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: styles.textColor }}>
+                                {cert['cert-type-stcw-ref'] || 'N/A'}
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
+                                Issuer Country
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: styles.textColor }}>
+                                {getCountryName(cert['issuer-country'])}
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
+                                Issuer Website
+                              </Typography>
+                              {cert['issuer-website'] ? (
+                                <Link href={cert['issuer-website'].startsWith('http') ? cert['issuer-website'] : `https://${cert['issuer-website']}`} target="_blank" rel="noopener" variant="body2" sx={{ color: styles.labelColor }}>
+                                  {cert['issuer-website']}
+                                </Link>
+                              ) : (
+                                <Typography variant="body2" sx={{ color: styles.textColor }}>N/A</Typography>
+                              )}
+                              <Box sx={{ mt: 0.5 }}>
+                                <Link 
+                                  component={RouterLink} 
+                                  to={`/edit-issuer/${cert['issuer-id']}`} 
+                                  state={{ from: 'certificates' }}
+                                  variant="caption"
+                                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, textDecoration: 'none', color: styles.labelColor }}
+                                >
+                                  <EditIcon sx={{ fontSize: '0.8rem' }} /> Edit Issuer
+                                </Link>
+                              </Box>
+                            </Box>
+                          </Box>
+                          {cert.remarks && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
+                                Remarks
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: styles.textColor }}>
+                                {cert.remarks}
+                              </Typography>
+                            </Box>
+                          )}
+                          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<EditIcon />}
+                                component={RouterLink}
+                                to={`/update-certificate/${cert.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                sx={{
+                                  color: styles.textColor,
+                                  borderColor: styles.borderColor,
+                                  '&:hover': {
+                                    borderColor: styles.textColor,
+                                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                  }
+                                }}
                             >
-                              <EditIcon sx={{ fontSize: '0.8rem' }} /> Edit Issuer
-                            </Link>
+                              Update
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<ArchiveIcon />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRetireClick(cert);
+                              }}
+                              sx={{ 
+                                color: styles.textColor, 
+                                borderColor: styles.borderColor,
+                                '&:hover': {
+                                  borderColor: styles.textColor,
+                                  bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                              }}
+                            >
+                              Retire
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="error"
+                              startIcon={<DeleteIcon />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(cert);
+                              }}
+                              sx={{ 
+                                '&:hover': {
+                                  bgcolor: 'error.main',
+                                  color: 'white'
+                                }
+                              }}
+                            >
+                              Delete Permanently
+                            </Button>
                           </Box>
                         </Box>
-                      </Box>
-                      {cert.remarks && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
-                            Remarks
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: styles.textColor }}>
-                            {cert.remarks}
-                          </Typography>
-                        </Box>
-                      )}
-                      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<EditIcon />}
-                          component={RouterLink}
-                          to={`/update-certificate/${cert.id}`}
-                          onClick={(e) => e.stopPropagation()}
+                      </Collapse>
+                    </Paper>
+                  );
+                })}
+              </List>
+            ) : (
+              <Typography variant="body1" sx={{ mt: 2 }}>
+                No active certificates found matching your search.
+              </Typography>
+            )}
+
+            {retiredCertificates.length > 0 && (
+              <Accordion 
+                sx={{ 
+                  mt: 4, 
+                  bgcolor: 'transparent', 
+                  boxShadow: 'none', 
+                  '&:before': { display: 'none' },
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '8px !important',
+                  overflow: 'hidden'
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  sx={{ 
+                    bgcolor: 'action.hover',
+                    '& .MuiAccordionSummary-content': { 
+                      m: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    },
+                    '&.Mui-expanded': { 
+                      minHeight: 'unset',
+                      borderBottom: '1px solid',
+                      borderColor: 'divider'
+                    },
+                    '&:hover': {
+                      bgcolor: 'action.selected'
+                    }
+                  }}
+                >
+                  <ArchiveIcon sx={{ color: 'text.secondary', fontSize: '1.2rem' }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                    Retired Certificates ({retiredCertificates.length})
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0, mt: 2 }}>
+                  <List>
+                    {retiredCertificates.map((cert) => {
+                      const styles = getStatusStyles('normal');
+                      
+                      return (
+                        <Paper 
+                          key={cert.id} 
+                          elevation={0} 
                           sx={{ 
-                            color: styles.textColor, 
-                            borderColor: styles.borderColor,
-                            '&:hover': {
-                              borderColor: styles.textColor,
-                              bgcolor: 'rgba(0, 0, 0, 0.04)'
-                            }
+                            mb: 2, 
+                            border: 1, 
+                            borderColor: 'divider', 
+                            bgcolor: 'action.hover',
+                            opacity: 0.8,
+                            overflow: 'hidden' 
                           }}
                         >
-                          Update
-                        </Button>
-                      </Box>
-                    </Box>
-                  </Collapse>
-                </Paper>
-              );
-            })}
-          </List>
+                          <ListItemButton 
+                            onClick={() => handleExpand(cert.id)}
+                            sx={{ 
+                              display: 'flex', 
+                              flexDirection: { xs: 'column', sm: 'row' },
+                              justifyContent: 'space-between', 
+                              alignItems: { xs: 'flex-start', sm: 'center' },
+                              p: 2,
+                              gap: 2
+                            }}
+                          >
+                            <ListItemText 
+                              primary={
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                  {cert['cert-type-name']}
+                                </Typography>
+                              }
+                              secondary={
+                                <Box component="span" sx={{ color: 'text.secondary' }}>
+                                  <Typography component="span" variant="body2" sx={{ color: 'inherit', display: 'block' }}>
+                                    Issuer: {cert['issuer-name']}
+                                  </Typography>
+                                  <Typography component="span" variant="caption" sx={{ color: 'inherit' }}>
+                                    {`No. ${cert['cert-number']} — Issued: ${formatDate(cert['issued-date'])}`}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' }, justifyContent: 'flex-end' }}>
+                              <IconButton size="small" sx={{ color: 'text.secondary' }}>
+                                {expandedId === cert.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                              </IconButton>
+                            </Box>
+                          </ListItemButton>
+                          <Collapse in={expandedId === cert.id} timeout="auto" unmountOnExit>
+                            <Divider />
+                            <Box sx={{ p: 2, bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
+                              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                                <Box>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                                    Short Name
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {cert['cert-type-short-name'] || 'N/A'}
+                                  </Typography>
+                                </Box>
+                                <Box>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                                    STCW Reference
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {cert['cert-type-stcw-ref'] || 'N/A'}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ gridColumn: { sm: 'span 2' } }}>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                                    Remarks
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {cert.remarks || 'No remarks provided.'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<UnarchiveIcon />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleActivateClick(cert);
+                                  }}
+                                  sx={{
+                                    color: 'primary.main',
+                                    borderColor: 'primary.main',
+                                    '&:hover': {
+                                      bgcolor: 'primary.main',
+                                      color: 'white'
+                                    }
+                                  }}
+                                >
+                                  Make Active
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  color="error"
+                                  startIcon={<DeleteIcon />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteClick(cert);
+                                  }}
+                                  sx={{ 
+                                    '&:hover': {
+                                      bgcolor: 'error.main',
+                                      color: 'white'
+                                    }
+                                  }}
+                                >
+                                  Delete Permanently
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<EditIcon />}
+                                  component={RouterLink}
+                                  to={`/update-certificate/${cert.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Edit
+                                </Button>
+                              </Box>
+                            </Box>
+                          </Collapse>
+                        </Paper>
+                      );
+                    })}
+                  </List>
+                </AccordionDetails>
+              </Accordion>
+            )}
+          </>
         )}
       </Box>
+
+      {/* Retire Confirmation Dialog */}
+      <Dialog
+        open={retireDialogOpen}
+        onClose={() => !actionLoading && setRetireDialogOpen(false)}
+      >
+        <DialogTitle>Retire Certificate</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to retire certificate "{selectedCert?.['cert-type-name']}"?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRetireDialogOpen(false)} disabled={actionLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleRetireConfirm} color="primary" autoFocus disabled={actionLoading}>
+            {actionLoading ? <CircularProgress size={24} /> : 'Retire'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Activate Confirmation Dialog */}
+      <Dialog
+        open={activateDialogOpen}
+        onClose={() => !actionLoading && setActivateDialogOpen(false)}
+      >
+        <DialogTitle>Activate Certificate</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Do you want to restore certificate "{selectedCert?.['cert-type-name']}" to your active list?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setActivateDialogOpen(false)} disabled={actionLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleActivateConfirm} color="primary" autoFocus disabled={actionLoading}>
+            {actionLoading ? <CircularProgress size={24} /> : 'Restore'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => !actionLoading && setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Certificate</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to <strong>permanently delete</strong> certificate "{selectedCert?.['cert-type-name']}"?
+            <br /><br />
+            <strong>Warning: This action cannot be undone.</strong>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" autoFocus disabled={actionLoading}>
+            {actionLoading ? <CircularProgress size={24} /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

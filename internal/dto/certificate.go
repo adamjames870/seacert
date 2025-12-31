@@ -45,4 +45,5 @@ type ParamsUpdateCertificate struct {
 	AlternativeName *string `json:"alternative-name,omitempty"`
 	Remarks         *string `json:"remarks,omitempty"`
 	ManualExpiry    *string `json:"manual-expiry,omitempty"`
+	Deleted         *bool   `json:"deleted,omitempty"`
 }
