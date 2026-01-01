@@ -6,6 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type SuccessionReason string
+
+const (
+	ReasonUpdated  SuccessionReason = "updated"
+	ReasonReplaced SuccessionReason = "replaced"
+)
+
 type CertificateType struct {
 	Id                   uuid.UUID `json:"id"`
 	CreatedAt            time.Time `json:"created-at"`
