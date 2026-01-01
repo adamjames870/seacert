@@ -7,3 +7,7 @@ sql:
       go:
         package: "sqlc"
         out: "internal/database/sqlc"
+        overrides:
+          - db_type: "certificate_succession"
+            go_type:
+              type: "SuccessionReason"

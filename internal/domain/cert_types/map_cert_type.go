@@ -1,6 +1,8 @@
 ﻿package cert_types
 
 import (
+	"errors"
+
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/dto"
@@ -65,4 +67,13 @@ func MapCertificateTypeDomainToDb(certType CertificateType) sqlc.CertificateType
 		NormalValidityMonths: normalValidity,
 	}
 
+}
+func SuccessionReasonDbToDomain(reason sqlc.SuccessionReason) (SuccessionReason, error) {
+	switch reason {
+	case sqlc.SuccessionReplaced:
+		return ReasonReplaced, nil
+	case sqlc.SuccessionUpdated:
+		return ReasonUpdated, nil
+	}
+	return "", errors.New("unknown succession reason")
 }

@@ -20,8 +20,12 @@ type Certificate struct {
 	AlternativeName   string        `json:"alternative-name"`
 	Remarks           string        `json:"remarks"`
 	Deleted           bool          `json:"deleted"`
-	Successors        []Certificate `json:"successors"`
-	Predecessors      []Certificate `json:"predecessors"`
+	Predecessors      []Predecessor `json:"predecessors"`
+}
+
+type Predecessor struct {
+	Cert   Certificate `json:"certificate"`
+	Reason string      `json:"reason"`
 }
 
 type ParamsAddCertificate struct {

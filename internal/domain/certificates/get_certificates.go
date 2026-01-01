@@ -32,22 +32,11 @@ func GetCertificates(state *internal.ApiState, ctx context.Context, userId uuid.
 			if errPredecessorIds != nil {
 				return nil, errPredecessorIds
 			}
-			predecessors, errPredecessors := GetCertificateFromListOfIds(state, ctx, predecessorIds, userId)
+			predecessors, errPredecessors := GetPredecessorsFromListOfIds(state, ctx, predecessorIds, userId)
 			if errPredecessors != nil {
 				return nil, errPredecessors
 			}
 			thisCert.Predecessors = predecessors
-		}
-		if cert.HasSuccessor {
-			successorIds, errSuccessorIds := state.Queries.GetSuccessors(ctx, thisCert.Id)
-			if errSuccessorIds != nil {
-				return nil, errSuccessorIds
-			}
-			successors, errSuccessors := GetCertificateFromListOfIds(state, ctx, successorIds, userId)
-			if errSuccessors != nil {
-				return nil, errSuccessors
-			}
-			thisCert.Successors = successors
 		}
 		apiCerts = append(apiCerts, thisCert)
 	}
@@ -82,7 +71,7 @@ func GetCertificateFromId(state *internal.ApiState, ctx context.Context, certId 
 		if errPredecessorIds != nil {
 			return Certificate{}, errPredecessorIds
 		}
-		predecessors, errPredecessors := GetCertificateFromListOfIds(state, ctx, predecessorIds, userId)
+		predecessors, errPredecessors := GetPredecessorsFromListOfIds(state, ctx, predecessorIds, userId)
 		if errPredecessors != nil {
 			return Certificate{}, errPredecessors
 		}
@@ -93,15 +82,22 @@ func GetCertificateFromId(state *internal.ApiState, ctx context.Context, certId 
 
 }
 
-func GetCertificateFromListOfIds(state *internal.ApiState, ctx context.Context, certIds []uuid.UUID, userId uuid.UUID) ([]Certificate, error) {
+func GetPredecessorsFromListOfIds(state *internal.ApiState, ctx context.Context, predecessors []sqlc.GetPredecessorsRow, userId uuid.UUID) ([]Predecesor, error) {
 
-	certs := make([]Certificate, 0, len(certIds))
-	for _, certId := range certIds {
-		cert, errCert := GetCertificateFromId(state, ctx, certId.String(), userId)
+	certs := make([]Predecesor, 0, len(predecessors))
+	for _, predecessor := range predecessors {
+		cert, errCert := GetCertificateFromId(state, ctx, predecessor.OldCert.String(), userId)
 		if errCert != nil {
 			return nil, errCert
 		}
-		certs = append(certs, cert)
+		replaceReason, errReplaceReason := cert_types.SuccessionReasonDbToDomain(predecessor.Reason)
+		if errReplaceReason != nil {
+			return nil, errReplaceReason
+		}
+		certs = append(certs, Predecesor{
+			Cert:          cert,
+			ReplaceReason: replaceReason,
+		})
 	}
 	return certs, nil
 

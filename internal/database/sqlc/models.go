@@ -36,6 +36,15 @@ type CertificateType struct {
 	NormalValidityMonths sql.NullInt32
 }
 
+type CertificateTypeSuccession struct {
+	ID                  uuid.UUID
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	ReplacingCertType   uuid.UUID
+	ReplaceableCertType uuid.UUID
+	ReplaceReason       SuccessionReason
+}
+
 type Issuer struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
@@ -49,7 +58,7 @@ type Succession struct {
 	ID      uuid.UUID
 	NewCert uuid.UUID
 	OldCert uuid.UUID
-	Reason  string
+	Reason  SuccessionReason
 }
 
 type User struct {

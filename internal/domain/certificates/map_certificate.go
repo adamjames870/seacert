@@ -86,16 +86,11 @@ func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 		AlternativeName:   cert.AlternativeName,
 		Remarks:           cert.Remarks,
 		Deleted:           cert.Deleted,
-		Successors:        []dto.Certificate{},
-		Predecessors:      []dto.Certificate{},
-	}
-
-	for _, successor := range cert.Successors {
-		rv.Successors = append(rv.Successors, MapCertificateDomainToDto(successor))
+		Predecessors:      []dto.Predecessor{},
 	}
 
 	for _, predecessor := range cert.Predecessors {
-		rv.Predecessors = append(rv.Predecessors, MapCertificateDomainToDto(predecessor))
+		rv.Predecessors = append(rv.Predecessors, MapPredecessorDomainToDto(predecessor))
 	}
 
 	return rv
@@ -133,16 +128,11 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		AlternativeName: cert.AlternativeName,
 		Remarks:         cert.Remarks,
 		Deleted:         cert.Deleted,
-		Successors:      []Certificate{},
-		Predecessors:    []Certificate{},
-	}
-
-	for _, successor := range cert.Successors {
-		rv.Successors = append(rv.Successors, MapCertificateDtoToDomain(successor))
+		Predecessors:    []Predecesor{},
 	}
 
 	for _, predecessor := range cert.Predecessors {
-		rv.Predecessors = append(rv.Predecessors, MapCertificateDtoToDomain(predecessor))
+		rv.Predecessors = append(rv.Predecessors, MapPredecessorDtoToDomain(predecessor))
 	}
 
 	return rv
@@ -167,4 +157,20 @@ func MapCertificateDomainToDb(cert Certificate) sqlc.Certificate {
 		Deleted:         cert.Deleted,
 	}
 
+}
+
+func MapPredecessorDomainToDto(predecessor Predecesor) dto.Predecessor {
+
+	return dto.Predecessor{
+		Cert:   MapCertificateDomainToDto(predecessor.Cert),
+		Reason: string(predecessor.ReplaceReason),
+	}
+
+}
+
+func MapPredecessorDtoToDomain(predecessor dto.Predecessor) Predecesor {
+	return Predecesor{
+		Cert:          MapCertificateDtoToDomain(predecessor.Cert),
+		ReplaceReason: cert_types.SuccessionReason(predecessor.Reason),
+	}
 }
