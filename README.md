@@ -6,11 +6,28 @@ SeaCert is a certificate management system designed for maritime certifications.
 
 - **Certificate Management**: Comprehensive tracking of maritime certifications, including issue dates, certificate numbers, and remarks.
 - **Automatic Expiry Tracking**: Intelligent calculation of certificate expiry based on predefined validity periods, with support for manual overrides.
+- **Certificate Succession**: Support for superseding existing certificates (e.g., when a certificate is renewed or replaced), maintaining a clear history of certification.
 - **Categorization**: Organize certifications by type (e.g., STCW references) and track authorized issuers.
 - **Secure Authentication**: Integration with Supabase for robust user authentication and access control.
 - **Admin Dashboard**: Specialized endpoints for health monitoring, database statistics, and user management.
 - **Type-Safe Backend**: High-performance API built with Go and `sqlc` for reliable data persistence.
 - **Modern User Interface**: Responsive React frontend for managing certificates on any device.
+
+## Frontend
+
+The SeaCert frontend is a modern Single Page Application (SPA) built with:
+
+- **React 19**: A powerful library for building user interfaces.
+- **TypeScript**: Ensuring type safety and better developer experience.
+- **Vite**: A fast build tool and development server.
+
+### Key Frontend Features
+
+- **Certificate Dashboard**: A centralized view of all certificates with sorting capabilities by type, number, issuer, and date.
+- **Responsive Design**: Optimized for various screen sizes, ensuring accessibility on mobile and desktop.
+- **Real-time Updates**: Manual refresh functionality to ensure the latest data is always visible.
+- **Formatted Data Display**: Automatically formats dates and types for better readability.
+- **Authentication Flow**: Full integration with Supabase for secure login and account management.
 
 ## Project Structure
 
@@ -71,7 +88,8 @@ The SeaCert API provides endpoints for both administrative tasks and certificate
     "forename": "John",
     "surname": "Doe",
     "email": "john.doe@example.com",
-    "nationality": "British"
+    "nationality": "British",
+    "role": "user"
   }
   ```
 
@@ -105,7 +123,14 @@ The SeaCert API provides endpoints for both administrative tasks and certificate
       "issuer-name": "MCA",
       "issued-date": "2023-01-01T00:00:00Z",
       "expiry-date": "2028-01-01T00:00:00Z",
-      "remarks": "..."
+      "remarks": "...",
+      "has-successors": false,
+      "predecessors": [
+        {
+          "certificate": { "id": "old-uuid", "cert-number": "..." },
+          "reason": "updated"
+        }
+      ]
     }
   ]
   ```
@@ -121,7 +146,9 @@ The SeaCert API provides endpoints for both administrative tasks and certificate
     "issued-date": "2023-01-01",
     "alternative-name": "Optional Name",
     "remarks": "Optional Remarks",
-    "manual-expiry": "2028-01-01"
+    "manual-expiry": "2028-01-01",
+    "supersedes": "uuid-of-old-cert",
+    "supersede-reason": "updated"
   }
   ```
 - **Response**: Created certificate object.
