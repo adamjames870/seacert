@@ -22,6 +22,7 @@ type Certificate struct {
 	ManualExpiry    time.Time
 	Deleted         bool
 	Predecessors    []Predecesor
+	HasSuccessors   bool
 }
 
 type Predecesor struct {

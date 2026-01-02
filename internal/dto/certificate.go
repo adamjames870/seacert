@@ -20,6 +20,7 @@ type Certificate struct {
 	AlternativeName   string        `json:"alternative-name"`
 	Remarks           string        `json:"remarks"`
 	Deleted           bool          `json:"deleted"`
+	HasSuccessors     bool          `json:"has-successors"`
 	Predecessors      []Predecessor `json:"predecessors"`
 }
 

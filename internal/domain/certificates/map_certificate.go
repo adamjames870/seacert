@@ -59,6 +59,7 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 		Remarks:         dbCert.Remarks.String,
 		ManualExpiry:    dbCert.ManualExpiry.Time,
 		Deleted:         dbCert.Deleted,
+		HasSuccessors:   dbCert.HasSuccessor,
 	}
 
 	apiCert.calculateExpiryDate()
@@ -87,6 +88,7 @@ func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 		Remarks:           cert.Remarks,
 		Deleted:           cert.Deleted,
 		Predecessors:      []dto.Predecessor{},
+		HasSuccessors:     cert.HasSuccessors,
 	}
 
 	for _, predecessor := range cert.Predecessors {

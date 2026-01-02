@@ -17,6 +17,11 @@ import { formatDate } from '../utils/dateUtils';
 import { getCountryName } from '../utils/countryData';
 import { Link as RouterLink } from 'react-router-dom';
 
+interface Predecessor {
+  reason: string;
+  certificate: Certificate;
+}
+
 interface Certificate {
   id: string;
   'created-at': string;
@@ -35,8 +40,8 @@ interface Certificate {
   'alternative-name': string;
   remarks: string;
   deleted?: boolean;
-  predecessors?: Certificate[];
-  successors?: Certificate[];
+  predecessors?: Predecessor[];
+  'has-successors'?: boolean;
 }
 
 type SortField = 'cert-type-name' | 'issuer-name' | 'issued-date' | 'expiry-date';
@@ -141,15 +146,16 @@ const Certificates = () => {
     }
   };
 
-  const flattenPredecessors = (cert: Certificate): Certificate[] => {
+  const flattenPredecessors = (cert: Certificate): { reason: string, certificate: Certificate }[] => {
     if (!cert.predecessors || cert.predecessors.length === 0) return [];
     
-    let result: Certificate[] = [];
+    let result: { reason: string, certificate: Certificate }[] = [];
     for (const pred of cert.predecessors) {
       // Add direct predecessor
       result.push(pred);
       // Recursively add its predecessors
-      result = [...result, ...flattenPredecessors(pred)];
+      const subPredecessors = flattenPredecessors(pred.certificate);
+      result = [...result, ...subPredecessors];
     }
     return result;
   };
@@ -256,7 +262,7 @@ const Certificates = () => {
 
   const filteredCertificates = certificates.filter((cert) => {
     // If a certificate has any successors, it should not be displayed in the main list
-    if (cert.successors && cert.successors.length > 0) {
+    if (cert['has-successors']) {
       return false;
     }
 
@@ -533,10 +539,10 @@ const Certificates = () => {
                                 Predecessors
                               </Typography>
                               <List sx={{ p: 0 }}>
-                                {flattenPredecessors(cert).map((pred) => (
-                                  <Box key={pred.id} sx={{ mb: 0.5 }}>
+                                {flattenPredecessors(cert).map((pred, idx) => (
+                                  <Box key={`${pred.certificate.id}-${idx}`} sx={{ mb: 0.5 }}>
                                     <Typography variant="body2" sx={{ color: styles.textColor }}>
-                                      {pred['cert-type-name']} ({pred['cert-number']}) • Issued: {formatDate(pred['issued-date'])}
+                                      {pred.certificate['cert-type-name']} ({pred.certificate['cert-number']}) • Issued: {formatDate(pred.certificate['issued-date'])} {pred.reason && `• Reason: ${pred.reason}`}
                                     </Typography>
                                   </Box>
                                 ))}
@@ -781,10 +787,10 @@ const Certificates = () => {
                                     Predecessors
                                   </Typography>
                                   <List sx={{ p: 0 }}>
-                                    {flattenPredecessors(cert).map((pred) => (
-                                      <Box key={pred.id} sx={{ mb: 0.5 }}>
+                                    {flattenPredecessors(cert).map((pred, idx) => (
+                                      <Box key={`${pred.certificate.id}-${idx}`} sx={{ mb: 0.5 }}>
                                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                          {pred['cert-type-name']} ({pred['cert-number']}) • Issued: {formatDate(pred['issued-date'])}
+                                          {pred.certificate['cert-type-name']} ({pred.certificate['cert-number']}) • Issued: {formatDate(pred.certificate['issued-date'])} {pred.reason && `• Reason: ${pred.reason}`}
                                         </Typography>
                                       </Box>
                                     ))}
