@@ -2,6 +2,10 @@
 
 SeaCert is a certificate management system designed for maritime certifications. It consists of a Go backend and a React frontend.
 
+You can always access the test server here. Because it is a test server, it may take some time to load (sleeping), and the datatbase may be reset at any time.
+- API: https://seacert-api.onrender.com
+- Frontend: https://seacert.onrender.com
+
 ## Features
 
 - **Certificate Management**: Comprehensive tracking of maritime certifications, including issue dates, certificate numbers, and remarks.
