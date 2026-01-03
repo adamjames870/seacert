@@ -7,6 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type SuccessionReason string
+
+const (
+	ReasonUpdated  SuccessionReason = "updated"
+	ReasonReplaced SuccessionReason = "replaced"
+)
+
 func ToNullStringFromPointer(s *string) sql.NullString {
 	if s == nil {
 		return sql.NullString{Valid: false}

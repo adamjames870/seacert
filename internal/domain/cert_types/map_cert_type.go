@@ -68,12 +68,12 @@ func MapCertificateTypeDomainToDb(certType CertificateType) sqlc.CertificateType
 	}
 
 }
-func SuccessionReasonDbToDomain(reason sqlc.SuccessionReason) (SuccessionReason, error) {
+func SuccessionReasonDbToDomain(reason sqlc.SuccessionReason) (domain.SuccessionReason, error) {
 	switch reason {
 	case sqlc.SuccessionReplaced:
-		return ReasonReplaced, nil
+		return domain.ReasonReplaced, nil
 	case sqlc.SuccessionUpdated:
-		return ReasonUpdated, nil
+		return domain.ReasonUpdated, nil
 	}
 	return "", errors.New("unknown succession reason")
 }

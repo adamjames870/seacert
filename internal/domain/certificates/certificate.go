@@ -3,6 +3,7 @@
 import (
 	"time"
 
+	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/google/uuid"
@@ -27,5 +28,5 @@ type Certificate struct {
 
 type Predecesor struct {
 	Cert          Certificate
-	ReplaceReason cert_types.SuccessionReason
+	ReplaceReason domain.SuccessionReason
 }
