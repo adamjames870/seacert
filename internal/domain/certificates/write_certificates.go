@@ -88,7 +88,7 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 
 		predecessor := Predecesor{
 			Cert:          predecessorCert,
-			ReplaceReason: cert_types.SuccessionReason(paramsSuccession.Reason),
+			ReplaceReason: domain.SuccessionReason(paramsSuccession.Reason),
 		}
 
 		apiCert.Predecessors = append(apiCert.Predecessors, predecessor)

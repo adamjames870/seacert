@@ -173,6 +173,6 @@ func MapPredecessorDomainToDto(predecessor Predecesor) dto.Predecessor {
 func MapPredecessorDtoToDomain(predecessor dto.Predecessor) Predecesor {
 	return Predecesor{
 		Cert:          MapCertificateDtoToDomain(predecessor.Cert),
-		ReplaceReason: cert_types.SuccessionReason(predecessor.Reason),
+		ReplaceReason: domain.SuccessionReason(predecessor.Reason),
 	}
 }
