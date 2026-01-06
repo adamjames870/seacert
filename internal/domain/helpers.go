@@ -14,6 +14,17 @@ const (
 	ReasonReplaced SuccessionReason = "replaced"
 )
 
+func SuccessionReasonFromString(reason string) SuccessionReason {
+	switch reason {
+	case "updated":
+		return ReasonUpdated
+	case "replaced":
+		return ReasonReplaced
+	default:
+		return ""
+	}
+}
+
 func ToNullStringFromPointer(s *string) sql.NullString {
 	if s == nil {
 		return sql.NullString{Valid: false}
