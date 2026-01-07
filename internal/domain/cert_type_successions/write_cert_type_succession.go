@@ -5,6 +5,7 @@ import (
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
+	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
 )
@@ -38,6 +39,18 @@ func WriteNewCertTypeSuccession(state *internal.ApiState, ctx context.Context, p
 		return CertTypeSuccession{}, errWriteNewSuccession
 	}
 
-	apiSuccession :=
+	replacing, errReplacing := cert_types.GetCertTypeFromId(state, ctx, idReplacingType.String())
+	if errReplacing != nil {
+		return CertTypeSuccession{}, errReplacing
+	}
+
+	replaceable, errReplaceable := cert_types.GetCertTypeFromId(state, ctx, idReplaceableType.String())
+	if errReplaceable != nil {
+		return CertTypeSuccession{}, errReplaceable
+	}
+
+	apiSuccession := MapSuccessionDbToDomain(dbSuccession, replacing, replaceable)
+
+	return apiSuccession, nil
 
 }

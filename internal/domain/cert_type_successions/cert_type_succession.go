@@ -16,3 +16,14 @@ type CertTypeSuccession struct {
 	ReplaceableType cert_types.CertificateType
 	ReplaceReason   domain.SuccessionReason
 }
+
+type CertTypeSuccessions struct {
+	CertType      cert_types.CertificateType
+	CanReplace    []Succession
+	ReplaceableBy []Succession
+}
+
+type Succession struct {
+	CertType cert_types.CertificateType
+	Reason   domain.SuccessionReason
+}

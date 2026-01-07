@@ -103,6 +103,54 @@ func (q *Queries) GetAllReplaceableByMe(ctx context.Context, replacingCertType u
 	return items, nil
 }
 
+const getAllThatCanReplaceMe = `-- name: GetAllThatCanReplaceMe :many
+SELECT
+    succession.id, type.id, type.name, succession.replace_reason
+FROM
+    certificate_types type
+        INNER JOIN
+    certificate_type_successions succession
+    ON
+        succession.replaceable_cert_type = type.id
+WHERE
+    succession.replaceable_cert_type = $1
+`
+
+type GetAllThatCanReplaceMeRow struct {
+	ID            uuid.UUID
+	ID_2          uuid.UUID
+	Name          string
+	ReplaceReason SuccessionReason
+}
+
+func (q *Queries) GetAllThatCanReplaceMe(ctx context.Context, replaceableCertType uuid.UUID) ([]GetAllThatCanReplaceMeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllThatCanReplaceMe, replaceableCertType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllThatCanReplaceMeRow
+	for rows.Next() {
+		var i GetAllThatCanReplaceMeRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ID_2,
+			&i.Name,
+			&i.ReplaceReason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getReplaceSuccessions = `-- name: GetReplaceSuccessions :many
 SELECT
     succession.id, type.id, type.name

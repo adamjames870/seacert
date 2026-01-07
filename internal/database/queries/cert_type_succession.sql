@@ -48,3 +48,15 @@ ON
     succession.replacing_cert_type = type.id
 WHERE
     succession.replacing_cert_type = $1;
+
+-- name: GetAllThatCanReplaceMe :many
+SELECT
+    succession.id, type.id, type.name, succession.replace_reason
+FROM
+    certificate_types type
+        INNER JOIN
+    certificate_type_successions succession
+    ON
+        succession.replaceable_cert_type = type.id
+WHERE
+    succession.replaceable_cert_type = $1;

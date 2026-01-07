@@ -6,7 +6,7 @@ import (
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 )
 
-func MapSuccessionDbToDomain(succession sqlc.CertificateTypeSuccession, replacing sqlc.CertificateType, replaceable sqlc.CertificateType) CertTypeSuccession {
+func MapSuccessionDbToDomain(succession sqlc.CertificateTypeSuccession, replacing cert_types.CertificateType, replaceable cert_types.CertificateType) CertTypeSuccession {
 
 	reason := domain.SuccessionReasonFromString(succession.ReplaceReason.String())
 
@@ -14,8 +14,8 @@ func MapSuccessionDbToDomain(succession sqlc.CertificateTypeSuccession, replacin
 		Id:              succession.ID,
 		CreatedAt:       succession.CreatedAt,
 		UpdatedAt:       succession.UpdatedAt,
-		ReplacingType:   cert_types.MapCertificateTypeDbToDomain(replacing),
-		ReplaceableType: cert_types.MapCertificateTypeDbToDomain(replaceable),
+		ReplacingType:   replacing,
+		ReplaceableType: replaceable,
 		ReplaceReason:   reason,
 	}
 
