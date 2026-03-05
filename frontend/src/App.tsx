@@ -12,7 +12,9 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  CircularProgress
+  CircularProgress,
+  Container,
+  Link
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
@@ -281,6 +283,17 @@ function App() {
         
         <Route path="/edit-account" element={<EditAccount />} />
       </Routes>
+      
+      <Box component="footer" sx={{ py: 3, borderTop: 1, borderColor: 'divider', mt: 'auto', bgcolor: 'background.paper' }}>
+        <Container maxWidth="lg">
+          <Typography variant="body2" color="text.secondary" align="center">
+            © {new Date().getFullYear()} SeaCert. Contact us: {' '}
+            <Link href="mailto:hello@seacert.app" color="inherit" sx={{ fontWeight: 600 }}>
+              hello@seacert.app
+            </Link>
+          </Typography>
+        </Container>
+      </Box>
     </>
   )
 }
