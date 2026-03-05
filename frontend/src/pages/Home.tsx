@@ -138,14 +138,6 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* Footer */}
-      <Box component="footer" sx={{ py: 6, borderTop: 1, borderColor: 'divider' }}>
-        <Container>
-          <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} SeaCert. All rights reserved.
-          </Typography>
-        </Container>
-      </Box>
     </Box>
   );
 };
