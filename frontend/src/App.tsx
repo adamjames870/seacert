@@ -20,6 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import EditIcon from '@mui/icons-material/Edit'
+import PeopleIcon from '@mui/icons-material/People'
 import { Anchor } from 'lucide-react'
 import Home from './pages/Home'
 import SignUp from './pages/SignUp'
@@ -34,6 +35,8 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import AdminUsers from './pages/AdminUsers'
+import AdminUserCertificates from './pages/AdminUserCertificates'
 import './App.css'
 import { supabase } from './supabaseClient'
 import { API_BASE_URL } from './config'
@@ -172,6 +175,12 @@ function App() {
               </MenuItem>,
               <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
                 Certificate Types
+              </MenuItem>,
+              <MenuItem key="users" onClick={handleClose} component={RouterLink} to="/admin/users">
+                <ListItemIcon>
+                  <PeopleIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>User Management</ListItemText>
               </MenuItem>
             ]}
           </Menu>
@@ -281,6 +290,9 @@ function App() {
         <Route path="/issuers" element={isAdmin ? <Issuers /> : <Navigate to="/certificates" replace />} />
         <Route path="/edit-issuer/:id" element={<EditIssuer />} />
         
+        <Route path="/admin/users" element={isAdmin ? <AdminUsers /> : <Navigate to="/certificates" replace />} />
+        <Route path="/admin/users/:userId/certificates" element={isAdmin ? <AdminUserCertificates /> : <Navigate to="/certificates" replace />} />
+
         <Route path="/edit-account" element={<EditAccount />} />
       </Routes>
       
