@@ -2,6 +2,8 @@
 
 SeaCert is a certificate management system designed for maritime certifications. It consists of a Go backend and a React frontend.
 
+**Production Environment:** [https://www.seacert.app/](https://www.seacert.app/)
+
 You can always access the test server here. Because it is a test server, it may take some time to load (sleeping), and the datatbase may be reset at any time.
 - API: https://seacert-api.onrender.com
 - Frontend: https://seacert.onrender.com
@@ -110,6 +112,18 @@ The SeaCert API provides endpoints for both administrative tasks and certificate
   ```
 - **Response**: Updated user object.
 
+#### Resolve Certificate Type (Admin Only)
+`POST /admin/cert-types/resolve`
+- **Description**: Migrates certificates from a provisional type to a replacement and deletes the provisional type.
+- **Body**:
+  ```json
+  {
+    "provisional-id": "uuid",
+    "replacement-id": "uuid"
+  }
+  ```
+- **Response**: `200 OK` ("Certificate type resolved and provisional type deleted")
+
 ### Certificate API
 
 #### List Certificates
@@ -176,7 +190,11 @@ The SeaCert API provides endpoints for both administrative tasks and certificate
 
 #### Certificate Types
 `GET /api/cert-types` | `POST /api/cert-types`
-- **GET Response**: Array of certificate type objects.
+- **GET**: Returns certificate types. Regular users see all `approved` types and their own `provisional` suggestions. Admins see all.
+- **POST**: Users can suggest new types (default status: `provisional`). Admins create `approved` types.
+- **Response Fields**:
+  - `status`: "approved" or "provisional"
+  - `created-by`: UUID of the suggesting user (optional)
 - **POST Body**:
   ```json
   {
@@ -186,6 +204,19 @@ The SeaCert API provides endpoints for both administrative tasks and certificate
     "normal-validity-months": 60
   }
   ```
+
+#### Update/Approve Certificate Type (Admin Only)
+`PUT /api/cert-types`
+- **Description**: Updates or approves a certificate type.
+- **Body**:
+  ```json
+  {
+    "id": "uuid",
+    "status": "approved",
+    "name": "Updated Name"
+  }
+  ```
+- **Response**: Updated certificate type object.
 
 #### Issuers
 `GET /api/issuers` | `POST /api/issuers`
