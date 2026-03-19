@@ -126,14 +126,14 @@ const AddCertType = () => {
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  required
                   fullWidth
                   id="normalValidityMonths"
-                  label="Normal Validity Months"
+                  label="Normal Validity (Months)"
                   name="normalValidityMonths"
                   type="number"
                   value={formData.normalValidityMonths}
                   onChange={handleChange}
+                  helperText="Leave blank if certificate does not expire"
                 />
               </Grid>
 

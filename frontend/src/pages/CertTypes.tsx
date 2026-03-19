@@ -40,7 +40,6 @@ const CertTypes = () => {
     const missing = [];
     if (!type['short-name']) missing.push('short-name');
     if (!type['stcw-reference']) missing.push('stcw-reference');
-    if (!type['normal-validity-months']) missing.push('normal-validity-months');
     
     if (missing.length > 0) return 'incomplete';
     return 'normal';
@@ -237,8 +236,8 @@ const CertTypes = () => {
                               Validity: {type['normal-validity-months']} months
                             </Typography>
                           ) : (
-                            <Typography variant="body2" sx={{ fontStyle: 'italic', fontWeight: 'bold', color: styles.labelColor }}>
-                              Validity: Missing
+                            <Typography variant="body2" sx={{ color: styles.secondaryTextColor }}>
+                              Validity: Does not expire
                             </Typography>
                           )}
                         </>
