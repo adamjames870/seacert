@@ -4,12 +4,24 @@ import (
 	"context"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/google/uuid"
 )
 
-func GetCertTypes(state *internal.ApiState, ctx context.Context) ([]CertificateType, error) {
+func GetCertTypes(state *internal.ApiState, ctx context.Context, userId *uuid.UUID, isAdmin bool) ([]CertificateType, error) {
 
-	certTypes, errCertTypes := state.Queries.GetCertTypes(ctx)
+	var certTypes []sqlc.CertificateType
+	var errCertTypes error
+
+	if isAdmin {
+		certTypes, errCertTypes = state.Queries.GetCertTypes(ctx)
+	} else if userId != nil {
+		certTypes, errCertTypes = state.Queries.GetCertTypesForUser(ctx, uuid.NullUUID{UUID: *userId, Valid: true})
+	} else {
+		// Should not happen if authenticated, but fallback to approved only
+		certTypes, errCertTypes = state.Queries.GetCertTypesForUser(ctx, uuid.NullUUID{Valid: false})
+	}
+
 	if errCertTypes != nil {
 		return nil, errCertTypes
 	}

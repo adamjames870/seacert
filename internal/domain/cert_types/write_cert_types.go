@@ -11,10 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
-func WriteNewCertType(state *internal.ApiState, ctx context.Context, params dto.ParamsAddCertificateType) (CertificateType, error) {
+func WriteNewCertType(state *internal.ApiState, ctx context.Context, params dto.ParamsAddCertificateType, creatorId uuid.UUID, isAdmin bool) (CertificateType, error) {
 
 	stcwRef := domain.ToNullStringFromPointer(params.StcwReference)
 	normalValidity := domain.ToNullInt32OrNil(params.NormalValidityMonths)
+
+	status := "provisional"
+	if isAdmin {
+		status = "approved"
+	}
 
 	newCert := sqlc.CreateCertTypeParams{
 		ID:                   uuid.New(),
@@ -24,6 +29,11 @@ func WriteNewCertType(state *internal.ApiState, ctx context.Context, params dto.
 		ShortName:            params.ShortName,
 		StcwReference:        stcwRef,
 		NormalValidityMonths: normalValidity,
+		Status:               status,
+		CreatedBy: uuid.NullUUID{
+			UUID:  creatorId,
+			Valid: creatorId != uuid.Nil,
+		},
 	}
 
 	dbCertType, errWriteNewCertType := state.Queries.CreateCertType(ctx, newCert)
@@ -48,6 +58,7 @@ func UpdateCertificateType(state *internal.ApiState, ctx context.Context, params
 	shortName := domain.ToNullStringFromPointer(params.ShortName)
 	stcwRef := domain.ToNullStringFromPointer(params.StcwReference)
 	normalValidity := domain.ToNullInt32FromPointer(params.NormalValidityMonths)
+	status := domain.ToNullStringFromPointer(params.Status)
 
 	updateCert := sqlc.UpdateCertTypeParams{
 		ID:                   uuidId,
@@ -55,6 +66,7 @@ func UpdateCertificateType(state *internal.ApiState, ctx context.Context, params
 		ShortName:            shortName,
 		StcwReference:        stcwRef,
 		NormalValidityMonths: normalValidity,
+		Status:               status,
 	}
 
 	dbCertType, errUpdateCertType := state.Queries.UpdateCertType(ctx, updateCert)
@@ -65,4 +77,29 @@ func UpdateCertificateType(state *internal.ApiState, ctx context.Context, params
 	apiCertType := MapCertificateTypeDbToDomain(dbCertType)
 	return apiCertType, nil
 
+}
+
+func ResolveProvisionalCertType(state *internal.ApiState, ctx context.Context, params dto.ParamsResolveCertificateType) error {
+
+	provisionalId, errProv := uuid.Parse(params.ProvisionalId)
+	if errProv != nil {
+		return errProv
+	}
+
+	replacementId, errRepl := uuid.Parse(params.ReplacementId)
+	if errRepl != nil {
+		return errRepl
+	}
+
+	// 1. Update all certificates using provisionalId to replacementId
+	errUpdate := state.Queries.UpdateCertTypeReferences(ctx, sqlc.UpdateCertTypeReferencesParams{
+		CertTypeID:   provisionalId,
+		CertTypeID_2: replacementId,
+	})
+	if errUpdate != nil {
+		return errUpdate
+	}
+
+	// 2. Delete the provisional cert type
+	return state.Queries.DeleteCertType(ctx, provisionalId)
 }

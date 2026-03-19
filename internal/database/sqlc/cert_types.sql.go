@@ -14,9 +14,9 @@ import (
 )
 
 const createCertType = `-- name: CreateCertType :one
-INSERT INTO certificate_types (id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months
+INSERT INTO certificate_types (id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by
 `
 
 type CreateCertTypeParams struct {
@@ -27,6 +27,8 @@ type CreateCertTypeParams struct {
 	ShortName            string
 	StcwReference        sql.NullString
 	NormalValidityMonths sql.NullInt32
+	Status               string
+	CreatedBy            uuid.NullUUID
 }
 
 func (q *Queries) CreateCertType(ctx context.Context, arg CreateCertTypeParams) (CertificateType, error) {
@@ -38,6 +40,8 @@ func (q *Queries) CreateCertType(ctx context.Context, arg CreateCertTypeParams) 
 		arg.ShortName,
 		arg.StcwReference,
 		arg.NormalValidityMonths,
+		arg.Status,
+		arg.CreatedBy,
 	)
 	var i CertificateType
 	err := row.Scan(
@@ -48,12 +52,23 @@ func (q *Queries) CreateCertType(ctx context.Context, arg CreateCertTypeParams) 
 		&i.ShortName,
 		&i.StcwReference,
 		&i.NormalValidityMonths,
+		&i.Status,
+		&i.CreatedBy,
 	)
 	return i, err
 }
 
+const deleteCertType = `-- name: DeleteCertType :exec
+DELETE FROM certificate_types WHERE id = $1
+`
+
+func (q *Queries) DeleteCertType(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteCertType, id)
+	return err
+}
+
 const getCertTypeFromId = `-- name: GetCertTypeFromId :one
-SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months FROM certificate_types WHERE id=$1
+SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by FROM certificate_types WHERE id=$1
 `
 
 func (q *Queries) GetCertTypeFromId(ctx context.Context, id uuid.UUID) (CertificateType, error) {
@@ -67,12 +82,14 @@ func (q *Queries) GetCertTypeFromId(ctx context.Context, id uuid.UUID) (Certific
 		&i.ShortName,
 		&i.StcwReference,
 		&i.NormalValidityMonths,
+		&i.Status,
+		&i.CreatedBy,
 	)
 	return i, err
 }
 
 const getCertTypeFromName = `-- name: GetCertTypeFromName :one
-SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months FROM certificate_types WHERE name=$1
+SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by FROM certificate_types WHERE name=$1
 `
 
 func (q *Queries) GetCertTypeFromName(ctx context.Context, name string) (CertificateType, error) {
@@ -86,12 +103,14 @@ func (q *Queries) GetCertTypeFromName(ctx context.Context, name string) (Certifi
 		&i.ShortName,
 		&i.StcwReference,
 		&i.NormalValidityMonths,
+		&i.Status,
+		&i.CreatedBy,
 	)
 	return i, err
 }
 
 const getCertTypes = `-- name: GetCertTypes :many
-SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months FROM certificate_types
+SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by FROM certificate_types
 `
 
 func (q *Queries) GetCertTypes(ctx context.Context) ([]CertificateType, error) {
@@ -111,6 +130,46 @@ func (q *Queries) GetCertTypes(ctx context.Context) ([]CertificateType, error) {
 			&i.ShortName,
 			&i.StcwReference,
 			&i.NormalValidityMonths,
+			&i.Status,
+			&i.CreatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCertTypesForUser = `-- name: GetCertTypesForUser :many
+SELECT id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by FROM certificate_types
+WHERE status = 'approved' OR created_by = $1
+`
+
+func (q *Queries) GetCertTypesForUser(ctx context.Context, createdBy uuid.NullUUID) ([]CertificateType, error) {
+	rows, err := q.db.QueryContext(ctx, getCertTypesForUser, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CertificateType
+	for rows.Next() {
+		var i CertificateType
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.ShortName,
+			&i.StcwReference,
+			&i.NormalValidityMonths,
+			&i.Status,
+			&i.CreatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -131,9 +190,11 @@ SET
     name = COALESCE($2, name),
     short_name = COALESCE($3, short_name),
     stcw_reference = COALESCE($4, stcw_reference),
-    normal_validity_months = COALESCE($5, normal_validity_months)
+    normal_validity_months = COALESCE($5, normal_validity_months),
+    status = COALESCE($6, status),
+    updated_at = NOW()
 WHERE id=$1
-RETURNING id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months
+RETURNING id, created_at, updated_at, name, short_name, stcw_reference, normal_validity_months, status, created_by
 `
 
 type UpdateCertTypeParams struct {
@@ -142,6 +203,7 @@ type UpdateCertTypeParams struct {
 	ShortName            sql.NullString
 	StcwReference        sql.NullString
 	NormalValidityMonths sql.NullInt32
+	Status               sql.NullString
 }
 
 func (q *Queries) UpdateCertType(ctx context.Context, arg UpdateCertTypeParams) (CertificateType, error) {
@@ -151,6 +213,7 @@ func (q *Queries) UpdateCertType(ctx context.Context, arg UpdateCertTypeParams) 
 		arg.ShortName,
 		arg.StcwReference,
 		arg.NormalValidityMonths,
+		arg.Status,
 	)
 	var i CertificateType
 	err := row.Scan(
@@ -161,6 +224,22 @@ func (q *Queries) UpdateCertType(ctx context.Context, arg UpdateCertTypeParams) 
 		&i.ShortName,
 		&i.StcwReference,
 		&i.NormalValidityMonths,
+		&i.Status,
+		&i.CreatedBy,
 	)
 	return i, err
+}
+
+const updateCertTypeReferences = `-- name: UpdateCertTypeReferences :exec
+UPDATE certificates SET cert_type_id = $2 WHERE cert_type_id = $1
+`
+
+type UpdateCertTypeReferencesParams struct {
+	CertTypeID   uuid.UUID
+	CertTypeID_2 uuid.UUID
+}
+
+func (q *Queries) UpdateCertTypeReferences(ctx context.Context, arg UpdateCertTypeReferencesParams) error {
+	_, err := q.db.ExecContext(ctx, updateCertTypeReferences, arg.CertTypeID, arg.CertTypeID_2)
+	return err
 }

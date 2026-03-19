@@ -34,6 +34,8 @@ type CertificateType struct {
 	ShortName            string
 	StcwReference        sql.NullString
 	NormalValidityMonths sql.NullInt32
+	Status               string
+	CreatedBy            uuid.NullUUID
 }
 
 type CertificateTypeSuccession struct {

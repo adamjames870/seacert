@@ -10,6 +10,8 @@ type CertificateType struct {
 	ShortName            string    `json:"short-name"`
 	StcwRef              string    `json:"stcw-reference"`
 	NormalValidityMonths int32     `json:"normal-validity-months"`
+	Status               string    `json:"status"`
+	CreatedBy            *string   `json:"created-by,omitempty"`
 }
 
 type ParamsAddCertificateType struct {
@@ -25,4 +27,10 @@ type ParamsUpdateCertificateType struct {
 	ShortName            *string `json:"short-name,omitempty"`
 	StcwReference        *string `json:"stcw-reference,omitempty"`
 	NormalValidityMonths *int32  `json:"normal-validity-months,omitempty"`
+	Status               *string `json:"status,omitempty"`
+}
+
+type ParamsResolveCertificateType struct {
+	ProvisionalId string `json:"provisional-id"`
+	ReplacementId string `json:"replacement-id"`
 }

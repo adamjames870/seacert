@@ -43,6 +43,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("GET /admin/dbstats", authMw(adminMw(admin.HandlerAdminDbStats(state))))
 	mux.Handle("PUT /admin/users", authMw(admin.HandlerAdminUpdateUser(state)))
 	mux.Handle("GET /admin/users", authMw(admin.HandlerAdminGetUser(state)))
+	mux.Handle("POST /admin/cert-types/resolve", authMw(adminMw(admin.HandlerAdminResolveCertType(state))))
 
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates", authMw(api.HandlerApiAddCert(state)))
@@ -51,7 +52,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("DELETE /api/certificates", authMw(api.HandlerApiDeleteCert(state)))
 
 	mux.Handle("GET /api/cert-types", authMw(api.HandlerApiGetCertTypes(state)))
-	mux.Handle("POST /api/cert-types", authMw(adminMw(api.HandlerApiAddCertType(state))))
+	mux.Handle("POST /api/cert-types", authMw(api.HandlerApiAddCertType(state)))
 	mux.Handle("PUT /api/cert-types", authMw(adminMw(api.HandlerUpdateCertType(state))))
 
 	mux.Handle("GET /api/issuers", authMw(api.HandlerApiGetIssuers(state)))

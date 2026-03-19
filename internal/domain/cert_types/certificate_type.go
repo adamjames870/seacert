@@ -21,4 +21,6 @@ type CertificateType struct {
 	ShortName            string    `json:"short_name"`
 	StcwReference        string    `json:"stcw_reference"`
 	NormalValidityMonths int32     `json:"normal_validity_months"`
+	Status               string    `json:"status"`
+	CreatedBy            uuid.UUID `json:"created_by"`
 }

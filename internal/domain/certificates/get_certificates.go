@@ -105,7 +105,7 @@ func GetPredecessorsFromListOfIds(state *internal.ApiState, ctx context.Context,
 
 func getMapOfCertTypes(state *internal.ApiState, ctx context.Context) (map[uuid.UUID]cert_types.CertificateType, error) {
 
-	certTypes, errCertTypes := cert_types.GetCertTypes(state, ctx)
+	certTypes, errCertTypes := cert_types.GetCertTypes(state, ctx, nil, true)
 	if errCertTypes != nil {
 		return nil, errCertTypes
 	}

@@ -19,10 +19,18 @@ func MapCertificateTypeDbToDomain(certType sqlc.CertificateType) CertificateType
 		ShortName:            certType.ShortName,
 		StcwReference:        certType.StcwReference.String,
 		NormalValidityMonths: certType.NormalValidityMonths.Int32,
+		Status:               certType.Status,
+		CreatedBy:            certType.CreatedBy.UUID,
 	}
 }
 
 func MapCertificateTypeDomainToDto(certType CertificateType) dto.CertificateType {
+
+	var createdBy *string
+	if certType.CreatedBy != uuid.Nil {
+		s := certType.CreatedBy.String()
+		createdBy = &s
+	}
 
 	return dto.CertificateType{
 		Id:                   certType.Id.String(),
@@ -32,6 +40,8 @@ func MapCertificateTypeDomainToDto(certType CertificateType) dto.CertificateType
 		ShortName:            certType.ShortName,
 		StcwRef:              certType.StcwReference,
 		NormalValidityMonths: certType.NormalValidityMonths,
+		Status:               certType.Status,
+		CreatedBy:            createdBy,
 	}
 
 }
@@ -39,6 +49,10 @@ func MapCertificateTypeDomainToDto(certType CertificateType) dto.CertificateType
 func MapCertificateTypeDtoToDomain(certType dto.CertificateType) CertificateType {
 
 	id, _ := uuid.Parse(certType.Id)
+	var createdBy uuid.UUID
+	if certType.CreatedBy != nil {
+		createdBy, _ = uuid.Parse(*certType.CreatedBy)
+	}
 
 	return CertificateType{
 		Id:                   id,
@@ -48,6 +62,8 @@ func MapCertificateTypeDtoToDomain(certType dto.CertificateType) CertificateType
 		ShortName:            certType.ShortName,
 		StcwReference:        certType.StcwRef,
 		NormalValidityMonths: certType.NormalValidityMonths,
+		Status:               certType.Status,
+		CreatedBy:            createdBy,
 	}
 
 }
@@ -56,6 +72,10 @@ func MapCertificateTypeDomainToDb(certType CertificateType) sqlc.CertificateType
 
 	stcwRef := domain.ToNullString(certType.StcwReference)
 	normalValidity := domain.ToNullInt32OrNil(certType.NormalValidityMonths)
+	createdBy := uuid.NullUUID{
+		UUID:  certType.CreatedBy,
+		Valid: certType.CreatedBy != uuid.Nil,
+	}
 
 	return sqlc.CertificateType{
 		ID:                   certType.Id,
@@ -65,6 +85,8 @@ func MapCertificateTypeDomainToDb(certType CertificateType) sqlc.CertificateType
 		ShortName:            certType.ShortName,
 		StcwReference:        stcwRef,
 		NormalValidityMonths: normalValidity,
+		Status:               certType.Status,
+		CreatedBy:            createdBy,
 	}
 
 }
