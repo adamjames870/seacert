@@ -205,9 +205,11 @@ const CertTypes = () => {
                   <Box 
                     sx={{ 
                       display: 'flex', 
+                      flexDirection: { xs: 'column', sm: 'row' },
                       justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      p: 2
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      p: 2,
+                      gap: 1
                     }}
                   >
                     <ListItemText 
@@ -243,15 +245,17 @@ const CertTypes = () => {
                         </>
                       }
                     />
-                    <Tooltip title="Edit Certificate Type">
-                      <IconButton 
-                        component={RouterLink} 
-                        to={`/edit-cert-type/${type.id}`}
-                        sx={{ color: styles.labelColor }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Tooltip title="Edit Certificate Type">
+                        <IconButton 
+                          component={RouterLink} 
+                          to={`/edit-cert-type/${type.id}`}
+                          sx={{ color: styles.labelColor }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Box>
                 </Paper>
               );

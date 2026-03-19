@@ -549,7 +549,13 @@ const Certificates = () => {
                               </List>
                             </Box>
                           )}
-                          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                          <Box sx={{ 
+                            mt: 3, 
+                            display: 'flex', 
+                            justifyContent: 'flex-end', 
+                            gap: 1,
+                            flexWrap: 'wrap'
+                          }}>
                             <Button
                               variant="outlined"
                               size="small"
@@ -563,7 +569,8 @@ const Certificates = () => {
                                 '&:hover': {
                                   borderColor: styles.textColor,
                                   bgcolor: 'rgba(0, 0, 0, 0.04)'
-                                }
+                                },
+                                flex: { xs: '1 1 auto', sm: 'none' }
                               }}
                             >
                               Edit
@@ -586,7 +593,8 @@ const Certificates = () => {
                                   '&:hover': {
                                     borderColor: styles.textColor,
                                     bgcolor: 'rgba(0, 0, 0, 0.04)'
-                                  }
+                                  },
+                                  flex: { xs: '1 1 auto', sm: 'none' }
                                 }}
                             >
                               Update with New
@@ -609,7 +617,8 @@ const Certificates = () => {
                                   '&:hover': {
                                     borderColor: styles.textColor,
                                     bgcolor: 'rgba(0, 0, 0, 0.04)'
-                                  }
+                                  },
+                                  flex: { xs: '1 1 auto', sm: 'none' }
                                 }}
                             >
                               Replace with New
@@ -628,7 +637,8 @@ const Certificates = () => {
                                 '&:hover': {
                                   borderColor: styles.textColor,
                                   bgcolor: 'rgba(0, 0, 0, 0.04)'
-                                }
+                                },
+                                flex: { xs: '1 1 auto', sm: 'none' }
                               }}
                             >
                               Retire
@@ -646,7 +656,8 @@ const Certificates = () => {
                                 '&:hover': {
                                   bgcolor: 'error.main',
                                   color: 'white'
-                                }
+                                },
+                                flex: { xs: '1 1 auto', sm: 'none' }
                               }}
                             >
                               Delete Permanently
@@ -797,7 +808,13 @@ const Certificates = () => {
                                   </List>
                                 </Box>
                               )}
-                              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                              <Box sx={{ 
+                                mt: 3, 
+                                display: 'flex', 
+                                justifyContent: 'flex-end', 
+                                gap: 1,
+                                flexWrap: 'wrap'
+                              }}>
                                 <Button
                                   variant="outlined"
                                   size="small"
@@ -812,7 +829,8 @@ const Certificates = () => {
                                     '&:hover': {
                                       bgcolor: 'primary.main',
                                       color: 'white'
-                                    }
+                                    },
+                                    flex: { xs: '1 1 auto', sm: 'none' }
                                   }}
                                 >
                                   Make Active
@@ -830,7 +848,8 @@ const Certificates = () => {
                                     '&:hover': {
                                       bgcolor: 'error.main',
                                       color: 'white'
-                                    }
+                                    },
+                                    flex: { xs: '1 1 auto', sm: 'none' }
                                   }}
                                 >
                                   Delete Permanently
@@ -842,6 +861,7 @@ const Certificates = () => {
                                   component={RouterLink}
                                   to={`/update-certificate/${cert.id}`}
                                   onClick={(e) => e.stopPropagation()}
+                                  sx={{ flex: { xs: '1 1 auto', sm: 'none' } }}
                                 >
                                   Edit
                                 </Button>
@@ -857,6 +877,7 @@ const Certificates = () => {
                                     supersedeReason: 'updated'
                                   }}
                                   onClick={(e) => e.stopPropagation()}
+                                  sx={{ flex: { xs: '1 1 auto', sm: 'none' } }}
                                 >
                                   Update with New
                                 </Button>
@@ -872,6 +893,7 @@ const Certificates = () => {
                                     supersedeReason: 'replaced'
                                   }}
                                   onClick={(e) => e.stopPropagation()}
+                                  sx={{ flex: { xs: '1 1 auto', sm: 'none' } }}
                                 >
                                   Replace with New
                                 </Button>
