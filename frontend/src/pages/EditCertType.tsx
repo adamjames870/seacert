@@ -8,7 +8,9 @@ import {
   Paper, 
   Alert, 
   CircularProgress,
-  Grid
+  Grid,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -20,12 +22,37 @@ const EditCertType = () => {
     name: '',
     shortName: '',
     stcwReference: '',
-    normalValidityMonths: ''
+    normalValidityMonths: '',
+    status: 'provisional'
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/users`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const user = Array.isArray(data) ? data.find((u: any) => u.id === session.user.id) : data;
+            setUserRole(user?.role || 'user');
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const fetchCertType = async () => {
@@ -51,7 +78,8 @@ const EditCertType = () => {
           name: certType.name || '',
           shortName: certType['short-name'] || '',
           stcwReference: certType['stcw-reference'] || '',
-          normalValidityMonths: certType['normal-validity-months']?.toString() || ''
+          normalValidityMonths: certType['normal-validity-months']?.toString() || '',
+          status: certType.status || 'provisional'
         });
       } catch (err: any) {
         setError(err.message || 'An error occurred');
@@ -82,7 +110,8 @@ const EditCertType = () => {
         name: formData.name,
         'short-name': formData.shortName || null,
         'stcw-reference': formData.stcwReference || null,
-        'normal-validity-months': formData.normalValidityMonths ? parseInt(formData.normalValidityMonths) : null
+        'normal-validity-months': formData.normalValidityMonths ? parseInt(formData.normalValidityMonths) : null,
+        status: formData.status
       };
 
       const response = await fetch(`${API_BASE_URL}/api/cert-types?id=${id}`, {
@@ -177,6 +206,25 @@ const EditCertType = () => {
                   helperText="Leave blank if certificate does not expire"
                 />
               </Grid>
+
+              {userRole === 'admin' && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Status
+                  </Typography>
+                  <ToggleButtonGroup
+                    color="primary"
+                    value={formData.status}
+                    exclusive
+                    onChange={(_e, value) => value && setFormData(prev => ({ ...prev, status: value }))}
+                    fullWidth
+                    size="small"
+                  >
+                    <ToggleButton value="provisional">Provisional</ToggleButton>
+                    <ToggleButton value="approved">Approved</ToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
+              )}
 
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 

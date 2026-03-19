@@ -10,7 +10,8 @@ import {
   Link,
   CircularProgress,
   Autocomplete,
-  Grid
+  Grid,
+  Chip
 } from '@mui/material';
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -21,6 +22,7 @@ interface CertType {
   name: string;
   'short-name': string;
   'stcw-reference': string;
+  status?: 'approved' | 'provisional';
 }
 
 interface Issuer {
@@ -226,7 +228,49 @@ const AddCertificate = () => {
                       error={!formData.certTypeId && submitting}
                     />
                   )}
+                  renderOption={(props, option) => {
+                    const { key, ...optionProps } = props as any;
+                    return (
+                      <Box component="li" key={key} {...optionProps} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <Box>
+                          <Typography variant="body1">{option.name}</Typography>
+                          {option['short-name'] && (
+                            <Typography variant="caption" color="text.secondary">
+                              {option['short-name']}
+                            </Typography>
+                          )}
+                        </Box>
+                        {option.status === 'provisional' && (
+                          <Chip label="Provisional" size="small" color="warning" variant="outlined" sx={{ ml: 1 }} />
+                        )}
+                      </Box>
+                    );
+                  }}
+                  noOptionsText={
+                    <Box sx={{ p: 1 }}>
+                      <Typography variant="body2" sx={{ mb: 1 }}>No results found</Typography>
+                      <Button
+                        size="small"
+                        color="primary"
+                        component={RouterLink}
+                        to="/add-cert-type"
+                        state={{ from: 'add-certificate' }}
+                        fullWidth
+                        sx={{ justifyContent: 'flex-start' }}
+                      >
+                        Add certificate type
+                      </Button>
+                    </Box>
+                  }
                 />
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption">
+                    Can't find the certificate type?{' '}
+                    <Link component={RouterLink} to="/add-cert-type" state={{ from: 'add-certificate' }} sx={{ textDecoration: 'none' }}>
+                      Add certificate type
+                    </Link>
+                  </Typography>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -248,6 +292,22 @@ const AddCertificate = () => {
                       error={!formData.issuerId && submitting}
                     />
                   )}
+                  noOptionsText={
+                    <Box sx={{ p: 1 }}>
+                      <Typography variant="body2" sx={{ mb: 1 }}>No results found</Typography>
+                      <Button
+                        size="small"
+                        color="primary"
+                        component={RouterLink}
+                        to="/add-issuer"
+                        state={{ from: 'add-certificate' }}
+                        fullWidth
+                        sx={{ justifyContent: 'flex-start' }}
+                      >
+                        Add New Issuer
+                      </Button>
+                    </Box>
+                  }
                 />
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="caption">

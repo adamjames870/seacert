@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   Typography, 
   Container, 
@@ -8,9 +8,11 @@ import {
   Paper, 
   Alert, 
   Grid,
-  CircularProgress
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 
@@ -19,11 +21,57 @@ const AddCertType = () => {
     name: '',
     shortName: '',
     stcwReference: '',
-    normalValidityMonths: ''
+    normalValidityMonths: '',
+    status: 'provisional'
   });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // First try to get role from app_metadata
+        const role = session.user?.app_metadata?.role;
+        if (role) {
+          setUserRole(role);
+          if (role === 'admin') {
+            setFormData(prev => ({ ...prev, status: 'approved' }));
+          }
+          return;
+        }
+
+        // Fallback to fetching
+        if (session.access_token) {
+          try {
+            const response = await fetch(`${API_BASE_URL}/admin/users`, {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const user = Array.isArray(data) ? data.find((u: any) => u.id === session.user.id) : data;
+              const role = user?.role || 'user';
+              setUserRole(role);
+              if (role === 'admin') {
+                setFormData(prev => ({ ...prev, status: 'approved' }));
+              }
+            } else {
+              setUserRole('user');
+            }
+          } catch (error) {
+            console.error('Error fetching user role:', error);
+            setUserRole('user');
+          }
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,9 +95,10 @@ const AddCertType = () => {
         },
         body: JSON.stringify({
           name: formData.name,
-          'short-name': formData.shortName,
+          'short-name': formData.shortName || null,
           'stcw-reference': formData.stcwReference || null,
-          'normal-validity-months': parseInt(formData.normalValidityMonths)
+          'normal-validity-months': formData.normalValidityMonths ? parseInt(formData.normalValidityMonths) : null,
+          status: formData.status
         }),
       });
 
@@ -63,8 +112,18 @@ const AddCertType = () => {
         throw new Error(errorMessage);
       }
 
-      // Navigate back to CertTypes list
-      navigate('/cert-types');
+      // Navigate back to CertTypes list or where we came from
+      if (location.state?.from === 'add-certificate') {
+        navigate('/add-certificate', { 
+          state: { 
+            certTypeId: responseData.id,
+            // Preserve other state if needed, though AddCertificate might not have much else in state
+          },
+          replace: true 
+        });
+      } else {
+        navigate('/cert-types');
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred during submission');
     } finally {
@@ -76,8 +135,13 @@ const AddCertType = () => {
     <Container maxWidth="md">
       <Box sx={{ mt: 4, mb: 4 }}>
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            Add New Certificate Type
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+            Add certificate type
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Can't find the certificate type you're looking for? Add it here. 
+            Once submitted, it will be available for you to use immediately. 
+            An administrator will review it for global approval.
           </Typography>
 
           {error && (
@@ -103,7 +167,6 @@ const AddCertType = () => {
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  required
                   fullWidth
                   id="shortName"
                   label="Short Name"
@@ -137,10 +200,35 @@ const AddCertType = () => {
                 />
               </Grid>
 
+              {userRole === 'admin' && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Status
+                  </Typography>
+                  <ToggleButtonGroup
+                    color="primary"
+                    value={formData.status}
+                    exclusive
+                    onChange={(_e, value) => value && setFormData(prev => ({ ...prev, status: value }))}
+                    fullWidth
+                    size="small"
+                  >
+                    <ToggleButton value="provisional">Provisional</ToggleButton>
+                    <ToggleButton value="approved">Approved</ToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
+              )}
+
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate('/cert-types')}
+                  onClick={() => {
+                    if (location.state?.from === 'add-certificate') {
+                      navigate('/add-certificate', { replace: true });
+                    } else {
+                      navigate('/cert-types');
+                    }
+                  }}
                   disabled={submitting}
                 >
                   Cancel
@@ -151,7 +239,7 @@ const AddCertType = () => {
                   color="primary"
                   disabled={submitting}
                 >
-                  {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Certificate Type'}
+                  {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add certificate type'}
                 </Button>
               </Grid>
             </Grid>

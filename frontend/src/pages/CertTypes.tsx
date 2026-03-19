@@ -13,11 +13,23 @@ import {
   Button,
   TextField,
   InputAdornment,
-  Stack
+  Stack,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import CheckIcon from '@mui/icons-material/Check';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
@@ -28,6 +40,8 @@ interface CertType {
   'short-name': string;
   'stcw-reference': string;
   'normal-validity-months': number;
+  status?: 'approved' | 'provisional';
+  'created-by'?: string;
 }
 
 const CertTypes = () => {
@@ -35,6 +49,11 @@ const CertTypes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+  const [provisionalType, setProvisionalType] = useState<CertType | null>(null);
+  const [replacementId, setReplacementId] = useState('');
+  const [resolving, setResolving] = useState(false);
 
   const getMissingFieldsStatus = (type: CertType) => {
     const missing = [];
@@ -67,6 +86,41 @@ const CertTypes = () => {
   };
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // First try to get role from app_metadata (set by Supabase for our admins)
+        const role = session.user?.app_metadata?.role;
+        if (role) {
+          setUserRole(role);
+          return;
+        }
+
+        // Fallback to fetching if metadata is not available (though it should be)
+        if (session.access_token) {
+          try {
+            const response = await fetch(`${API_BASE_URL}/admin/users`, {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const user = Array.isArray(data) ? data.find((u: any) => u.id === session.user.id) : data;
+              setUserRole(user?.role || 'user');
+            } else {
+              // If we can't fetch /admin/users (e.g. we're not an admin), we're likely a regular user
+              setUserRole('user');
+            }
+          } catch (error) {
+            console.error('Error fetching user role:', error);
+            setUserRole('user');
+          }
+        }
+      }
+    };
+    fetchUserData();
+
     const fetchCertTypes = async () => {
       try {
         setLoading(true);
@@ -100,6 +154,76 @@ const CertTypes = () => {
 
     fetchCertTypes();
   }, []);
+
+  const handleApprove = async (type: CertType) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`${API_BASE_URL}/api/cert-types?id=${type.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          id: type.id,
+          name: type.name,
+          'short-name': type['short-name'] || null,
+          'stcw-reference': type['stcw-reference'] || null,
+          'normal-validity-months': type['normal-validity-months'] || null,
+          status: 'approved'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve certificate type');
+      }
+
+      setCertTypes(prev => prev.map(t => t.id === type.id ? { ...t, status: 'approved' } : t));
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleOpenResolve = (type: CertType) => {
+    setProvisionalType(type);
+    setReplacementId('');
+    setResolveDialogOpen(true);
+  };
+
+  const handleResolve = async () => {
+    if (!provisionalType || !replacementId) return;
+    
+    setResolving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`${API_BASE_URL}/admin/cert-types/resolve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          'provisional-id': provisionalType.id,
+          'replacement-id': replacementId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to resolve certificate type');
+      }
+
+      setCertTypes(prev => prev.filter(t => t.id !== provisionalType.id));
+      setResolveDialogOpen(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setResolving(false);
+    }
+  };
 
   const filteredCertTypes = certTypes.filter((type) => {
     const query = searchQuery.toLowerCase();
@@ -155,7 +279,7 @@ const CertTypes = () => {
               to="/add-cert-type"
               sx={{ whiteSpace: 'nowrap' }}
             >
-              Add Certificate Type
+              Add certificate type
             </Button>
           </Stack>
         </Stack>
@@ -214,9 +338,14 @@ const CertTypes = () => {
                   >
                     <ListItemText 
                       primary={
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
-                          {type.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
+                            {type.name}
+                          </Typography>
+                          {type.status === 'provisional' && (
+                            <Chip label="Provisional" size="small" color="warning" variant="outlined" />
+                          )}
+                        </Box>
                       }
                       secondary={
                         <>
@@ -245,7 +374,27 @@ const CertTypes = () => {
                         </>
                       }
                     />
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.5 }}>
+                      {userRole === 'admin' && type.status === 'provisional' && (
+                        <>
+                          <Tooltip title="Approve">
+                            <IconButton 
+                              onClick={() => handleApprove(type)}
+                              color="success"
+                            >
+                              <CheckIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Resolve (Replace & Delete)">
+                            <IconButton 
+                              onClick={() => handleOpenResolve(type)}
+                              color="warning"
+                            >
+                              <SwapHorizIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
                       <Tooltip title="Edit Certificate Type">
                         <IconButton 
                           component={RouterLink} 
@@ -262,6 +411,47 @@ const CertTypes = () => {
             })}
           </List>
         )}
+
+        <Dialog open={resolveDialogOpen} onClose={() => !resolving && setResolveDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Resolve Provisional Certificate Type</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+              Migrate all existing certificates from <strong>{provisionalType?.name}</strong> to an existing approved type and delete the provisional one.
+            </DialogContentText>
+            <FormControl fullWidth sx={{ mt: 1 }}>
+              <InputLabel id="replacement-type-label">Replacement Approved Type</InputLabel>
+              <Select
+                labelId="replacement-type-label"
+                value={replacementId}
+                label="Replacement Approved Type"
+                onChange={(e) => setReplacementId(e.target.value)}
+                disabled={resolving}
+              >
+                {certTypes
+                  .filter(t => t.status === 'approved' && t.id !== provisionalType?.id)
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(t => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.name} ({t['short-name']})
+                    </MenuItem>
+                  ))
+                }
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setResolveDialogOpen(false)} disabled={resolving}>Cancel</Button>
+            <Button 
+              onClick={handleResolve} 
+              color="warning" 
+              variant="contained" 
+              disabled={!replacementId || resolving}
+              startIcon={resolving ? <CircularProgress size={20} color="inherit" /> : <SwapHorizIcon />}
+            >
+              Resolve & Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Container>
   );

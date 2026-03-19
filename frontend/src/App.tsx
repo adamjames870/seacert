@@ -167,11 +167,11 @@ function App() {
             </MenuItem>
             {isAdmin && [
               <Divider key="divider" />,
-              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
-                Certificate Types
-              </MenuItem>,
               <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers">
                 Issuers
+              </MenuItem>,
+              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
+                Certificate Types
               </MenuItem>
             ]}
           </Menu>
@@ -274,9 +274,9 @@ function App() {
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
         
-        {/* Admin only routes */}
+        {/* Certificate Types: Admin can see all, Users can add types from AddCertificate flow */}
         <Route path="/cert-types" element={isAdmin ? <CertTypes /> : <Navigate to="/certificates" replace />} />
-        <Route path="/add-cert-type" element={isAdmin ? <AddCertType /> : <Navigate to="/certificates" replace />} />
+        <Route path="/add-cert-type" element={session ? <AddCertType /> : <Navigate to="/login" replace />} />
         <Route path="/edit-cert-type/:id" element={isAdmin ? <EditCertType /> : <Navigate to="/certificates" replace />} />
         <Route path="/issuers" element={isAdmin ? <Issuers /> : <Navigate to="/certificates" replace />} />
         <Route path="/edit-issuer/:id" element={<EditIssuer />} />
