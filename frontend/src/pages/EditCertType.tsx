@@ -174,6 +174,7 @@ const EditCertType = () => {
                   type="number"
                   value={formData.normalValidityMonths}
                   onChange={handleChange}
+                  helperText="Leave blank if certificate does not expire"
                 />
               </Grid>
 

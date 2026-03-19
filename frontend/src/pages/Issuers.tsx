@@ -207,9 +207,11 @@ const Issuers = () => {
                   <Box 
                     sx={{ 
                       display: 'flex', 
+                      flexDirection: { xs: 'column', sm: 'row' },
                       justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      p: 2
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      p: 2,
+                      gap: 1
                     }}
                   >
                     <ListItemText 
@@ -247,15 +249,17 @@ const Issuers = () => {
                         </>
                       }
                     />
-                    <Tooltip title="Edit Issuer">
-                      <IconButton 
-                        component={RouterLink} 
-                        to={`/edit-issuer/${issuer.id}`}
-                        sx={{ color: styles.labelColor }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Tooltip title="Edit Issuer">
+                        <IconButton 
+                          component={RouterLink} 
+                          to={`/edit-issuer/${issuer.id}`}
+                          sx={{ color: styles.labelColor }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Box>
                 </Paper>
               );

@@ -69,6 +69,8 @@ const AddIssuer = () => {
       // Navigate back to the caller
       if (from === 'issuers') {
         navigate('/issuers');
+      } else if (from === 'update-certificate') {
+        navigate(`/update-certificate/${location.state.id}`, { state: { newIssuerId: responseData.id } });
       } else {
         navigate('/add-certificate', { state: { newIssuerId: responseData.id } });
       }
@@ -146,7 +148,11 @@ const AddIssuer = () => {
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate(from === 'issuers' ? '/issuers' : '/add-certificate')}
+                  onClick={() => {
+                    if (from === 'issuers') navigate('/issuers');
+                    else if (from === 'update-certificate') navigate(`/update-certificate/${location.state.id}`);
+                    else navigate('/add-certificate');
+                  }}
                   disabled={submitting}
                 >
                   Cancel

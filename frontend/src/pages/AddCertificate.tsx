@@ -80,8 +80,18 @@ const AddCertificate = () => {
           issuersRes.json()
         ]);
 
-        setCertTypes(certTypesData);
-        setIssuers(issuersData);
+        // Sort cert types alphabetically by name
+        const sortedCertTypes = (certTypesData as CertType[]).sort((a, b) => 
+          a.name.localeCompare(b.name)
+        );
+
+        // Sort issuers alphabetically by name
+        const sortedIssuers = (issuersData as Issuer[]).sort((a, b) => 
+          a.name.localeCompare(b.name)
+        );
+
+        setCertTypes(sortedCertTypes);
+        setIssuers(sortedIssuers);
 
         // Pre-fill from location state (Update/Replace from Certificates page)
         if (location.state?.certTypeId || location.state?.supersedes || location.state?.supersedeReason) {
@@ -195,6 +205,13 @@ const AddCertificate = () => {
                   id="certTypeId"
                   options={certTypes}
                   getOptionLabel={(option) => option.name}
+                  filterOptions={(options, { inputValue }) => {
+                    const query = inputValue.toLowerCase();
+                    return options.filter(option => 
+                      option.name.toLowerCase().includes(query) || 
+                      option['short-name']?.toLowerCase().includes(query)
+                    );
+                  }}
                   autoHighlight
                   autoSelect
                   value={certTypes.find(type => type.id === formData.certTypeId) || null}
