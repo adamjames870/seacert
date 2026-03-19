@@ -1,12 +1,13 @@
 ﻿import { Typography, Container, Box, Button, Grid, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Anchor, ShieldCheck, Bell, Smartphone, Clock } from 'lucide-react';
+import { Anchor, ShieldCheck, Smartphone, Clock } from 'lucide-react';
 
 const Home = () => {
   return (
     <Box>
       {/* Hero Section */}
       <Box 
+        component="section"
         sx={{ 
           bgcolor: 'primary.main', 
           color: 'white', 
@@ -55,7 +56,7 @@ const Home = () => {
       </Box>
 
       {/* Features Section */}
-      <Box sx={{ bgcolor: 'white', py: 10 }}>
+      <Box component="section" sx={{ bgcolor: 'white', py: 10 }}>
         <Container>
           <Typography variant="h4" component="h2" align="center" gutterBottom sx={{ fontWeight: 700, mb: 8 }}>
             Why Use SeaCert?
@@ -68,11 +69,6 @@ const Home = () => {
                 description: "Easily track all your STCW and mandatory certificates required for your next contract."
               },
               {
-                icon: <Bell size={48} />,
-                title: "Expiry Alerts",
-                description: "Get notified before your certificates expire, giving you plenty of time for renewal courses."
-              },
-              {
                 icon: <Smartphone size={48} />,
                 title: "Always Accessible",
                 description: "Access your certificate details anytime, anywhere. On the ship or at home."
@@ -83,7 +79,7 @@ const Home = () => {
                 description: "No more digging through folders. Find issuer details and certificate numbers in seconds."
               }
             ].map((feature, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} sx={{ display: 'flex' }}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} sx={{ display: 'flex' }}>
                 <Stack 
                   spacing={2} 
                   alignItems="center" 
@@ -118,9 +114,9 @@ const Home = () => {
       </Box>
 
       {/* CTA Section */}
-      <Box sx={{ bgcolor: 'background.paper', py: 10, borderTop: 1, borderColor: 'divider' }}>
+      <Box component="section" sx={{ bgcolor: 'background.paper', py: 10, borderTop: 1, borderColor: 'divider' }}>
         <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+          <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 700 }}>
             Ready to get organized?
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
