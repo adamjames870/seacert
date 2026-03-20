@@ -16,12 +16,14 @@ import {
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
+import { calculateExpiryDate, formatDate } from '../utils/dateUtils';
 
 interface CertType {
   id: string;
   name: string;
   'short-name': string;
   'stcw-reference': string;
+  'normal-validity-months'?: number;
   status?: 'approved' | 'provisional';
 }
 
@@ -46,8 +48,10 @@ const AddCertificate = () => {
     issuedDate: new Date().toISOString().split('T')[0],
     remarks: '',
     supersedes: '',
-    supersedeReason: ''
+    supersedeReason: '',
+    manualExpiry: ''
   });
+  const [showManualExpiry, setShowManualExpiry] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -145,7 +149,8 @@ const AddCertificate = () => {
           'cert-type-id': formData.certTypeId,
           'issuer-id': formData.issuerId,
           'cert-number': formData.certNumber,
-          'issued-date': formData.issuedDate,
+          'issued-date': formData.issuedDate ? new Date(formData.issuedDate).toISOString() : null,
+          'manual-expiry': formData.manualExpiry ? new Date(formData.manualExpiry).toISOString() : null,
           remarks: formData.remarks,
           'supersedes': formData.supersedes || undefined,
           'supersede-reason': formData.supersedeReason || undefined
@@ -343,6 +348,59 @@ const AddCertificate = () => {
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                 />
+                {(() => {
+                  const selectedCertType = certTypes.find(type => type.id === formData.certTypeId);
+                  if (!selectedCertType || !formData.issuedDate) return null;
+                  
+                  const validityMonths = selectedCertType['normal-validity-months'];
+                  const expiryDate = calculateExpiryDate(formData.issuedDate, validityMonths ?? null);
+                  return (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="primary" sx={{ display: 'inline', fontWeight: 500 }}>
+                        {validityMonths === null || validityMonths === 0 ? 'Does not expire' : (expiryDate ? `Expiry Date: ${formatDate(expiryDate)}` : 'Does not expire')}
+                      </Typography>
+                      {!showManualExpiry && (
+                        <Link
+                          component="button"
+                          type="button"
+                          variant="caption"
+                          onClick={() => setShowManualExpiry(true)}
+                          sx={{ ml: 1, textDecoration: 'none', verticalAlign: 'baseline' }}
+                        >
+                          (Set manual expiry)
+                        </Link>
+                      )}
+                      {showManualExpiry && (
+                        <Box sx={{ mt: 2 }}>
+                          <TextField
+                            fullWidth
+                            id="manualExpiry"
+                            label="Manual Expiry Date"
+                            name="manualExpiry"
+                            type="date"
+                            value={formData.manualExpiry}
+                            onChange={handleChange}
+                            InputLabelProps={{ shrink: true }}
+                            helperText="Override the calculated expiry date"
+                          />
+                          <Link
+                            component="button"
+                            type="button"
+                            variant="caption"
+                            color="error"
+                            onClick={() => {
+                              setShowManualExpiry(false);
+                              setFormData(prev => ({ ...prev, manualExpiry: '' }));
+                            }}
+                            sx={{ mt: 0.5, textDecoration: 'none' }}
+                          >
+                            Remove manual expiry
+                          </Link>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })()}
               </Grid>
 
               <Grid size={{ xs: 12 }}>

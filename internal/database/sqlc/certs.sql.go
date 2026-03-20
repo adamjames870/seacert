@@ -374,23 +374,24 @@ SET
     alternative_name=COALESCE($5, alternative_name),
     remarks=COALESCE($6, remarks),
     issuer_id=COALESCE($7, issuer_id),
-    manual_expiry=COALESCE($8, manual_expiry),
-    deleted=COALESCE($9, deleted),
+    manual_expiry=(CASE WHEN $8::boolean THEN $9 ELSE manual_expiry END),
+    deleted=COALESCE($10, deleted),
     updated_at=NOW()
 WHERE id=$1
 RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry, deleted
 `
 
 type UpdateCertificateParams struct {
-	ID              uuid.UUID
-	CertNumber      sql.NullString
-	IssuedDate      sql.NullTime
-	CertTypeID      uuid.NullUUID
-	AlternativeName sql.NullString
-	Remarks         sql.NullString
-	IssuerID        uuid.NullUUID
-	ManualExpiry    sql.NullTime
-	Deleted         sql.NullBool
+	ID                   uuid.UUID
+	CertNumber           sql.NullString
+	IssuedDate           sql.NullTime
+	CertTypeID           uuid.NullUUID
+	AlternativeName      sql.NullString
+	Remarks              sql.NullString
+	IssuerID             uuid.NullUUID
+	ManualExpiryDoUpdate bool
+	ManualExpiry         sql.NullTime
+	Deleted              sql.NullBool
 }
 
 func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificateParams) (Certificate, error) {
@@ -402,6 +403,7 @@ func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificatePa
 		arg.AlternativeName,
 		arg.Remarks,
 		arg.IssuerID,
+		arg.ManualExpiryDoUpdate,
 		arg.ManualExpiry,
 		arg.Deleted,
 	)

@@ -96,7 +96,7 @@ SET
     alternative_name=COALESCE(sqlc.narg('alternative_name'), alternative_name),
     remarks=COALESCE(sqlc.narg('remarks'), remarks),
     issuer_id=COALESCE(sqlc.narg('issuer_id'), issuer_id),
-    manual_expiry=COALESCE(sqlc.narg('manual_expiry'), manual_expiry),
+    manual_expiry=(CASE WHEN sqlc.arg('manual_expiry_do_update')::boolean THEN sqlc.narg('manual_expiry') ELSE manual_expiry END),
     deleted=COALESCE(sqlc.narg('deleted'), deleted),
     updated_at=NOW()
 WHERE id=$1

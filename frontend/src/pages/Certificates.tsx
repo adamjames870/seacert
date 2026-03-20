@@ -456,7 +456,16 @@ const Certificates = () => {
                           }
                         />
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'flex-end' } }}>
-                          {cert['expiry-date'] && new Date(cert['expiry-date']).getFullYear() > 1 && (
+                          {!cert['expiry-date'] || new Date(cert['expiry-date']).getFullYear() <= 1 ? (
+                            <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                              <Typography variant="caption" sx={{ display: 'block', textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.7rem', color: styles.secondaryTextColor }}>
+                                Validity
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontWeight: 'bold', color: styles.labelColor }}>
+                                Does not expire
+                              </Typography>
+                            </Box>
+                          ) : (
                             <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
                               <Typography variant="caption" sx={{ display: 'block', textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.7rem', color: styles.secondaryTextColor }}>
                                 Expires
