@@ -149,30 +149,22 @@ func (cert *Certificate) calculateExpiryDate() {
 
 func getExpiryAfterValidity(issueDate time.Time, validityMonths int) time.Time {
 
-	issueDate = time.Date(
-		issueDate.Year(),
-		issueDate.Month(),
-		issueDate.Day(),
-		0, 0, 0, 0,
-		issueDate.Location(),
-	)
+	target := issueDate.AddDate(0, validityMonths, 0)
 
-	target := issueDate.AddDate(0, int(validityMonths), 0)
-	issueDay := issueDate.Day()
-	daysInTargetMonth := daysInMonth(target.Year(), target.Month())
-	if issueDay > daysInTargetMonth {
-		issueDay = daysInTargetMonth
+	// If the original day doesn't exist in target month (e.g. Jan 31 -> Feb 28),
+	// AddDate might roll into the following month (Mar 2 or Mar 3).
+	// We want to snap back to the last day of the intended month if it overflowed.
+	expectedMonth := (int(issueDate.Month()) + validityMonths - 1) % 12
+	if expectedMonth < 0 {
+		expectedMonth += 12
+	}
+	expectedMonth += 1
+	if int(target.Month()) != expectedMonth {
+		// Overflowed, go to last day of previous month
+		target = time.Date(target.Year(), target.Month(), 1, 0, 0, 0, 0, target.Location()).AddDate(0, 0, -1)
 	}
 
-	targetSameDay := time.Date(
-		target.Year(),
-		target.Month(),
-		issueDay,
-		0, 0, 0, 0,
-		target.Location(),
-	)
-
-	return targetSameDay.AddDate(0, 0, -1)
+	return time.Date(target.Year(), target.Month(), target.Day(), 0, 0, 0, 0, target.Location()).AddDate(0, 0, -1)
 
 }
 

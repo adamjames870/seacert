@@ -108,6 +108,68 @@ func TestCertificateMapping(t *testing.T) {
 		}
 	})
 
+	t.Run("MapCertificateDomainToDto_WithPredecessors", func(t *testing.T) {
+		predecessorCert := certificates.Certificate{
+			Id:         uuid.New(),
+			CertNumber: "PRE-123",
+			CertType:   certType,
+			Issuer:     issuer,
+		}
+		domainCert := certificates.Certificate{
+			Id:         certId,
+			CertNumber: "12345",
+			CertType:   certType,
+			Issuer:     issuer,
+			Predecessors: []certificates.Predecesor{
+				{
+					Cert:          predecessorCert,
+					ReplaceReason: cert_types.ReasonReplaced,
+				},
+			},
+		}
+		got := certificates.MapCertificateDomainToDto(domainCert)
+		if len(got.Predecessors) != 1 {
+			t.Fatalf("expected 1 predecessor, got %d", len(got.Predecessors))
+		}
+		if got.Predecessors[0].Cert.CertNumber != "PRE-123" {
+			t.Errorf("expected predecessor CertNumber PRE-123, got %s", got.Predecessors[0].Cert.CertNumber)
+		}
+		if got.Predecessors[0].Reason != string(cert_types.ReasonReplaced) {
+			t.Errorf("expected reason %s, got %s", cert_types.ReasonReplaced, got.Predecessors[0].Reason)
+		}
+	})
+
+	t.Run("MapCertificateDtoToDomain_WithPredecessors", func(t *testing.T) {
+		predecessorDto := dto.Certificate{
+			Id:         uuid.New().String(),
+			CertNumber: "PRE-123",
+			CertTypeId: certTypeId.String(),
+			IssuerName: issuer.Name,
+		}
+		dtoCert := dto.Certificate{
+			Id:         certId.String(),
+			CertNumber: "12345",
+			CertTypeId: certTypeId.String(),
+			IssuerName: issuer.Name,
+			Predecessors: []dto.Predecessor{
+				{
+					Cert:   predecessorDto,
+					Reason: string(cert_types.ReasonReplaced),
+				},
+			},
+		}
+		got := certificates.MapCertificateDtoToDomain(dtoCert)
+		if len(got.Predecessors) != 1 {
+			t.Fatalf("expected 1 predecessor, got %d", len(got.Predecessors))
+		}
+		if got.Predecessors[0].Cert.CertNumber != "PRE-123" {
+			t.Errorf("expected predecessor CertNumber PRE-123, got %s", got.Predecessors[0].Cert.CertNumber)
+		}
+		if got.Predecessors[0].ReplaceReason != cert_types.ReasonReplaced {
+			t.Errorf("expected reason %s, got %s", cert_types.ReasonReplaced, got.Predecessors[0].ReplaceReason)
+		}
+	})
+
 	t.Run("MapCertificateDomainToDb", func(t *testing.T) {
 		domainCert := certificates.Certificate{
 			Id:         certId,
