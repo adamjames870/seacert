@@ -57,10 +57,19 @@ func ToNullTimeFromStringPointer(t *string) sql.NullTime {
 		return sql.NullTime{Valid: false}
 	}
 
+	// Try RFC3339 first
 	parsed, err := time.Parse(time.RFC3339, *t)
-	if err != nil {
-		return sql.NullTime{Valid: false}
+	if err == nil {
+		return sql.NullTime{Time: parsed, Valid: true}
 	}
 
-	return sql.NullTime{Time: parsed, Valid: true}
+	// Try ISO Date (YYYY-MM-DD)
+	parsed, err = time.Parse("2006-01-02", *t)
+	if err == nil {
+		// Set to start of day in UTC
+		parsed = time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC)
+		return sql.NullTime{Time: parsed, Valid: true}
+	}
+
+	return sql.NullTime{Valid: false}
 }

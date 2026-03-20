@@ -2,6 +2,8 @@
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -16,10 +18,11 @@ import (
 
 func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.ParamsAddCertificate) (Certificate, error) {
 
-	issuedDate, errParse := time.Parse("2006-01-02", params.IssuedDate)
-	if errParse != nil {
-		return Certificate{}, errParse
+	issuedDateNull := domain.ToNullTimeFromStringPointer(&params.IssuedDate)
+	if !issuedDateNull.Valid {
+		return Certificate{}, errors.New("Error parsing issued date: " + params.IssuedDate)
 	}
+	issuedDate := issuedDateNull.Time
 
 	certTypeId := params.CertTypeId
 	apiCertType, errGetCertType := cert_types.GetCertTypeFromId(state, ctx, certTypeId)
@@ -41,14 +44,17 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 	timeNow := time.Now()
 
 	newCert := sqlc.CreateCertParams{
-		ID:         uuid.New(),
-		CreatedAt:  timeNow,
-		UpdatedAt:  timeNow,
-		UserID:     uuidId,
-		CertTypeID: apiCertType.Id,
-		CertNumber: params.CertNumber,
-		IssuerID:   apiIssuer.Id,
-		IssuedDate: issuedDate,
+		ID:              uuid.New(),
+		CreatedAt:       timeNow,
+		UpdatedAt:       timeNow,
+		UserID:          uuidId,
+		CertTypeID:      apiCertType.Id,
+		CertNumber:      params.CertNumber,
+		IssuerID:        apiIssuer.Id,
+		IssuedDate:      issuedDate,
+		AlternativeName: domain.ToNullStringFromPointer(params.AlternativeName),
+		Remarks:         domain.ToNullStringFromPointer(params.Remarks),
+		ManualExpiry:    domain.ToNullTimeFromStringPointer(params.ManualExpiry),
 	}
 
 	dbCert, errCreateCert := state.Queries.CreateCert(ctx, newCert)
@@ -132,15 +138,33 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		}
 	}
 
+	issuedDate := domain.ToNullTimeFromStringPointer(params.IssuedDate)
+	if params.IssuedDate != nil && !issuedDate.Valid {
+		return Certificate{}, errors.New("Error parsing issued date: " + *params.IssuedDate)
+	}
+
 	updatedCertificate := sqlc.UpdateCertificateParams{
 		ID:              uuidId,
 		CertNumber:      domain.ToNullStringFromPointer(params.CertNumber),
-		IssuedDate:      domain.ToNullTimeFromStringPointer(params.IssuedDate),
+		IssuedDate:      issuedDate,
 		CertTypeID:      domain.ToNullUUIDFromStringPointer(params.CertTypeId),
 		AlternativeName: domain.ToNullStringFromPointer(params.AlternativeName),
 		Remarks:         domain.ToNullStringFromPointer(params.Remarks),
 		IssuerID:        domain.ToNullUUIDFromStringPointer(params.IssuerId),
 		Deleted:         domain.ToNullBoolFromPointer(params.Deleted),
+	}
+
+	if params.ManualExpiry != nil {
+		updatedCertificate.ManualExpiryDoUpdate = true
+		if string(params.ManualExpiry) == "null" {
+			updatedCertificate.ManualExpiry = sql.NullTime{Valid: false}
+		} else {
+			var expiryStr string
+			if err := json.Unmarshal(params.ManualExpiry, &expiryStr); err != nil {
+				return Certificate{}, err
+			}
+			updatedCertificate.ManualExpiry = domain.ToNullTimeFromStringPointer(&expiryStr)
+		}
 	}
 
 	dbCert, errUpdateCert := state.Queries.UpdateCertificate(ctx, updatedCertificate)

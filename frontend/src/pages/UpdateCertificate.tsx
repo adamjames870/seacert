@@ -15,6 +15,7 @@ import {
 import { useNavigate, useParams, Link as RouterLink, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
+import { calculateExpiryDate, formatDate } from '../utils/dateUtils';
 
 interface Issuer {
   id: string;
@@ -32,9 +33,12 @@ const UpdateCertificate = () => {
     certNumber: '',
     issuedDate: '',
     remarks: '',
-    issuerId: ''
+    issuerId: '',
+    manualExpiry: ''
   });
+  const [showManualExpiry, setShowManualExpiry] = useState(false);
   const [certTypeName, setCertTypeName] = useState('');
+  const [validityMonths, setValidityMonths] = useState<number | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,9 +93,14 @@ const UpdateCertificate = () => {
           certNumber: cert['cert-number'] || '',
           issuedDate: cert['issued-date'] ? cert['issued-date'].split('T')[0] : '',
           remarks: cert.remarks || '',
-          issuerId: cert['issuer-id'] || ''
+          issuerId: cert['issuer-id'] || '',
+          manualExpiry: cert['manual-expiry'] ? cert['manual-expiry'].split('T')[0] : ''
         });
+        if (cert['manual-expiry']) {
+          setShowManualExpiry(true);
+        }
         setCertTypeName(cert['cert-type-name'] || '');
+        setValidityMonths(cert['cert-type-normal-validity-months'] ?? null);
       } catch (err: any) {
         setError(err.message || 'An error occurred while fetching data');
       } finally {
@@ -129,6 +138,7 @@ const UpdateCertificate = () => {
         'issuer-id': formData.issuerId,
         'cert-number': formData.certNumber,
         'issued-date': formData.issuedDate ? new Date(formData.issuedDate).toISOString() : null,
+        'manual-expiry': formData.manualExpiry ? new Date(formData.manualExpiry).toISOString() : null,
         remarks: formData.remarks
       };
       console.log('Sending update payload:', payload);
@@ -249,6 +259,57 @@ const UpdateCertificate = () => {
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                 />
+                {(() => {
+                  if (!formData.issuedDate) return null;
+
+                  const expiryDate = calculateExpiryDate(formData.issuedDate, validityMonths);
+                  return (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="primary" sx={{ display: 'inline', fontWeight: 500 }}>
+                        {validityMonths === null || validityMonths === 0 ? 'Does not expire' : (expiryDate ? `Expiry Date: ${formatDate(expiryDate)}` : 'Does not expire')}
+                      </Typography>
+                      {!showManualExpiry && (
+                        <Link
+                          component="button"
+                          type="button"
+                          variant="caption"
+                          onClick={() => setShowManualExpiry(true)}
+                          sx={{ ml: 1, textDecoration: 'none', verticalAlign: 'baseline' }}
+                        >
+                          (Set manual expiry)
+                        </Link>
+                      )}
+                      {showManualExpiry && (
+                        <Box sx={{ mt: 2 }}>
+                          <TextField
+                            fullWidth
+                            id="manualExpiry"
+                            label="Manual Expiry Date"
+                            name="manualExpiry"
+                            type="date"
+                            value={formData.manualExpiry}
+                            onChange={handleChange}
+                            InputLabelProps={{ shrink: true }}
+                            helperText="Override the calculated expiry date"
+                          />
+                          <Link
+                            component="button"
+                            type="button"
+                            variant="caption"
+                            color="error"
+                            onClick={() => {
+                              setShowManualExpiry(false);
+                              setFormData(prev => ({ ...prev, manualExpiry: '' }));
+                            }}
+                            sx={{ mt: 0.5, textDecoration: 'none' }}
+                          >
+                            Remove manual expiry
+                          </Link>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })()}
               </Grid>
 
               <Grid size={{ xs: 12 }}>

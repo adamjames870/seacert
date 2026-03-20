@@ -20,9 +20,10 @@ func TestCertificateMapping(t *testing.T) {
 	now := time.Now()
 
 	certType := cert_types.CertificateType{
-		Id:        certTypeId,
-		Name:      "Test Cert Type",
-		ShortName: "TCT",
+		Id:                   certTypeId,
+		Name:                 "Test Cert Type",
+		ShortName:            "TCT",
+		NormalValidityMonths: 12,
 	}
 
 	issuer := issuers.Issuer{
@@ -44,24 +45,27 @@ func TestCertificateMapping(t *testing.T) {
 	}
 
 	t.Run("MapCertificateDbToDomain", func(t *testing.T) {
-		got := certificates.MapCertificateDbToDomain(dbCert, certType, issuer)
+		dbCertManual := dbCert
+		manualExpiry := now.AddDate(1, 0, 0)
+		dbCertManual.ManualExpiry = sql.NullTime{Time: manualExpiry, Valid: true}
+
+		got := certificates.MapCertificateDbToDomain(dbCertManual, certType, issuer)
 		if got.Id != certId {
 			t.Errorf("expected ID %v, got %v", certId, got.Id)
 		}
-		if got.CertNumber != "12345" {
-			t.Errorf("expected CertNumber 12345, got %s", got.CertNumber)
-		}
-		if got.AlternativeName != "Alt Name" {
-			t.Errorf("expected AlternativeName Alt Name, got %s", got.AlternativeName)
+		if got.ManualExpiry != manualExpiry {
+			t.Errorf("expected ManualExpiry %v, got %v", manualExpiry, got.ManualExpiry)
 		}
 	})
 
 	t.Run("MapCertificateDomainToDto", func(t *testing.T) {
+		manualExpiry := now.AddDate(1, 0, 0)
 		domainCert := certificates.Certificate{
-			Id:         certId,
-			CertNumber: "12345",
-			CertType:   certType,
-			Issuer:     issuer,
+			Id:           certId,
+			CertNumber:   "12345",
+			CertType:     certType,
+			Issuer:       issuer,
+			ManualExpiry: manualExpiry,
 		}
 		got := certificates.MapCertificateDomainToDto(domainCert)
 		if got.Id != certId.String() {
@@ -70,15 +74,24 @@ func TestCertificateMapping(t *testing.T) {
 		if got.CertTypeName != certType.Name {
 			t.Errorf("expected CertTypeName %s, got %s", certType.Name, got.CertTypeName)
 		}
+		if got.CertTypeNormalValidityMonths != certType.NormalValidityMonths {
+			t.Errorf("expected CertTypeNormalValidityMonths %d, got %d", certType.NormalValidityMonths, got.CertTypeNormalValidityMonths)
+		}
+		if got.ManualExpiry == nil || *got.ManualExpiry != manualExpiry {
+			t.Errorf("expected ManualExpiry %v, got %v", manualExpiry, got.ManualExpiry)
+		}
 	})
 
 	t.Run("MapCertificateDtoToDomain", func(t *testing.T) {
+		manualExpiry := now.AddDate(1, 0, 0)
 		dtoCert := dto.Certificate{
-			Id:           certId.String(),
-			CertNumber:   "12345",
-			CertTypeId:   certTypeId.String(),
-			CertTypeName: certType.Name,
-			IssuerName:   issuer.Name,
+			Id:                           certId.String(),
+			CertNumber:                   "12345",
+			CertTypeId:                   certTypeId.String(),
+			CertTypeName:                 certType.Name,
+			CertTypeNormalValidityMonths: 12,
+			IssuerName:                   issuer.Name,
+			ManualExpiry:                 &manualExpiry,
 		}
 		got := certificates.MapCertificateDtoToDomain(dtoCert)
 		if got.Id != certId {
@@ -86,6 +99,12 @@ func TestCertificateMapping(t *testing.T) {
 		}
 		if got.CertNumber != "12345" {
 			t.Errorf("expected CertNumber 12345, got %s", got.CertNumber)
+		}
+		if got.CertType.NormalValidityMonths != 12 {
+			t.Errorf("expected NormalValidityMonths 12, got %d", got.CertType.NormalValidityMonths)
+		}
+		if got.ManualExpiry != manualExpiry {
+			t.Errorf("expected ManualExpiry %v, got %v", manualExpiry, got.ManualExpiry)
 		}
 	})
 

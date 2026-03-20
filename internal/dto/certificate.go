@@ -1,27 +1,32 @@
 ﻿package dto
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Certificate struct {
-	Id                string        `json:"id"`
-	CreatedAt         time.Time     `json:"created-at"`
-	UpdatedAt         time.Time     `json:"updated-at"`
-	CertTypeId        string        `json:"cert-type-id"`
-	CertTypeName      string        `json:"cert-type-name"`
-	CertTypeShortName string        `json:"cert-type-short-name"`
-	CertTypeStcwRef   string        `json:"cert-type-stcw-ref"`
-	CertNumber        string        `json:"cert-number"`
-	IssuerId          string        `json:"issuer-id"`
-	IssuerName        string        `json:"issuer-name"`
-	IssuerCountry     string        `json:"issuer-country"`
-	IssuerWebsite     string        `json:"issuer-website"`
-	IssuedDate        time.Time     `json:"issued-date"`
-	ExpiryDate        time.Time     `json:"expiry-date"`
-	AlternativeName   string        `json:"alternative-name"`
-	Remarks           string        `json:"remarks"`
-	Deleted           bool          `json:"deleted"`
-	HasSuccessors     bool          `json:"has-successors"`
-	Predecessors      []Predecessor `json:"predecessors"`
+	Id                           string        `json:"id"`
+	CreatedAt                    time.Time     `json:"created-at"`
+	UpdatedAt                    time.Time     `json:"updated-at"`
+	CertTypeId                   string        `json:"cert-type-id"`
+	CertTypeName                 string        `json:"cert-type-name"`
+	CertTypeShortName            string        `json:"cert-type-short-name"`
+	CertTypeStcwRef              string        `json:"cert-type-stcw-ref"`
+	CertTypeNormalValidityMonths int32         `json:"cert-type-normal-validity-months"`
+	CertNumber                   string        `json:"cert-number"`
+	IssuerId                     string        `json:"issuer-id"`
+	IssuerName                   string        `json:"issuer-name"`
+	IssuerCountry                string        `json:"issuer-country"`
+	IssuerWebsite                string        `json:"issuer-website"`
+	IssuedDate                   time.Time     `json:"issued-date"`
+	ExpiryDate                   time.Time     `json:"expiry-date"`
+	AlternativeName              string        `json:"alternative-name"`
+	Remarks                      string        `json:"remarks"`
+	Deleted                      bool          `json:"deleted"`
+	HasSuccessors                bool          `json:"has-successors"`
+	ManualExpiry                 *time.Time    `json:"manual-expiry,omitzero"`
+	Predecessors                 []Predecessor `json:"predecessors"`
 }
 
 type Predecessor struct {
@@ -43,14 +48,14 @@ type ParamsAddCertificate struct {
 }
 
 type ParamsUpdateCertificate struct {
-	UserId          string  `json:"user-id"`
-	Id              string  `json:"id" validate:"required"`
-	CertNumber      *string `json:"cert-number,omitempty"`
-	CertTypeId      *string `json:"cert-type-id,omitempty"`
-	IssuerId        *string `json:"issuer-id,omitempty"`
-	IssuedDate      *string `json:"issued-date,omitempty"`
-	AlternativeName *string `json:"alternative-name,omitempty"`
-	Remarks         *string `json:"remarks,omitempty"`
-	ManualExpiry    *string `json:"manual-expiry,omitempty"`
-	Deleted         *bool   `json:"deleted,omitempty"`
+	UserId          string          `json:"user-id"`
+	Id              string          `json:"id" validate:"required"`
+	CertNumber      *string         `json:"cert-number,omitempty"`
+	CertTypeId      *string         `json:"cert-type-id,omitempty"`
+	IssuerId        *string         `json:"issuer-id,omitempty"`
+	IssuedDate      *string         `json:"issued-date,omitempty"`
+	AlternativeName *string         `json:"alternative-name,omitempty"`
+	Remarks         *string         `json:"remarks,omitempty"`
+	ManualExpiry    json.RawMessage `json:"manual-expiry,omitempty"`
+	Deleted         *bool           `json:"deleted,omitempty"`
 }
