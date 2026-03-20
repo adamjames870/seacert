@@ -43,26 +43,65 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
+    setError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        console.error('AdminUsers: No session found');
         setError('Not authenticated');
         return;
       }
 
+      console.log('AdminUsers: Fetching users from', `${API_BASE_URL}/admin/users`);
       const response = await fetch(`${API_BASE_URL}/admin/users`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
+      console.log('AdminUsers: Fetch response status:', response.status);
       if (!response.ok) {
-        throw new Error('Failed to fetch users');
+        const errorText = await response.text();
+        console.error('AdminUsers: Fetch failed', response.status, errorText);
+        throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      setUsers(data);
+      console.log('AdminUsers: Received users data:', data);
+      
+      let usersArray: User[] = [];
+      if (Array.isArray(data)) {
+        usersArray = data;
+      } else if (data && typeof data === 'object') {
+        // Try to find an array in the object properties
+        const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
+        if (arrayKey) {
+          usersArray = data[arrayKey];
+          console.log(`AdminUsers: Extracted users from key: "${arrayKey}"`);
+        } else if (data.id && data.email && data.role) {
+          // If it's a single user object (as reported in the issue)
+          console.log('AdminUsers: Received a single user object instead of an array. Wrapping in array.');
+          usersArray = [data as User];
+        } else {
+          // If no array found, check for a message or error field
+          const message = data.message || data.error || data.details;
+          const availableKeys = Object.keys(data).join(', ');
+          console.error('AdminUsers: No array found in object:', data);
+          
+          if (message) {
+            throw new Error(`Server message: ${message}`);
+          } else {
+            throw new Error(`Received invalid data format from server. Expected an array but got object with keys: [${availableKeys}].`);
+          }
+        }
+      } else {
+        console.error('AdminUsers: Expected array of users but got:', typeof data, data);
+        throw new Error(`Received invalid data format from server. Expected an array but got ${typeof data}.`);
+      }
+      
+      setUsers(usersArray);
     } catch (err: any) {
+      console.error('AdminUsers: Error in fetchUsers:', err);
       setError(err.message || 'An error occurred while fetching users');
     } finally {
       setLoading(false);
@@ -75,10 +114,13 @@ const AdminUsers = () => {
 
   const filteredUsers = users.filter((user) => {
     const query = searchQuery.toLowerCase();
+    const forename = user.forename || '';
+    const surname = user.surname || '';
+    const email = user.email || '';
     return (
-      user.forename.toLowerCase().includes(query) ||
-      user.surname.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query)
+      forename.toLowerCase().includes(query) ||
+      surname.toLowerCase().includes(query) ||
+      email.toLowerCase().includes(query)
     );
   });
 

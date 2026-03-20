@@ -61,10 +61,26 @@ const AdminUserCertificates = () => {
             },
         });
         
-        if (userResponse.ok) {
-            const users = await userResponse.json();
-            const foundUser = users.find((u: User) => u.id === userId);
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            let usersArray: User[] = [];
+            
+            if (Array.isArray(userData)) {
+              usersArray = userData;
+            } else if (userData && typeof userData === 'object') {
+              const arrayKey = Object.keys(userData).find(key => Array.isArray(userData[key]));
+              if (arrayKey) {
+                usersArray = userData[arrayKey];
+              } else if (userData.id && userData.email) {
+                // Handle single user object
+                usersArray = [userData as User];
+              }
+            }
+
+            if (usersArray.length > 0) {
+            const foundUser = usersArray.find((u: User) => u.id === userId);
             if (foundUser) setUser(foundUser);
+          }
         }
 
         // Fetch user certificates
@@ -78,11 +94,45 @@ const AdminUserCertificates = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch user certificates');
+          const errorText = await response.text();
+          console.error('AdminUserCertificates: Fetch certificates failed', response.status, errorText);
+          throw new Error(`Failed to fetch user certificates: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        setCertificates(data);
+        console.log('AdminUserCertificates: Received certificates data:', data);
+        
+        let certsArray: Certificate[] = [];
+        if (Array.isArray(data)) {
+          certsArray = data;
+        } else if (data && typeof data === 'object') {
+          // Try to find an array in the object properties
+          const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
+          if (arrayKey) {
+            certsArray = data[arrayKey];
+            console.log(`AdminUserCertificates: Extracted certificates from key: "${arrayKey}"`);
+          } else if (data.id && (data['cert-type-name'] || data.certificate_type)) {
+            // Handle single certificate object if returned
+            console.log('AdminUserCertificates: Received a single certificate object instead of an array. Wrapping in array.');
+            certsArray = [data as Certificate];
+          } else {
+            // If no array found, check for a message or error field
+            const message = data.message || data.error || data.details;
+            const availableKeys = Object.keys(data).join(', ');
+            console.error('AdminUserCertificates: No array found in object:', data);
+            
+            if (message) {
+              throw new Error(`Server message: ${message}`);
+            } else {
+              throw new Error(`Received invalid data format for certificates. Expected an array but got object with keys: [${availableKeys}].`);
+            }
+          }
+        } else {
+          console.error('AdminUserCertificates: Expected array of certificates but got:', typeof data, data);
+          throw new Error(`Received invalid data format for certificates. Expected an array but got ${typeof data}.`);
+        }
+        
+        setCertificates(certsArray);
       } catch (err: any) {
         setError(err.message || 'An error occurred while fetching data');
       } finally {

@@ -81,27 +81,65 @@ function App() {
     const fetchUserData = async () => {
       if (session?.access_token) {
         setLoadingUserData(true)
+        console.log('Fetching user data for session:', session.user.id);
         try {
           const response = await fetch(`${API_BASE_URL}/admin/users`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },
           })
+          console.log('User data fetch response status:', response.status);
           if (response.ok) {
             const data = await response.json()
+            console.log('User data fetch response data:', data);
+            
+            let usersArray: UserData[] = [];
             if (Array.isArray(data)) {
-              const user = data.find(u => u.id === session.user.id)
-              setUserData(user || null)
-            } else {
-              setUserData(data)
+              usersArray = data;
+            } else if (data && typeof data === 'object') {
+              // Try to find an array in the object properties
+              const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
+              if (arrayKey) {
+                usersArray = data[arrayKey];
+              } else if (data.id || data.email) {
+                // If it's a single user object
+                setUserData(data as UserData);
+                return;
+              }
             }
+
+            if (usersArray.length > 0) {
+              const user = usersArray.find(u => u.id === session.user.id)
+              if (user) {
+                console.log('Found user in /admin/users list:', user);
+                setUserData(user)
+              } else {
+                console.warn('User session ID not found in /admin/users list');
+                // Fallback: If we got some data but not the specific user, 
+                // and it was a single object response, we already set it above and returned.
+                // If it was an array but our ID wasn't in it, something is wrong.
+                setUserData(null)
+              }
+            } else if (userData) {
+              // already set via single object check
+              return;
+            } else {
+              console.warn('No user data found in /admin/users response');
+              setUserData(null)
+            }
+          } else {
+            console.warn('Failed to fetch user data via /admin/users - status:', response.status);
+            // Try fetching from public user endpoint if it exists or just settle for session data
+            setUserData(null)
           }
         } catch (error) {
           console.error('Error fetching user data:', error)
+          setUserData(null)
         } finally {
           setLoadingUserData(false)
         }
       } else {
+        console.log('No session, clearing user data.');
         setUserData(null)
         setLoadingUserData(false)
       }
@@ -129,11 +167,30 @@ function App() {
     navigate('/login')
   }
 
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = session?.user?.app_metadata?.role === 'admin' || userData?.role === 'admin' || session?.user?.user_metadata?.role === 'admin'
+  console.log('Admin status:', { 
+    isAdmin, 
+    app_metadata_role: session?.user?.app_metadata?.role, 
+    user_metadata_role: session?.user?.user_metadata?.role,
+    userData_role: userData?.role 
+  });
 
   // Only block the whole app if we're waiting for the initial session check
-  // or if we have a session but haven't started fetching user data yet.
-  if (session === undefined || (session && loadingUserData && !userData)) {
+  if (session === undefined) {
+    console.log('App loading: session undefined');
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  const isAuthPath = ['/login', '/signup', '/'].includes(window.location.pathname);
+
+  // If we have a session but we're still loading user data and don't have it yet, show loading spinner.
+  // We'll also allow it to proceed if loadingUserData becomes false, regardless of if userData is found.
+  if (session && loadingUserData && !userData && !isAuthPath) {
+    console.log('App loading: session exists, fetching user data...');
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
