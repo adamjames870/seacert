@@ -11,7 +11,6 @@ import (
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/api/auth"
 	"github.com/adamjames870/seacert/internal/api/handlers"
-	"github.com/google/uuid"
 )
 
 type ParamsUploadURL struct {
@@ -45,10 +44,13 @@ func HandlerApiGetUploadURL(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		// Generate a unique file key: users/<user_id>/certs/<uuid><ext>
-		ext := filepath.Ext(params.Filename)
+		// 1. Get a clean version of the original filename without its extension
+		originalBase := filepath.Base(params.Filename)
+		ext := filepath.Ext(originalBase)
+		filenameWithoutExt := strings.TrimSuffix(originalBase, ext)
+
+		// 2. Default extension if missing
 		if ext == "" {
-			// Default extensions if missing
 			if strings.Contains(params.ContentType, "pdf") {
 				ext = ".pdf"
 			} else if strings.Contains(params.ContentType, "jpeg") || strings.Contains(params.ContentType, "jpg") {
@@ -56,7 +58,11 @@ func HandlerApiGetUploadURL(state *internal.ApiState) http.HandlerFunc {
 			}
 		}
 
-		fileKey := fmt.Sprintf("users/%s/certs/%s%s", userId.String(), uuid.New().String(), ext)
+		// 3. Generate a compact timestamp (YYYYMMDD-HHMMSS)
+		timestamp := time.Now().Format("20060102-150405")
+
+		// 4. Combine them into the final key: users/<user-id>/certs/<filename>-<timestamp><ext>
+		fileKey := fmt.Sprintf("users/%s/certs/%s-%s%s", userId.String(), filenameWithoutExt, timestamp, ext)
 
 		uploadURL, err := state.Storage.GetPresignedUploadURL(r.Context(), fileKey, params.ContentType, 15*time.Minute)
 		if err != nil {

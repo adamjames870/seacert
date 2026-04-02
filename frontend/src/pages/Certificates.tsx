@@ -1,5 +1,39 @@
 ﻿import { useEffect, useState } from 'react';
-import { Typography, Container, Box, Paper, List, ListItemText, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Collapse, Divider, Link, ListItemButton, Button, TextField, InputAdornment, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { 
+  Typography, 
+  Container, 
+  Box, 
+  Paper, 
+  List, 
+  ListItemText, 
+  Alert, 
+  CircularProgress, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  IconButton, 
+  Tooltip, 
+  Collapse, 
+  Divider, 
+  Link, 
+  ListItemButton, 
+  Button, 
+  TextField, 
+  InputAdornment, 
+  Stack, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogContentText, 
+  DialogActions, 
+  Accordion, 
+  AccordionSummary, 
+  AccordionDetails,
+  ButtonGroup,
+  Menu,
+  ListItemIcon
+} from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -12,6 +46,11 @@ import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import DownloadIcon from '@mui/icons-material/Download';
+import CloseIcon from '@mui/icons-material/Close';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
@@ -63,6 +102,41 @@ const Certificates = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeMenuCertId, setActiveMenuCertId] = useState<string | null>(null);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, certId: string) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget);
+    setActiveMenuCertId(certId);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setActiveMenuCertId(null);
+  };
+
+  const handlePreviewOpen = (cert: Certificate) => {
+    setSelectedCert(cert);
+    setPreviewOpen(true);
+    handleMenuClose();
+  };
+
+  const handleDownload = (cert: Certificate) => {
+    if (!cert['document-url']) return;
+    
+    const link = document.createElement('a');
+    link.href = cert['document-url'];
+    // Try to suggest a filename, though R2 pre-signed URLs might override this
+    const extension = cert['document-path']?.split('.').pop() || 'file';
+    link.download = `${cert['cert-type-short-name']}_${cert['cert-number']}.${extension}`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    handleMenuClose();
+  };
 
   const fetchCertificates = async (retry = true) => {
     try {
@@ -443,9 +517,16 @@ const Certificates = () => {
                       >
                         <ListItemText 
                           primary={
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
-                              {cert['cert-type-name']}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: styles.textColor }}>
+                                {cert['cert-type-name']}
+                              </Typography>
+                              {cert['document-path'] && (
+                                <Tooltip title="Has attachment">
+                                  <AttachFileIcon sx={{ fontSize: '1rem', color: styles.secondaryTextColor, transform: 'rotate(45deg)' }} />
+                                </Tooltip>
+                              )}
+                            </Box>
                           }
                           secondary={
                             <Box component="span" sx={{ color: styles.secondaryTextColor }}>
@@ -547,25 +628,55 @@ const Certificates = () => {
                           )}
                           {cert['document-url'] && (
                             <Box sx={{ mt: 2 }}>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                startIcon={<DescriptionIcon />}
-                                href={cert['document-url']}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
+                              <ButtonGroup 
+                                variant="outlined" 
+                                size="small" 
                                 sx={{
-                                  color: styles.textColor,
-                                  borderColor: styles.borderColor,
-                                  '&:hover': {
-                                    borderColor: styles.textColor,
-                                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                  '& .MuiButton-root': {
+                                    color: styles.textColor,
+                                    borderColor: styles.borderColor,
+                                    '&:hover': {
+                                      borderColor: styles.textColor,
+                                      bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                    }
                                   }
                                 }}
                               >
-                                View Document
-                              </Button>
+                                <Button
+                                  startIcon={<VisibilityIcon />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePreviewOpen(cert);
+                                  }}
+                                >
+                                  Preview
+                                </Button>
+                                <Button
+                                  size="small"
+                                  onClick={(e) => handleMenuOpen(e, cert.id)}
+                                >
+                                  <ArrowDropDownIcon />
+                                </Button>
+                              </ButtonGroup>
+                              <Menu
+                                anchorEl={menuAnchorEl}
+                                open={Boolean(menuAnchorEl) && activeMenuCertId === cert.id}
+                                onClose={handleMenuClose}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MenuItem onClick={() => handlePreviewOpen(cert)}>
+                                  <ListItemIcon>
+                                    <VisibilityIcon fontSize="small" />
+                                  </ListItemIcon>
+                                  Preview
+                                </MenuItem>
+                                <MenuItem onClick={() => handleDownload(cert)}>
+                                  <ListItemIcon>
+                                    <DownloadIcon fontSize="small" />
+                                  </ListItemIcon>
+                                  Download
+                                </MenuItem>
+                              </Menu>
                             </Box>
                           )}
                           {flattenPredecessors(cert).length > 0 && (
@@ -777,9 +888,16 @@ const Certificates = () => {
                           >
                             <ListItemText 
                               primary={
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                                  {cert['cert-type-name']}
-                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                    {cert['cert-type-name']}
+                                  </Typography>
+                                  {cert['document-path'] && (
+                                    <Tooltip title="Has attachment">
+                                      <AttachFileIcon sx={{ fontSize: '1rem', color: 'text.disabled', transform: 'rotate(45deg)' }} />
+                                    </Tooltip>
+                                  )}
+                                </Box>
                               }
                               secondary={
                                 <Box component="span" sx={{ color: 'text.secondary' }}>
@@ -827,19 +945,43 @@ const Certificates = () => {
                                   </Typography>
                                 </Box>
                                 {cert['document-url'] && (
-                                  <Box sx={{ gridColumn: { sm: 'span 2' } }}>
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      startIcon={<DescriptionIcon />}
-                                      href={cert['document-url']}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                  <Box sx={{ gridColumn: { sm: 'span 2' }, mt: 1 }}>
+                                    <ButtonGroup variant="outlined" size="small">
+                                      <Button
+                                        startIcon={<VisibilityIcon />}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handlePreviewOpen(cert);
+                                        }}
+                                      >
+                                        Preview
+                                      </Button>
+                                      <Button
+                                        size="small"
+                                        onClick={(e) => handleMenuOpen(e, cert.id)}
+                                      >
+                                        <ArrowDropDownIcon />
+                                      </Button>
+                                    </ButtonGroup>
+                                    <Menu
+                                      anchorEl={menuAnchorEl}
+                                      open={Boolean(menuAnchorEl) && activeMenuCertId === cert.id}
+                                      onClose={handleMenuClose}
                                       onClick={(e) => e.stopPropagation()}
-                                      sx={{ mt: 1 }}
                                     >
-                                      View Document
-                                    </Button>
+                                      <MenuItem onClick={() => handlePreviewOpen(cert)}>
+                                        <ListItemIcon>
+                                          <VisibilityIcon fontSize="small" />
+                                        </ListItemIcon>
+                                        Preview
+                                      </MenuItem>
+                                      <MenuItem onClick={() => handleDownload(cert)}>
+                                        <ListItemIcon>
+                                          <DownloadIcon fontSize="small" />
+                                        </ListItemIcon>
+                                        Download
+                                      </MenuItem>
+                                    </Menu>
                                   </Box>
                                 )}
                               </Box>
@@ -1023,6 +1165,51 @@ const Certificates = () => {
           </Button>
           <Button onClick={handleDeleteConfirm} color="error" autoFocus disabled={actionLoading}>
             {actionLoading ? <CircularProgress size={24} /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Document Preview Dialog */}
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Document Preview - {selectedCert?.['cert-type-short-name']}
+          <IconButton onClick={() => setPreviewOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0, height: '75vh', overflow: 'hidden' }}>
+          {selectedCert?.['document-url'] && (
+            selectedCert['document-path']?.toLowerCase().endsWith('.pdf') ? (
+              <iframe
+                src={selectedCert['document-url']}
+                title="PDF Preview"
+                width="100%"
+                height="100%"
+                style={{ border: 'none' }}
+              />
+            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2 }}>
+                <img
+                  src={selectedCert['document-url']}
+                  alt="Document Preview"
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+              </Box>
+            )
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+          <Button 
+            variant="contained" 
+            startIcon={<DownloadIcon />}
+            onClick={() => selectedCert && handleDownload(selectedCert)}
+          >
+            Download
           </Button>
         </DialogActions>
       </Dialog>
