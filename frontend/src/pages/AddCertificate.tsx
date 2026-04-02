@@ -11,9 +11,12 @@ import {
   CircularProgress,
   Autocomplete,
   Grid,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { calculateExpiryDate, formatDate } from '../utils/dateUtils';
@@ -40,6 +43,9 @@ const AddCertificate = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [documentPath, setDocumentPath] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     certTypeId: '',
@@ -130,6 +136,71 @@ const AddCertificate = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only PDF and JPG files are allowed');
+      return;
+    }
+
+    setUploadingFile(true);
+    setError(null);
+    setFileName(file.name);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // 1. Get upload URL
+      const urlResponse = await fetch(`${API_BASE_URL}/api/certificates/upload-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          'content-type': file.type
+        }),
+      });
+
+      if (!urlResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { 'upload-url': uploadUrl, 'file-key': fileKey } = await urlResponse.json();
+
+      // 2. Upload to R2
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file to storage');
+      }
+
+      setDocumentPath(fileKey);
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload document');
+      setFileName(null);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setDocumentPath(null);
+    setFileName(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -153,7 +224,8 @@ const AddCertificate = () => {
           'manual-expiry': formData.manualExpiry ? new Date(formData.manualExpiry).toISOString() : null,
           remarks: formData.remarks,
           'supersedes': formData.supersedes || undefined,
-          'supersede-reason': formData.supersedeReason || undefined
+          'supersede-reason': formData.supersedeReason || undefined,
+          'document-path': documentPath
         }),
       });
 
@@ -414,6 +486,43 @@ const AddCertificate = () => {
                   value={formData.remarks}
                   onChange={handleChange}
                 />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
+                    Certificate Attachment (PDF/JPG)
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<CloudUploadIcon />}
+                      disabled={uploadingFile || submitting}
+                    >
+                      {documentPath ? 'Change File' : 'Upload File'}
+                      <input
+                        type="file"
+                        hidden
+                        accept="application/pdf,image/jpeg,image/jpg"
+                        onChange={handleFileUpload}
+                      />
+                    </Button>
+                    {uploadingFile && <CircularProgress size={24} />}
+                    {fileName && !uploadingFile && (
+                      <Chip
+                        label={fileName}
+                        onDelete={handleRemoveFile}
+                        deleteIcon={<DeleteIcon />}
+                        color="primary"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Max size: 5MB. Allowed formats: PDF, JPG.
+                  </Typography>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>

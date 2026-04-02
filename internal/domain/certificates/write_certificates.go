@@ -120,9 +120,20 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		return Certificate{}, errDb
 	}
 
+	var docPath *string
 	if params.DocumentPath != nil {
-		newPath := *params.DocumentPath
-		if oldCert.DocumentPath != "" && oldCert.DocumentPath != newPath {
+		if string(params.DocumentPath) == "null" {
+			docPath = new(string)
+			*docPath = ""
+		} else {
+			var pathStr string
+			if err := json.Unmarshal(params.DocumentPath, &pathStr); err != nil {
+				return Certificate{}, err
+			}
+			docPath = &pathStr
+		}
+
+		if oldCert.DocumentPath != "" && oldCert.DocumentPath != *docPath {
 			errDelete := state.Storage.DeleteObject(ctx, oldCert.DocumentPath)
 			if errDelete != nil {
 				state.Logger.Error("Failed to delete old certificate from R2", "path", oldCert.DocumentPath, "error", errDelete)
@@ -164,7 +175,7 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		AlternativeName: domain.ToNullStringFromPointer(params.AlternativeName),
 		Remarks:         domain.ToNullStringFromPointer(params.Remarks),
 		IssuerID:        domain.ToNullUUIDFromStringPointer(params.IssuerId),
-		DocumentPath:    domain.ToNullStringFromPointer(params.DocumentPath),
+		DocumentPath:    domain.ToNullStringFromPointer(docPath),
 		Deleted:         domain.ToNullBoolFromPointer(params.Deleted),
 	}
 

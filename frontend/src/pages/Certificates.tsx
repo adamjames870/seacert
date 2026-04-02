@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
@@ -42,6 +43,8 @@ interface Certificate {
   deleted?: boolean;
   predecessors?: Predecessor[];
   'has-successors'?: boolean;
+  'document-path'?: string;
+  'document-url'?: string;
 }
 
 type SortField = 'cert-type-name' | 'issuer-name' | 'issued-date' | 'expiry-date';
@@ -542,6 +545,29 @@ const Certificates = () => {
                               </Typography>
                             </Box>
                           )}
+                          {cert['document-url'] && (
+                            <Box sx={{ mt: 2 }}>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<DescriptionIcon />}
+                                href={cert['document-url']}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                sx={{
+                                  color: styles.textColor,
+                                  borderColor: styles.borderColor,
+                                  '&:hover': {
+                                    borderColor: styles.textColor,
+                                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                  }
+                                }}
+                              >
+                                View Document
+                              </Button>
+                            </Box>
+                          )}
                           {flattenPredecessors(cert).length > 0 && (
                             <Box sx={{ mt: 2 }}>
                               <Typography variant="caption" sx={{ color: styles.secondaryTextColor, display: 'block' }}>
@@ -800,6 +826,22 @@ const Certificates = () => {
                                     {cert.remarks || 'No remarks provided.'}
                                   </Typography>
                                 </Box>
+                                {cert['document-url'] && (
+                                  <Box sx={{ gridColumn: { sm: 'span 2' } }}>
+                                    <Button
+                                      variant="outlined"
+                                      size="small"
+                                      startIcon={<DescriptionIcon />}
+                                      href={cert['document-url']}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      sx={{ mt: 1 }}
+                                    >
+                                      View Document
+                                    </Button>
+                                  </Box>
+                                )}
                               </Box>
                               {flattenPredecessors(cert).length > 0 && (
                                 <Box sx={{ mt: 2 }}>

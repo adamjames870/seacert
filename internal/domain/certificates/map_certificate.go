@@ -94,9 +94,12 @@ func MapCertificateDomainToDto(state *internal.ApiState, ctx context.Context, ce
 		AlternativeName:              cert.AlternativeName,
 		Remarks:                      cert.Remarks,
 		Deleted:                      cert.Deleted,
-		DocumentPath:                 cert.DocumentPath,
 		Predecessors:                 []dto.Predecessor{},
 		HasSuccessors:                cert.HasSuccessors,
+	}
+
+	if cert.DocumentPath != "" {
+		rv.DocumentPath = &cert.DocumentPath
 	}
 
 	if cert.DocumentPath != "" && state != nil && state.Storage != nil {
@@ -149,9 +152,11 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		IssuedDate:      cert.IssuedDate,
 		AlternativeName: cert.AlternativeName,
 		Remarks:         cert.Remarks,
-		DocumentPath:    cert.DocumentPath,
 		Deleted:         cert.Deleted,
 		Predecessors:    []Predecesor{},
+	}
+	if cert.DocumentPath != nil {
+		rv.DocumentPath = *cert.DocumentPath
 	}
 	if cert.ManualExpiry != nil {
 		rv.ManualExpiry = *cert.ManualExpiry
