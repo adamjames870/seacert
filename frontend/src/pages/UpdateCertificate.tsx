@@ -48,7 +48,7 @@ const UpdateCertificate = () => {
   const [fileType, setFileType] = useState<string | null>(null);
   const [issuers, setIssuers] = useState<Issuer[]>([]);
 
-  const { uploadFile, uploading: uploadingFile, progress, error: uploadError, setError: setUploadError } = useFileUpload();
+  const { uploadFile, uploading: uploadingFile, progress, error: uploadError } = useFileUpload();
 
   useEffect(() => {
     if (uploadError) {
