@@ -50,6 +50,7 @@ const AddCertificate = () => {
   const [issuers, setIssuers] = useState<Issuer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPdfSizeError, setIsPdfSizeError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [documentPath, setDocumentPath] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -59,13 +60,14 @@ const AddCertificate = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
 
-  const { uploadFile, uploading: uploadingFile, progress, error: uploadError } = useFileUpload();
+  const { uploadFile, uploading: uploadingFile, progress, error: uploadError, isPdfSizeError: uploadPdfError } = useFileUpload();
 
   useEffect(() => {
     if (uploadError) {
       setError(uploadError);
+      setIsPdfSizeError(uploadPdfError);
     }
-  }, [uploadError]);
+  }, [uploadError, uploadPdfError]);
 
   useEffect(() => {
     setUploadProgress(progress);
@@ -165,6 +167,7 @@ const AddCertificate = () => {
     if (!file) return;
 
     setError(null);
+    setIsPdfSizeError(false);
     setFileName(file.name);
     setFileType(file.type);
 
@@ -194,6 +197,7 @@ const AddCertificate = () => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setIsPdfSizeError(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -264,6 +268,11 @@ const AddCertificate = () => {
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
+              {isPdfSizeError && (
+                <Box component="span" sx={{ display: 'block', mt: 1 }}>
+                  Try using <Link href="https://www.ilovepdf.com/compress_pdf" target="_blank" rel="noopener">iLovePDF</Link> to reduce your file size.
+                </Box>
+              )}
             </Alert>
           )}
 

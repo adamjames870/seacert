@@ -38,6 +38,7 @@ const UpdateCertificate = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPdfSizeError, setIsPdfSizeError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [documentPath, setDocumentPath] = useState<string | null>(null);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
@@ -48,13 +49,14 @@ const UpdateCertificate = () => {
   const [fileType, setFileType] = useState<string | null>(null);
   const [issuers, setIssuers] = useState<Issuer[]>([]);
 
-  const { uploadFile, uploading: uploadingFile, progress, error: uploadError } = useFileUpload();
+  const { uploadFile, uploading: uploadingFile, progress, error: uploadError, isPdfSizeError: uploadPdfError } = useFileUpload();
 
   useEffect(() => {
     if (uploadError) {
       setError(uploadError);
+      setIsPdfSizeError(uploadPdfError);
     }
-  }, [uploadError]);
+  }, [uploadError, uploadPdfError]);
 
   useEffect(() => {
     setUploadProgress(progress);
@@ -167,6 +169,7 @@ const UpdateCertificate = () => {
     if (!file) return;
 
     setError(null);
+    setIsPdfSizeError(false);
     setFileType(file.type);
 
     try {
@@ -195,6 +198,7 @@ const UpdateCertificate = () => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setIsPdfSizeError(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -269,6 +273,11 @@ const UpdateCertificate = () => {
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
+              {isPdfSizeError && (
+                <Box component="span" sx={{ display: 'block', mt: 1 }}>
+                  Try using <Link href="https://www.ilovepdf.com/compress_pdf" target="_blank" rel="noopener">iLovePDF</Link> to reduce your file size.
+                </Box>
+              )}
             </Alert>
           )}
 
