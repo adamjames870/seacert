@@ -14,11 +14,11 @@ import (
 )
 
 const createCert = `-- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks, manual_expiry)
+INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks, manual_expiry, document_path)
 VALUES (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
        )
-RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry, deleted
+RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry, deleted, document_path
 `
 
 type CreateCertParams struct {
@@ -33,6 +33,7 @@ type CreateCertParams struct {
 	AlternativeName sql.NullString
 	Remarks         sql.NullString
 	ManualExpiry    sql.NullTime
+	DocumentPath    sql.NullString
 }
 
 func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certificate, error) {
@@ -48,6 +49,7 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		arg.AlternativeName,
 		arg.Remarks,
 		arg.ManualExpiry,
+		arg.DocumentPath,
 	)
 	var i Certificate
 	err := row.Scan(
@@ -63,6 +65,7 @@ func (q *Queries) CreateCert(ctx context.Context, arg CreateCertParams) (Certifi
 		&i.UserID,
 		&i.ManualExpiry,
 		&i.Deleted,
+		&i.DocumentPath,
 	)
 	return i, err
 }
@@ -120,6 +123,7 @@ SELECT
     alternative_name,
     remarks,
     manual_expiry,
+    document_path,
     deleted,
     EXISTS (
         SELECT true
@@ -164,6 +168,7 @@ type GetCertFromIdRow struct {
 	AlternativeName       sql.NullString
 	Remarks               sql.NullString
 	ManualExpiry          sql.NullTime
+	DocumentPath          sql.NullString
 	Deleted               bool
 	HasPredecessors       bool
 	HasSuccessor          bool
@@ -194,6 +199,7 @@ func (q *Queries) GetCertFromId(ctx context.Context, arg GetCertFromIdParams) (G
 		&i.AlternativeName,
 		&i.Remarks,
 		&i.ManualExpiry,
+		&i.DocumentPath,
 		&i.Deleted,
 		&i.HasPredecessors,
 		&i.HasSuccessor,
@@ -224,6 +230,7 @@ SELECT
     alternative_name,
     remarks,
     manual_expiry,
+    document_path,
     deleted,
     EXISTS (
         SELECT true
@@ -263,6 +270,7 @@ type GetCertsRow struct {
 	AlternativeName       sql.NullString
 	Remarks               sql.NullString
 	ManualExpiry          sql.NullTime
+	DocumentPath          sql.NullString
 	Deleted               bool
 	HasPredecessors       bool
 	HasSuccessor          bool
@@ -299,6 +307,7 @@ func (q *Queries) GetCerts(ctx context.Context, userID uuid.UUID) ([]GetCertsRow
 			&i.AlternativeName,
 			&i.Remarks,
 			&i.ManualExpiry,
+			&i.DocumentPath,
 			&i.Deleted,
 			&i.HasPredecessors,
 			&i.HasSuccessor,
@@ -375,10 +384,11 @@ SET
     remarks=COALESCE($6, remarks),
     issuer_id=COALESCE($7, issuer_id),
     manual_expiry=(CASE WHEN $8::boolean THEN $9 ELSE manual_expiry END),
-    deleted=COALESCE($10, deleted),
+    document_path=COALESCE($10, document_path),
+    deleted=COALESCE($11, deleted),
     updated_at=NOW()
 WHERE id=$1
-RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry, deleted
+RETURNING id, created_at, updated_at, cert_number, issued_date, cert_type_id, alternative_name, remarks, issuer_id, user_id, manual_expiry, deleted, document_path
 `
 
 type UpdateCertificateParams struct {
@@ -391,6 +401,7 @@ type UpdateCertificateParams struct {
 	IssuerID             uuid.NullUUID
 	ManualExpiryDoUpdate bool
 	ManualExpiry         sql.NullTime
+	DocumentPath         sql.NullString
 	Deleted              sql.NullBool
 }
 
@@ -405,6 +416,7 @@ func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificatePa
 		arg.IssuerID,
 		arg.ManualExpiryDoUpdate,
 		arg.ManualExpiry,
+		arg.DocumentPath,
 		arg.Deleted,
 	)
 	var i Certificate
@@ -421,6 +433,7 @@ func (q *Queries) UpdateCertificate(ctx context.Context, arg UpdateCertificatePa
 		&i.UserID,
 		&i.ManualExpiry,
 		&i.Deleted,
+		&i.DocumentPath,
 	)
 	return i, err
 }

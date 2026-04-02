@@ -55,6 +55,7 @@ func WriteNewCert(state *internal.ApiState, ctx context.Context, params dto.Para
 		AlternativeName: domain.ToNullStringFromPointer(params.AlternativeName),
 		Remarks:         domain.ToNullStringFromPointer(params.Remarks),
 		ManualExpiry:    domain.ToNullTimeFromStringPointer(params.ManualExpiry),
+		DocumentPath:    domain.ToNullStringFromPointer(params.DocumentPath),
 	}
 
 	dbCert, errCreateCert := state.Queries.CreateCert(ctx, newCert)
@@ -114,9 +115,21 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		return Certificate{}, errParse
 	}
 
-	_, errDb := GetCertificateFromId(state, ctx, params.Id, userId)
+	oldCert, errDb := GetCertificateFromId(state, ctx, params.Id, userId)
 	if errDb != nil {
 		return Certificate{}, errDb
+	}
+
+	if params.DocumentPath != nil {
+		newPath := *params.DocumentPath
+		if oldCert.DocumentPath != "" && oldCert.DocumentPath != newPath {
+			errDelete := state.Storage.DeleteObject(ctx, oldCert.DocumentPath)
+			if errDelete != nil {
+				state.Logger.Error("Failed to delete old certificate from R2", "path", oldCert.DocumentPath, "error", errDelete)
+			} else {
+				state.Logger.Info("Deleted old certificate from R2", "path", oldCert.DocumentPath)
+			}
+		}
 	}
 
 	uuidId, errParse := uuid.Parse(params.Id)
@@ -151,6 +164,7 @@ func UpdateCertificate(state *internal.ApiState, ctx context.Context, params dto
 		AlternativeName: domain.ToNullStringFromPointer(params.AlternativeName),
 		Remarks:         domain.ToNullStringFromPointer(params.Remarks),
 		IssuerID:        domain.ToNullUUIDFromStringPointer(params.IssuerId),
+		DocumentPath:    domain.ToNullStringFromPointer(params.DocumentPath),
 		Deleted:         domain.ToNullBoolFromPointer(params.Deleted),
 	}
 

@@ -1,6 +1,10 @@
 ﻿package certificates
 
 import (
+	"context"
+	"time"
+
+	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
@@ -22,6 +26,7 @@ func MapCertificateDbToDomain(cert sqlc.Certificate, certType cert_types.Certifi
 		AlternativeName: cert.AlternativeName.String,
 		Remarks:         cert.Remarks.String,
 		ManualExpiry:    cert.ManualExpiry.Time,
+		DocumentPath:    cert.DocumentPath.String,
 		Deleted:         cert.Deleted,
 	}
 }
@@ -58,6 +63,7 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 		AlternativeName: dbCert.AlternativeName.String,
 		Remarks:         dbCert.Remarks.String,
 		ManualExpiry:    dbCert.ManualExpiry.Time,
+		DocumentPath:    dbCert.DocumentPath.String,
 		Deleted:         dbCert.Deleted,
 		HasSuccessors:   dbCert.HasSuccessor,
 	}
@@ -67,7 +73,7 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 
 }
 
-func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
+func MapCertificateDomainToDto(state *internal.ApiState, ctx context.Context, cert Certificate) dto.Certificate {
 
 	rv := dto.Certificate{
 		Id:                           cert.Id.String(),
@@ -88,15 +94,24 @@ func MapCertificateDomainToDto(cert Certificate) dto.Certificate {
 		AlternativeName:              cert.AlternativeName,
 		Remarks:                      cert.Remarks,
 		Deleted:                      cert.Deleted,
+		DocumentPath:                 cert.DocumentPath,
 		Predecessors:                 []dto.Predecessor{},
 		HasSuccessors:                cert.HasSuccessors,
 	}
+
+	if cert.DocumentPath != "" && state != nil && state.Storage != nil {
+		url, err := state.Storage.GetPresignedDownloadURL(ctx, cert.DocumentPath, 1*time.Hour)
+		if err == nil {
+			rv.DocumentURL = url
+		}
+	}
+
 	if !cert.ManualExpiry.IsZero() {
 		rv.ManualExpiry = &cert.ManualExpiry
 	}
 
 	for _, predecessor := range cert.Predecessors {
-		rv.Predecessors = append(rv.Predecessors, MapPredecessorDomainToDto(predecessor))
+		rv.Predecessors = append(rv.Predecessors, MapPredecessorDomainToDto(state, ctx, predecessor))
 	}
 
 	return rv
@@ -134,6 +149,7 @@ func MapCertificateDtoToDomain(cert dto.Certificate) Certificate {
 		IssuedDate:      cert.IssuedDate,
 		AlternativeName: cert.AlternativeName,
 		Remarks:         cert.Remarks,
+		DocumentPath:    cert.DocumentPath,
 		Deleted:         cert.Deleted,
 		Predecessors:    []Predecesor{},
 	}
@@ -169,10 +185,10 @@ func MapCertificateDomainToDb(cert Certificate) sqlc.Certificate {
 
 }
 
-func MapPredecessorDomainToDto(predecessor Predecesor) dto.Predecessor {
+func MapPredecessorDomainToDto(state *internal.ApiState, ctx context.Context, predecessor Predecesor) dto.Predecessor {
 
 	return dto.Predecessor{
-		Cert:   MapCertificateDomainToDto(predecessor.Cert),
+		Cert:   MapCertificateDomainToDto(state, ctx, predecessor.Cert),
 		Reason: string(predecessor.ReplaceReason),
 	}
 

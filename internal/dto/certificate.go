@@ -26,6 +26,8 @@ type Certificate struct {
 	Deleted                      bool          `json:"deleted"`
 	HasSuccessors                bool          `json:"has-successors"`
 	ManualExpiry                 *time.Time    `json:"manual-expiry,omitzero"`
+	DocumentPath                 string        `json:"document-path,omitzero"`
+	DocumentURL                  string        `json:"document-url,omitzero"`
 	Predecessors                 []Predecessor `json:"predecessors"`
 }
 
@@ -43,6 +45,7 @@ type ParamsAddCertificate struct {
 	AlternativeName *string `json:"alternative-name,omitempty"`
 	Remarks         *string `json:"remarks,omitempty"`
 	ManualExpiry    *string `json:"manual-expiry,omitempty"`
+	DocumentPath    *string `json:"document-path,omitempty"`
 	Supersedes      *string `json:"supersedes,omitempty"`
 	SupersedeReason *string `json:"supersede-reason,omitempty"`
 }
@@ -57,5 +60,6 @@ type ParamsUpdateCertificate struct {
 	AlternativeName *string         `json:"alternative-name,omitempty"`
 	Remarks         *string         `json:"remarks,omitempty"`
 	ManualExpiry    json.RawMessage `json:"manual-expiry,omitempty"`
+	DocumentPath    *string         `json:"document-path,omitempty"`
 	Deleted         *bool           `json:"deleted,omitempty"`
 }

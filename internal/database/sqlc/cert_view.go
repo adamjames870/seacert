@@ -16,6 +16,7 @@ type CertView struct {
 	AlternativeName       sql.NullString
 	Remarks               sql.NullString
 	ManualExpiry          sql.NullTime
+	DocumentPath          sql.NullString
 	CertTypeID            uuid.UUID
 	CertTypeCreatedAt     time.Time
 	CertTypeUpdatedAt     time.Time
@@ -44,6 +45,7 @@ func (r GetCertsRow) ToCertView() CertView {
 		AlternativeName:       r.AlternativeName,
 		Remarks:               r.Remarks,
 		ManualExpiry:          r.ManualExpiry,
+		DocumentPath:          r.DocumentPath,
 		CertTypeID:            r.CertTypeID,
 		CertTypeCreatedAt:     r.CertTypeCreatedAt,
 		CertTypeUpdatedAt:     r.CertTypeUpdatedAt,
@@ -73,6 +75,7 @@ func (r GetCertFromIdRow) ToCertView() CertView {
 		AlternativeName:       r.AlternativeName,
 		Remarks:               r.Remarks,
 		ManualExpiry:          r.ManualExpiry,
+		DocumentPath:          r.DocumentPath,
 		CertTypeID:            r.CertTypeID,
 		CertTypeCreatedAt:     r.CertTypeCreatedAt,
 		CertTypeUpdatedAt:     r.CertTypeUpdatedAt,

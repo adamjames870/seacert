@@ -24,6 +24,7 @@ type Certificate struct {
 	UserID          uuid.UUID
 	ManualExpiry    sql.NullTime
 	Deleted         bool
+	DocumentPath    sql.NullString
 }
 
 type CertificateType struct {

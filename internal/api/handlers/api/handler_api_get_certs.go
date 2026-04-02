@@ -52,7 +52,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 				}
 				return
 			}
-			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(rv))
+			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(state, r.Context(), rv))
 			return
 
 		default:
@@ -73,7 +73,7 @@ func getAllCertificates(state *internal.ApiState, ctx context.Context, userId uu
 
 	rv := make([]dto.Certificate, 0, len(certs))
 	for _, cert := range certs {
-		rv = append(rv, certificates.MapCertificateDomainToDto(cert))
+		rv = append(rv, certificates.MapCertificateDomainToDto(state, ctx, cert))
 	}
 
 	return rv, nil

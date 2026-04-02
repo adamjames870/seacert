@@ -41,7 +41,7 @@ func HandlerApiUpdateCert(state *internal.ApiState) http.HandlerFunc {
 
 		state.Logger.Info("Certificate updated", "user_id", userId, "certificate_id", cert.Id)
 
-		certDto := certificates.MapCertificateDomainToDto(cert)
+		certDto := certificates.MapCertificateDomainToDto(state, r.Context(), cert)
 
 		handlers.RespondWithJSON(w, 200, certDto)
 
