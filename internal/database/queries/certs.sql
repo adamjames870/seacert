@@ -1,7 +1,7 @@
 -- name: CreateCert :one
-INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks, manual_expiry)
+INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date, alternative_name, remarks, manual_expiry, document_path)
 VALUES (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
        )
 RETURNING *;
 
@@ -19,6 +19,7 @@ SELECT
     alternative_name,
     remarks,
     manual_expiry,
+    document_path,
     deleted,
     EXISTS (
         SELECT true
@@ -58,6 +59,7 @@ SELECT
     alternative_name,
     remarks,
     manual_expiry,
+    document_path,
     deleted,
     EXISTS (
         SELECT true
@@ -97,6 +99,7 @@ SET
     remarks=COALESCE(sqlc.narg('remarks'), remarks),
     issuer_id=COALESCE(sqlc.narg('issuer_id'), issuer_id),
     manual_expiry=(CASE WHEN sqlc.arg('manual_expiry_do_update')::boolean THEN sqlc.narg('manual_expiry') ELSE manual_expiry END),
+    document_path=COALESCE(sqlc.narg('document_path'), document_path),
     deleted=COALESCE(sqlc.narg('deleted'), deleted),
     updated_at=NOW()
 WHERE id=$1

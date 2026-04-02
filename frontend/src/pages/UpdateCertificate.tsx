@@ -7,15 +7,27 @@ import {
   Button, 
   Paper, 
   Alert, 
-  CircularProgress,
+  LinearProgress,
+  Snackbar,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Chip,
   Grid,
   Autocomplete,
+  CircularProgress,
   Link
 } from '@mui/material';
 import { useNavigate, useParams, Link as RouterLink, useLocation } from 'react-router-dom';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloseIcon from '@mui/icons-material/Close';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { calculateExpiryDate, formatDate } from '../utils/dateUtils';
+import { useFileUpload } from '../hooks/useFileUpload';
 
 interface Issuer {
   id: string;
@@ -27,7 +39,26 @@ const UpdateCertificate = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [documentPath, setDocumentPath] = useState<string | null>(null);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
   const [issuers, setIssuers] = useState<Issuer[]>([]);
+
+  const { uploadFile, uploading: uploadingFile, progress, error: uploadError } = useFileUpload();
+
+  useEffect(() => {
+    if (uploadError) {
+      setError(uploadError);
+    }
+  }, [uploadError]);
+
+  useEffect(() => {
+    setUploadProgress(progress);
+  }, [progress]);
 
   const [formData, setFormData] = useState({
     certNumber: '',
@@ -101,6 +132,13 @@ const UpdateCertificate = () => {
         }
         setCertTypeName(cert['cert-type-name'] || '');
         setValidityMonths(cert['cert-type-normal-validity-months'] ?? null);
+        setDocumentPath(cert['document-path'] || null);
+        setDocumentUrl(cert['document-url'] || null);
+        if (cert['document-path']?.toLowerCase().endsWith('.pdf')) {
+          setFileType('application/pdf');
+        } else if (cert['document-path']?.toLowerCase().endsWith('.jpg') || cert['document-path']?.toLowerCase().endsWith('.jpeg')) {
+          setFileType('image/jpeg');
+        }
       } catch (err: any) {
         setError(err.message || 'An error occurred while fetching data');
       } finally {
@@ -124,6 +162,35 @@ const UpdateCertificate = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+    setFileType(file.type);
+
+    try {
+      const { fileKey } = await uploadFile(file);
+      setDocumentPath(fileKey);
+      setDocumentUrl(null); // Clear old preview if any
+      
+      // Create local preview URL
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } catch (err: any) {
+      // Error handled by useFileUpload
+      setPreviewUrl(null);
+      setFileType(null);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setDocumentPath(null);
+    setDocumentUrl(null);
+    setPreviewUrl(null);
+    setFileType(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -139,7 +206,8 @@ const UpdateCertificate = () => {
         'cert-number': formData.certNumber,
         'issued-date': formData.issuedDate ? new Date(formData.issuedDate).toISOString() : null,
         'manual-expiry': formData.manualExpiry ? new Date(formData.manualExpiry).toISOString() : null,
-        remarks: formData.remarks
+        remarks: formData.remarks,
+        'document-path': documentPath
       };
       console.log('Sending update payload:', payload);
 
@@ -170,6 +238,7 @@ const UpdateCertificate = () => {
       // We could optionally verify if the returned data matches formData here,
       // but if the response is OK, we assume the backend handled it or returned the new state.
 
+      // setShowSuccess(true);
       navigate('/certificates');
     } catch (err: any) {
       setError(err.message || 'An error occurred during update');
@@ -325,6 +394,65 @@ const UpdateCertificate = () => {
                 />
               </Grid>
 
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
+                    Certificate Attachment (PDF/JPG)
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<CloudUploadIcon />}
+                      disabled={uploadingFile || submitting}
+                    >
+                      {documentPath ? 'Change File' : 'Upload File'}
+                      <input
+                        type="file"
+                        hidden
+                        accept="application/pdf,image/jpeg,image/jpg"
+                        onChange={handleFileUpload}
+                      />
+                    </Button>
+                    
+                    {documentPath && !uploadingFile && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          label={documentPath.split('/').pop()}
+                          onDelete={handleRemoveFile}
+                          deleteIcon={<DeleteIcon />}
+                          color="primary"
+                          variant="outlined"
+                        />
+                        {(documentUrl || previewUrl) && (
+                          <IconButton 
+                            color="primary" 
+                            onClick={() => setPreviewOpen(true)}
+                            size="small"
+                            title="Preview document"
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+
+                  {uploadingFile && (
+                    <Box sx={{ width: '100%', mt: 1, mb: 1 }}>
+                      <LinearProgress variant="determinate" value={uploadProgress} />
+                      <Typography variant="caption" color="text.secondary">
+                        Uploading: {uploadProgress}%
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Max size: 3MB. Allowed formats: PDF, JPG.
+                  </Typography>
+                </Box>
+              </Grid>
+
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
@@ -346,6 +474,48 @@ const UpdateCertificate = () => {
           </Box>
         </Paper>
       </Box>
+
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Document Preview
+          <IconButton onClick={() => setPreviewOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0, height: '70vh', overflow: 'hidden' }}>
+          {(previewUrl || documentUrl) && (
+            (fileType === 'application/pdf' || documentPath?.toLowerCase().endsWith('.pdf')) ? (
+              <iframe
+                src={previewUrl || documentUrl || ''}
+                title="PDF Preview"
+                width="100%"
+                height="100%"
+                style={{ border: 'none' }}
+              />
+            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2 }}>
+                <img
+                  src={previewUrl || documentUrl || ''}
+                  alt="Document Preview"
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+              </Box>
+            )
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={3000}
+        onClose={() => setShowSuccess(false)}
+        message="Certificate updated successfully!"
+      />
     </Container>
   );
 };

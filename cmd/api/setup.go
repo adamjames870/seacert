@@ -1,6 +1,7 @@
 ﻿package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/logging"
+	"github.com/adamjames870/seacert/internal/storage"
 	"github.com/joho/godotenv"
 )
 
@@ -28,7 +30,33 @@ func LoadState(state *internal.ApiState) error {
 	if err != nil {
 		return err
 	}
+	errStorage := loadStorage(state)
+	if errStorage != nil {
+		return errStorage
+	}
 	setDevFlag(state)
+	return nil
+}
+
+func loadStorage(state *internal.ApiState) error {
+	cfg := storage.Config{
+		BucketName:      os.Getenv("R2_BUCKET_NAME"),
+		Endpoint:        os.Getenv("R2_ENDPOINT"),
+		AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
+		SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
+	}
+
+	if cfg.BucketName == "" || cfg.Endpoint == "" || cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" {
+		state.Logger.Warn("R2 storage configuration is incomplete, uploads will not work")
+		return nil
+	}
+
+	r2, err := storage.NewR2Storage(context.Background(), cfg)
+	if err != nil {
+		return fmt.Errorf("failed to initialize R2 storage: %w", err)
+	}
+
+	state.Storage = r2
 	return nil
 }
 

@@ -39,7 +39,7 @@ func HandlerApiAddCert(state *internal.ApiState) http.HandlerFunc {
 
 		state.Logger.Info("Certificate created", "user_id", userId, "certificate_id", cert.Id)
 
-		rv := certificates.MapCertificateDomainToDto(cert)
+		rv := certificates.MapCertificateDomainToDto(state, r.Context(), cert)
 
 		handlers.RespondWithJSON(w, 201, rv)
 

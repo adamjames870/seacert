@@ -61,16 +61,28 @@ func TestGetExpiryAfterValidity(t *testing.T) {
 			want:           time.Date(2024, 1, 14, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:           "leap year",
+			name:           "leap year (29 Feb -> 28 Feb next year)",
 			issueDate:      time.Date(2024, 2, 29, 0, 0, 0, 0, time.UTC),
 			validityMonths: 12,
-			want:           time.Date(2025, 3, 28, 0, 0, 0, 0, time.UTC),
+			want:           time.Date(2025, 2, 27, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:           "end of month adjustment (31 Jan -> 30 Apr)",
+			name:           "end of month adjustment (31 Jan -> 30 Apr - 1 day = 29 Apr)",
 			issueDate:      time.Date(2023, 1, 31, 0, 0, 0, 0, time.UTC),
 			validityMonths: 3,
-			want:           time.Date(2023, 5, 30, 0, 0, 0, 0, time.UTC),
+			want:           time.Date(2023, 4, 29, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:           "31 Aug (6 months) -> 28 Feb (non-leap)",
+			issueDate:      time.Date(2022, 8, 31, 0, 0, 0, 0, time.UTC),
+			validityMonths: 6,
+			want:           time.Date(2023, 2, 27, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:           "31 Aug (6 months) -> 29 Feb (leap)",
+			issueDate:      time.Date(2023, 8, 31, 0, 0, 0, 0, time.UTC),
+			validityMonths: 6,
+			want:           time.Date(2024, 2, 28, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
