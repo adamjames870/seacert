@@ -1,6 +1,6 @@
 ﻿import { Typography, Container, Box, Button, Grid, Stack, Card, CardContent, CardMedia } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Anchor, ShieldCheck, Smartphone, Clock, FileText, DownloadCloud, AlertCircle } from 'lucide-react';
+import { Anchor, ShieldCheck, FileText, DownloadCloud, AlertCircle } from 'lucide-react';
 
 const Home = () => {
   return (
