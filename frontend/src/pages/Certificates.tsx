@@ -54,7 +54,7 @@ import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
 import { getCountryName } from '../utils/countryData';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 interface Predecessor {
   reason: string;
@@ -104,6 +104,32 @@ const Certificates = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeMenuCertId, setActiveMenuCertId] = useState<string | null>(null);
+  const [draggedOverCertId, setDraggedOverCertId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+
+  const handleDragOver = (e: React.DragEvent, certId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedOverCertId(certId);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedOverCertId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, certId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedOverCertId(null);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type === 'application/pdf' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+      navigate(`/update-certificate/${certId}`, { state: { droppedFile: file } });
+    }
+  };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, certId: string) => {
     event.stopPropagation();
@@ -497,13 +523,18 @@ const Certificates = () => {
                     <Paper 
                       key={cert.id} 
                       elevation={0} 
+                      onDragOver={(e) => handleDragOver(e, cert.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, cert.id)}
                       sx={{ 
                         mb: 2, 
                         border: 1, 
-                        borderColor: styles.borderColor, 
-                        bgcolor: styles.bgcolor,
+                        borderColor: draggedOverCertId === cert.id ? 'primary.main' : styles.borderColor, 
+                        bgcolor: draggedOverCertId === cert.id ? 'action.hover' : styles.bgcolor,
                         overflow: 'hidden',
                         position: 'relative',
+                        transition: 'all 0.2s ease-in-out',
+                        boxShadow: draggedOverCertId === cert.id ? 2 : 'none',
                         '&::before': !hasAttachment ? {
                           content: '""',
                           position: 'absolute',
@@ -516,6 +547,25 @@ const Certificates = () => {
                         } : {}
                       }}
                     >
+                      {draggedOverCertId === cert.id && (
+                        <Box sx={{ 
+                          position: 'absolute', 
+                          top: 0, 
+                          left: 0, 
+                          right: 0, 
+                          bottom: 0, 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          bgcolor: 'rgba(25, 118, 210, 0.08)',
+                          zIndex: 1,
+                          pointerEvents: 'none'
+                        }}>
+                          <Typography variant="subtitle2" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                            Drop to add/replace attachment
+                          </Typography>
+                        </Box>
+                      )}
                       <ListItemButton 
                         onClick={() => handleExpand(cert.id)}
                         sx={{ 
@@ -879,14 +929,19 @@ const Certificates = () => {
                         <Paper 
                           key={cert.id} 
                           elevation={0} 
+                          onDragOver={(e) => handleDragOver(e, cert.id)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, cert.id)}
                           sx={{ 
                             mb: 2, 
                             border: 1, 
-                            borderColor: 'divider', 
-                            bgcolor: 'action.hover',
-                            opacity: 0.8,
+                            borderColor: draggedOverCertId === cert.id ? 'primary.main' : 'divider', 
+                            bgcolor: draggedOverCertId === cert.id ? 'action.selected' : 'action.hover',
+                            opacity: draggedOverCertId === cert.id ? 1 : 0.8,
                             overflow: 'hidden',
                             position: 'relative',
+                            transition: 'all 0.2s ease-in-out',
+                            boxShadow: draggedOverCertId === cert.id ? 2 : 'none',
                             '&::before': !hasAttachment ? {
                               content: '""',
                               position: 'absolute',
@@ -899,6 +954,25 @@ const Certificates = () => {
                             } : {}
                           }}
                         >
+                          {draggedOverCertId === cert.id && (
+                            <Box sx={{ 
+                              position: 'absolute', 
+                              top: 0, 
+                              left: 0, 
+                              right: 0, 
+                              bottom: 0, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              bgcolor: 'rgba(25, 118, 210, 0.08)',
+                              zIndex: 1,
+                              pointerEvents: 'none'
+                            }}>
+                              <Typography variant="subtitle2" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                                Drop to add/replace attachment
+                              </Typography>
+                            </Box>
+                          )}
                           <ListItemButton 
                             onClick={() => handleExpand(cert.id)}
                             sx={{ 

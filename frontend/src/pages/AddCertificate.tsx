@@ -59,6 +59,7 @@ const AddCertificate = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { uploadFile, uploading: uploadingFile, progress, error: uploadError, isPdfSizeError: uploadPdfError } = useFileUpload();
 
@@ -162,8 +163,7 @@ const AddCertificate = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
     setError(null);
@@ -183,6 +183,31 @@ const AddCertificate = () => {
       setFileName(null);
       setPreviewUrl(null);
       setFileType(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type === 'application/pdf' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+      handleFileUpload(file);
+    } else if (file) {
+      setError('Only PDF and JPG files are allowed.');
     }
   };
 
@@ -492,44 +517,70 @@ const AddCertificate = () => {
                   <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
                     Certificate Attachment (PDF/JPG)
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      startIcon={<CloudUploadIcon />}
-                      disabled={uploadingFile || submitting}
-                    >
-                      {documentPath ? 'Change File' : 'Upload File'}
-                      <input
-                        type="file"
-                        hidden
-                        accept="application/pdf,image/jpeg,image/jpg"
-                        onChange={handleFileUpload}
-                      />
-                    </Button>
-                    {fileName && !uploadingFile && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          label={fileName}
-                          onDelete={handleRemoveFile}
-                          deleteIcon={<DeleteIcon />}
-                          color="primary"
-                          variant="outlined"
+                  <Box 
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    sx={{ 
+                      border: '2px dashed',
+                      borderColor: isDragging ? 'primary.main' : 'divider',
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: 'center',
+                      bgcolor: isDragging ? 'action.hover' : 'background.paper',
+                      transition: 'all 0.2s ease-in-out',
+                      mb: 1
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <CloudUploadIcon sx={{ fontSize: 40, color: isDragging ? 'primary.main' : 'text.secondary', mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Drag and drop your certificate here, or
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        disabled={uploadingFile || submitting}
+                        size="small"
+                        sx={{ mt: 1 }}
+                      >
+                        {documentPath ? 'Change File' : 'Select File'}
+                        <input
+                          type="file"
+                          hidden
+                          accept="application/pdf,image/jpeg,image/jpg"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file);
+                          }}
                         />
-                        {previewUrl && (
-                          <IconButton 
-                            color="primary" 
-                            onClick={() => setPreviewOpen(true)}
-                            size="small"
-                            title="Preview document"
-                          >
-                            <VisibilityIcon />
-                          </IconButton>
-                        )}
-                      </Box>
-                    )}
+                      </Button>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                        Maximum size: 3MB (PDF or JPG)
+                      </Typography>
+                    </Box>
                   </Box>
-
+                  {fileName && !uploadingFile && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip
+                        label={fileName}
+                        onDelete={handleRemoveFile}
+                        deleteIcon={<DeleteIcon />}
+                        color="primary"
+                        variant="outlined"
+                      />
+                      {previewUrl && (
+                        <IconButton 
+                          color="primary" 
+                          onClick={() => setPreviewOpen(true)}
+                          size="small"
+                          title="Preview document"
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      )}
+                    </Box>
+                  )}
                   {uploadingFile && (
                     <Box sx={{ width: '100%', mt: 1, mb: 1 }}>
                       <LinearProgress variant="determinate" value={uploadProgress} />
@@ -538,7 +589,6 @@ const AddCertificate = () => {
                       </Typography>
                     </Box>
                   )}
-
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                     Max size: 3MB. Allowed formats: PDF, JPG.
                   </Typography>
