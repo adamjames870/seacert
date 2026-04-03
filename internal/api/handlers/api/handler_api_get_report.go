@@ -18,7 +18,8 @@ func HandlerApiGetReport(state *internal.ApiState) http.HandlerFunc {
 
 		certs, err := getAllCertificates(state, r.Context(), userId)
 		if err != nil {
-			handlers.RespondWithError(w, r, 500, "Error fetching certificates", err)
+			code, msg := handlers.MapDomainError(err)
+			handlers.RespondWithError(w, r, code, msg, err)
 			return
 		}
 

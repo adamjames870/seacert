@@ -2,8 +2,6 @@
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -43,16 +41,18 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 		case 1:
 			// 1 ID -> Fetch certificate by ID
-			rv, err := certificates.GetCertificateFromId(state, r.Context(), idsParam[0], userId)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, r, 404, "Certificate not found", err)
-				} else {
-					handlers.RespondWithError(w, r, 500, "Error fetching certificate", err)
-				}
+			certUuid, errParse := uuid.Parse(idsParam[0])
+			if errParse != nil {
+				handlers.RespondWithError(w, r, 400, "Invalid certificate ID", errParse)
 				return
 			}
-			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(state, r.Context(), rv))
+			rv, err := certificates.GetCertificateById(r.Context(), state.Repo, certUuid, userId)
+			if err != nil {
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
+				return
+			}
+			handlers.RespondWithJSON(w, 200, certificates.MapCertificateDomainToDto(r.Context(), state.Storage, rv))
 			return
 
 		default:
@@ -66,14 +66,14 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 func getAllCertificates(state *internal.ApiState, ctx context.Context, userId uuid.UUID) ([]dto.Certificate, error) {
 
-	certs, errCerts := certificates.GetCertificates(state, ctx, userId)
+	certs, errCerts := certificates.GetCertificates(ctx, state.Repo, userId)
 	if errCerts != nil {
 		return nil, errCerts
 	}
 
 	rv := make([]dto.Certificate, 0, len(certs))
 	for _, cert := range certs {
-		rv = append(rv, certificates.MapCertificateDomainToDto(state, ctx, cert))
+		rv = append(rv, certificates.MapCertificateDomainToDto(ctx, state.Storage, cert))
 	}
 
 	return rv, nil

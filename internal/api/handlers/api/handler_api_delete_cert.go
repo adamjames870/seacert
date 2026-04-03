@@ -7,6 +7,7 @@ import (
 	"github.com/adamjames870/seacert/internal/api/auth"
 	"github.com/adamjames870/seacert/internal/api/handlers"
 	"github.com/adamjames870/seacert/internal/domain/certificates"
+	"github.com/google/uuid"
 )
 
 func HandlerApiDeleteCert(state *internal.ApiState) http.HandlerFunc {
@@ -23,9 +24,16 @@ func HandlerApiDeleteCert(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		err := certificates.DeleteCertificate(state, r.Context(), idParam, userId)
+		certUuid, errParse := uuid.Parse(idParam)
+		if errParse != nil {
+			handlers.RespondWithError(w, r, 400, "Invalid certificate ID", errParse)
+			return
+		}
+
+		err := certificates.DeleteCertificate(r.Context(), state.Repo, state.Storage, state.Logger, certUuid, userId)
 		if err != nil {
-			handlers.RespondWithError(w, r, 500, "Error deleting certificate", err)
+			code, msg := handlers.MapDomainError(err)
+			handlers.RespondWithError(w, r, code, msg, err)
 			return
 		}
 

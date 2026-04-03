@@ -37,7 +37,7 @@ type Predecessor struct {
 }
 
 type ParamsAddCertificate struct {
-	UserId          string  `json:"user-id" validate:"required"`
+	UserId          string  `json:"user-id"`
 	CertTypeId      string  `json:"cert-type-id" validate:"required"`
 	CertNumber      string  `json:"cert-number" validate:"required"`
 	IssuerId        string  `json:"issuer-id" validate:"required"`

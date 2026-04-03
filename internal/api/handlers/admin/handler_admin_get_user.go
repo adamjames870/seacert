@@ -28,14 +28,14 @@ func HandlerAdminGetUser(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		apiUser, errUser := users.GetUser(state, r.Context(), uuidId)
+		apiUser, errUser := users.GetUser(r.Context(), state.Repo, uuidId)
 		if errUser != nil {
-			handlers.RespondWithError(w, r, 500, "Error fetching user", errUser)
+			code, msg := handlers.MapDomainError(errUser)
+			handlers.RespondWithError(w, r, code, msg, errUser)
 			return
 		}
 
 		apiUser.Role = authUser.Role
-
 		userDto := users.MapUserDomainToDto(apiUser)
 
 		handlers.RespondWithJSON(w, 200, userDto)

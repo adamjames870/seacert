@@ -1,7 +1,6 @@
 ﻿package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -30,11 +29,9 @@ func HandlerApiGetUploadURL(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		decoder := json.NewDecoder(r.Body)
 		params := ParamsUploadURL{}
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
@@ -69,6 +66,8 @@ func HandlerApiGetUploadURL(state *internal.ApiState) http.HandlerFunc {
 			handlers.RespondWithError(w, r, 500, "Error generating upload URL", err)
 			return
 		}
+
+		state.Logger.Info("Presigned upload URL generated", "user_id", userId, "file_key", fileKey)
 
 		handlers.RespondWithJSON(w, 200, ResponseUploadURL{
 			UploadURL: uploadURL,

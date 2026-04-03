@@ -2,13 +2,12 @@
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/api/auth"
 	"github.com/adamjames870/seacert/internal/api/handlers"
+	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
@@ -33,9 +32,10 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 				userId = &uid
 			}
 
-			rv, err := getAllCertTypes(state, r.Context(), userId, isAdmin)
+			rv, err := getAllCertTypes(r.Context(), state.Repo, userId, isAdmin)
 			if err != nil {
-				handlers.RespondWithError(w, r, 500, "Error fetching certificate types", err)
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -43,13 +43,15 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		if idParam != "" {
-			rv, err := getCertTypeFromId(state, r.Context(), idParam)
+			uid, errParse := uuid.Parse(idParam)
+			if errParse != nil {
+				handlers.RespondWithError(w, r, 400, "Invalid ID", errParse)
+				return
+			}
+			rv, err := getCertTypeFromId(r.Context(), state.Repo, uid)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, r, 404, "Certificate type not found", err)
-				} else {
-					handlers.RespondWithError(w, r, 500, "Error fetching certificate type", err)
-				}
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -57,13 +59,10 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		if nameParam != "" {
-			rv, err := getCertTypeFromName(state, r.Context(), nameParam)
+			rv, err := getCertTypeFromName(r.Context(), state.Repo, nameParam)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, r, 404, "Certificate type not found", err)
-				} else {
-					handlers.RespondWithError(w, r, 500, "Error fetching certificate type", err)
-				}
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -72,8 +71,8 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 	}
 }
 
-func getAllCertTypes(state *internal.ApiState, ctx context.Context, userId *uuid.UUID, isAdmin bool) ([]dto.CertificateType, error) {
-	certTypes, errCertTypes := cert_types.GetCertTypes(state, ctx, userId, isAdmin)
+func getAllCertTypes(ctx context.Context, repo domain.Repository, userId *uuid.UUID, isAdmin bool) ([]dto.CertificateType, error) {
+	certTypes, errCertTypes := cert_types.GetCertTypes(ctx, repo, userId, isAdmin)
 	if errCertTypes != nil {
 		return nil, errCertTypes
 	}
@@ -85,16 +84,16 @@ func getAllCertTypes(state *internal.ApiState, ctx context.Context, userId *uuid
 	return rv, nil
 }
 
-func getCertTypeFromId(state *internal.ApiState, ctx context.Context, id string) (dto.CertificateType, error) {
-	certType, errCertType := cert_types.GetCertTypeFromId(state, ctx, id)
+func getCertTypeFromId(ctx context.Context, repo domain.Repository, id uuid.UUID) (dto.CertificateType, error) {
+	certType, errCertType := cert_types.GetCertTypeFromId(ctx, repo, id)
 	if errCertType != nil {
 		return dto.CertificateType{}, errCertType
 	}
 	return cert_types.MapCertificateTypeDomainToDto(certType), nil
 }
 
-func getCertTypeFromName(state *internal.ApiState, ctx context.Context, name string) (dto.CertificateType, error) {
-	certType, errCertType := cert_types.GetCertTypeFromName(state, ctx, name)
+func getCertTypeFromName(ctx context.Context, repo domain.Repository, name string) (dto.CertificateType, error) {
+	certType, errCertType := cert_types.GetCertTypeFromName(ctx, repo, name)
 	if errCertType != nil {
 		return dto.CertificateType{}, errCertType
 	}

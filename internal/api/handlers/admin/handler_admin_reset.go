@@ -15,32 +15,9 @@ func HandlerAdminReset(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		errResetSuccessions := state.Queries.ResetSuccessions(r.Context())
-		if errResetSuccessions != nil {
-			handlers.RespondWithError(w, r, 500, "Error resetting successions", errResetSuccessions)
-		}
-
-		errResetCerts := state.Queries.ResetCerts(r.Context())
-		if errResetCerts != nil {
-			handlers.RespondWithError(w, r, 500, "Error resetting certificates", errResetCerts)
-			return
-		}
-
-		errResetCertTypes := state.Queries.ResetCertTypes(r.Context())
-		if errResetCertTypes != nil {
-			handlers.RespondWithError(w, r, 500, "Error resetting certificate types", errResetCertTypes)
-			return
-		}
-
-		errResetIssuers := state.Queries.ResetIssuers(r.Context())
-		if errResetIssuers != nil {
-			handlers.RespondWithError(w, r, 500, "Error resetting issuers", errResetIssuers)
-			return
-		}
-
-		errResetUsers := state.Queries.ResetUsers(r.Context())
-		if errResetUsers != nil {
-			handlers.RespondWithError(w, r, 500, "Error resetting users", errResetUsers)
+		err := state.Repo.ResetAll(r.Context())
+		if err != nil {
+			handlers.RespondWithError(w, r, 500, "Error resetting database", err)
 			return
 		}
 

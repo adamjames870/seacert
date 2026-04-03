@@ -3,15 +3,15 @@
 import (
 	"context"
 
-	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/users"
 	"github.com/google/uuid"
 )
 
 type userStoreAdapter struct {
-	state *internal.ApiState
+	repo domain.Repository
 }
 
 func (a *userStoreAdapter) EnsureUserExists(ctx context.Context, id uuid.UUID, email string) (users.User, error) {
-	return users.EnsureUserExists(a.state, ctx, id, email)
+	return users.EnsureUserExists(ctx, a.repo, id, email)
 }

@@ -1,7 +1,6 @@
 ﻿package admin
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -17,11 +16,9 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 
 		// PUT admin/users
 
-		decoder := json.NewDecoder(r.Body)
 		params := dto.ParamsUpdateUser{}
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
@@ -33,14 +30,14 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 
 		params.Id = userId.String()
 
-		user, userErr := users.UpdateUser(state, r.Context(), params)
+		user, userErr := users.UpdateUser(r.Context(), state.Repo, params)
 		if userErr != nil {
-			handlers.RespondWithError(w, r, 500, "Error updating user", userErr)
+			code, msg := handlers.MapDomainError(userErr)
+			handlers.RespondWithError(w, r, code, msg, userErr)
 			return
 		}
 
 		state.Logger.Info("User updated", "user_id", user.Id)
-
 		userDto := users.MapUserDomainToDto(user)
 
 		handlers.RespondWithJSON(w, 200, userDto)

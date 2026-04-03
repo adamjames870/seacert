@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/cert_types"
 	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/adamjames870/seacert/internal/dto"
+	"github.com/adamjames870/seacert/internal/storage"
 	"github.com/google/uuid"
 )
 
@@ -73,7 +73,7 @@ func MapCertificateViewDbToDomain(dbCert sqlc.CertView) Certificate {
 
 }
 
-func MapCertificateDomainToDto(state *internal.ApiState, ctx context.Context, cert Certificate) dto.Certificate {
+func MapCertificateDomainToDto(ctx context.Context, store storage.Storage, cert Certificate) dto.Certificate {
 
 	rv := dto.Certificate{
 		Id:                           cert.Id.String(),
@@ -102,8 +102,8 @@ func MapCertificateDomainToDto(state *internal.ApiState, ctx context.Context, ce
 		rv.DocumentPath = &cert.DocumentPath
 	}
 
-	if cert.DocumentPath != "" && state != nil && state.Storage != nil {
-		url, err := state.Storage.GetPresignedDownloadURL(ctx, cert.DocumentPath, 1*time.Hour)
+	if cert.DocumentPath != "" && store != nil {
+		url, err := store.GetPresignedDownloadURL(ctx, cert.DocumentPath, 1*time.Hour)
 		if err == nil {
 			rv.DocumentURL = url
 		}
@@ -114,7 +114,7 @@ func MapCertificateDomainToDto(state *internal.ApiState, ctx context.Context, ce
 	}
 
 	for _, predecessor := range cert.Predecessors {
-		rv.Predecessors = append(rv.Predecessors, MapPredecessorDomainToDto(state, ctx, predecessor))
+		rv.Predecessors = append(rv.Predecessors, MapPredecessorDomainToDto(ctx, store, predecessor))
 	}
 
 	return rv
@@ -190,10 +190,10 @@ func MapCertificateDomainToDb(cert Certificate) sqlc.Certificate {
 
 }
 
-func MapPredecessorDomainToDto(state *internal.ApiState, ctx context.Context, predecessor Predecesor) dto.Predecessor {
+func MapPredecessorDomainToDto(ctx context.Context, store storage.Storage, predecessor Predecesor) dto.Predecessor {
 
 	return dto.Predecessor{
-		Cert:   MapCertificateDomainToDto(state, ctx, predecessor.Cert),
+		Cert:   MapCertificateDomainToDto(ctx, store, predecessor.Cert),
 		Reason: string(predecessor.ReplaceReason),
 	}
 

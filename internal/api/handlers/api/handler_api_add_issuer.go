@@ -1,7 +1,6 @@
 ﻿package api
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -16,17 +15,16 @@ func HandlerApiAddIssuer(state *internal.ApiState) http.HandlerFunc {
 
 		// POST api/issuers
 
-		decoder := json.NewDecoder(r.Body)
 		params := dto.ParamsAddIssuer{}
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
-		dbIssuer, errIssuer := issuers.WriteNewIssuer(state, r.Context(), params)
+		dbIssuer, errIssuer := issuers.CreateIssuer(r.Context(), state.Repo, params)
 		if errIssuer != nil {
-			handlers.RespondWithError(w, r, 500, "Error creating issuer", errIssuer)
+			code, msg := handlers.MapDomainError(errIssuer)
+			handlers.RespondWithError(w, r, code, msg, errIssuer)
 			return
 		}
 

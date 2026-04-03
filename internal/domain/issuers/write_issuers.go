@@ -2,64 +2,92 @@
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
-	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/uuid"
 )
 
-func WriteNewIssuer(state *internal.ApiState, ctx context.Context, params dto.ParamsAddIssuer) (Issuer, error) {
+func GetIssuers(ctx context.Context, repo domain.Repository) ([]Issuer, error) {
+	issuers, err := repo.GetIssuers(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	country := domain.ToNullStringFromPointer(params.Country)
-	website := domain.ToNullStringFromPointer(params.Website)
+	apiIssuers := make([]Issuer, 0, len(issuers))
+	for _, issuer := range issuers {
+		apiIssuers = append(apiIssuers, MapIssuerDbToDomain(issuer))
+	}
 
+	return apiIssuers, nil
+}
+
+func GetIssuerById(ctx context.Context, repo domain.Repository, id uuid.UUID) (Issuer, error) {
+	issuer, err := repo.GetIssuerById(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Issuer{}, domain.ErrNotFound
+		}
+		return Issuer{}, err
+	}
+
+	return MapIssuerDbToDomain(issuer), nil
+}
+
+func GetIssuerByName(ctx context.Context, repo domain.Repository, name string) (Issuer, error) {
+	issuer, err := repo.GetIssuerByName(ctx, name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Issuer{}, domain.ErrNotFound
+		}
+		return Issuer{}, err
+	}
+
+	return MapIssuerDbToDomain(issuer), nil
+}
+
+func CreateIssuer(ctx context.Context, repo domain.Repository, params dto.ParamsAddIssuer) (Issuer, error) {
 	newIssuer := sqlc.CreateIssuerParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Name:      params.Name,
-		Country:   country,
-		Website:   website,
+		Country:   domain.ToNullStringFromPointer(params.Country),
+		Website:   domain.ToNullStringFromPointer(params.Website),
 	}
 
-	dbIssuer, errWriteNewIssuer := state.Queries.CreateIssuer(ctx, newIssuer)
-	if errWriteNewIssuer != nil {
-		return Issuer{}, errWriteNewIssuer
+	dbIssuer, err := repo.CreateIssuer(ctx, newIssuer)
+	if err != nil {
+		return Issuer{}, err
 	}
 
-	apiIssuer := MapIssuerDbToDomain(dbIssuer)
-
-	return apiIssuer, nil
-
+	return MapIssuerDbToDomain(dbIssuer), nil
 }
 
-func UpdateIssuer(state *internal.ApiState, ctx context.Context, params dto.ParamsUpdateIssuer) (Issuer, error) {
-
+func UpdateIssuer(ctx context.Context, repo domain.Repository, params dto.ParamsUpdateIssuer) (Issuer, error) {
 	uuidId, errParse := uuid.Parse(params.Id)
 	if errParse != nil {
-		return Issuer{}, errParse
+		return Issuer{}, domain.ErrInvalidInput
 	}
-
-	name := domain.ToNullStringFromPointer(params.Name)
-	country := domain.ToNullStringFromPointer(params.Country)
-	website := domain.ToNullStringFromPointer(params.Website)
 
 	updateIssuer := sqlc.UpdateIssuerParams{
 		ID:      uuidId,
-		Name:    name,
-		Country: country,
-		Website: website,
+		Name:    domain.ToNullStringFromPointer(params.Name),
+		Country: domain.ToNullStringFromPointer(params.Country),
+		Website: domain.ToNullStringFromPointer(params.Website),
 	}
 
-	dbIssuer, errUpdateIssuer := state.Queries.UpdateIssuer(ctx, updateIssuer)
-	if errUpdateIssuer != nil {
-		return Issuer{}, errUpdateIssuer
+	dbIssuer, err := repo.UpdateIssuer(ctx, updateIssuer)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Issuer{}, domain.ErrNotFound
+		}
+		return Issuer{}, err
 	}
 
-	apiIssuer := MapIssuerDbToDomain(dbIssuer)
-	return apiIssuer, nil
-
+	return MapIssuerDbToDomain(dbIssuer), nil
 }

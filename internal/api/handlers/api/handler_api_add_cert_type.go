@@ -1,7 +1,6 @@
 ﻿package api
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -18,11 +17,9 @@ func HandlerApiAddCertType(state *internal.ApiState) http.HandlerFunc {
 
 		// POST api/cert-types
 
-		decoder := json.NewDecoder(r.Body)
 		params := dto.ParamsAddCertificateType{}
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
@@ -30,9 +27,10 @@ func HandlerApiAddCertType(state *internal.ApiState) http.HandlerFunc {
 		isAdmin := user.Role == "admin"
 		creatorId, _ := uuid.Parse(user.Id)
 
-		certType, errCertType := cert_types.WriteNewCertType(state, r.Context(), params, creatorId, isAdmin)
+		certType, errCertType := cert_types.CreateCertType(r.Context(), state.Repo, params, creatorId, isAdmin)
 		if errCertType != nil {
-			handlers.RespondWithError(w, r, 500, "Error creating certificate type", errCertType)
+			code, msg := handlers.MapDomainError(errCertType)
+			handlers.RespondWithError(w, r, code, msg, errCertType)
 			return
 		}
 
