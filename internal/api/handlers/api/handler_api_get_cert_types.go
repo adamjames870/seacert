@@ -35,7 +35,7 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 
 			rv, err := getAllCertTypes(state, r.Context(), userId, isAdmin)
 			if err != nil {
-				handlers.RespondWithError(w, 500, "Error fetching certificate types", err)
+				handlers.RespondWithError(w, r, 500, "Error fetching certificate types", err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -46,9 +46,9 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 			rv, err := getCertTypeFromId(state, r.Context(), idParam)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Certificate type not found", err)
+					handlers.RespondWithError(w, r, 404, "Certificate type not found", err)
 				} else {
-					handlers.RespondWithError(w, 500, "Error fetching certificate type", err)
+					handlers.RespondWithError(w, r, 500, "Error fetching certificate type", err)
 				}
 				return
 			}
@@ -60,9 +60,9 @@ func HandlerApiGetCertTypes(state *internal.ApiState) http.HandlerFunc {
 			rv, err := getCertTypeFromName(state, r.Context(), nameParam)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Certificate type not found", err)
+					handlers.RespondWithError(w, r, 404, "Certificate type not found", err)
 				} else {
-					handlers.RespondWithError(w, 500, "Error fetching certificate type", err)
+					handlers.RespondWithError(w, r, 500, "Error fetching certificate type", err)
 				}
 				return
 			}

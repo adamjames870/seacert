@@ -21,13 +21,13 @@ func HandlerApiUpdateCert(state *internal.ApiState) http.HandlerFunc {
 
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
 			return
 		}
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			handlers.RespondWithError(w, 401, "Unauthorized", errId)
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
 			return
 		}
 
@@ -35,7 +35,7 @@ func HandlerApiUpdateCert(state *internal.ApiState) http.HandlerFunc {
 
 		cert, certErr := certificates.UpdateCertificate(state, r.Context(), params)
 		if certErr != nil {
-			handlers.RespondWithError(w, 500, "Error updating certificate", certErr)
+			handlers.RespondWithError(w, r, 500, "Error updating certificate", certErr)
 			return
 		}
 

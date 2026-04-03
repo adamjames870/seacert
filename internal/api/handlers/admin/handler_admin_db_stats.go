@@ -15,25 +15,25 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 
 		countCert, errCountCert := state.Queries.CountCertificates(r.Context())
 		if errCountCert != nil {
-			handlers.RespondWithError(w, 500, "Error counting certificates", errCountCert)
+			handlers.RespondWithError(w, r, 500, "Error counting certificates", errCountCert)
 			return
 		}
 
-		countCertType, errCountCertType := state.Queries.CountCertTypes(r.Context())
-		if errCountCertType != nil {
-			handlers.RespondWithError(w, 500, "Error counting certificate types", errCountCertType)
+		countCertType, errCountType := state.Queries.CountCertTypes(r.Context())
+		if errCountType != nil {
+			handlers.RespondWithError(w, r, 500, "Error counting certificate types", errCountType)
 			return
 		}
 
 		countIssuers, errCountIssuers := state.Queries.CountIssuers(r.Context())
 		if errCountIssuers != nil {
-			handlers.RespondWithError(w, 500, "Error counting issuers", errCountIssuers)
+			handlers.RespondWithError(w, r, 500, "Error counting issuers", errCountIssuers)
 			return
 		}
 
 		countUsers, errCountUsers := state.Queries.CountUsers(r.Context())
 		if errCountUsers != nil {
-			handlers.RespondWithError(w, 500, "Error counting users", errCountUsers)
+			handlers.RespondWithError(w, r, 500, "Error counting users", errCountUsers)
 			return
 		}
 

@@ -17,7 +17,7 @@ func HandlerUpdateCertType(state *internal.ApiState) http.HandlerFunc {
 
 		idParam := r.URL.Query().Get("id")
 		if idParam == "" {
-			handlers.RespondWithError(w, 400, "Missing required parameter 'id'", nil)
+			handlers.RespondWithError(w, r, 400, "Missing required parameter 'id'", nil)
 			return
 		}
 
@@ -26,7 +26,7 @@ func HandlerUpdateCertType(state *internal.ApiState) http.HandlerFunc {
 
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
 			return
 		}
 
@@ -34,7 +34,7 @@ func HandlerUpdateCertType(state *internal.ApiState) http.HandlerFunc {
 
 		certType, errCertType := cert_types.UpdateCertificateType(state, r.Context(), params)
 		if errCertType != nil {
-			handlers.RespondWithError(w, 500, "Error updating certificate type", errCertType)
+			handlers.RespondWithError(w, r, 500, "Error updating certificate type", errCertType)
 			return
 		}
 

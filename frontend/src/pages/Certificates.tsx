@@ -56,6 +56,7 @@ import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
 import { getCountryName } from '../utils/countryData';
 import ReportPreviewDialog from '../components/ReportPreviewDialog';
+import { getErrorMessage } from '../utils/errorUtils';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 interface Predecessor {
@@ -192,7 +193,8 @@ const Certificates = () => {
       }
 
       if (!response.ok) {
-        throw new Error(`Error fetching certificates: ${response.statusText}`);
+        const message = await getErrorMessage(response);
+        throw new Error(message);
       }
 
       const data = await response.json();

@@ -25,7 +25,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			handlers.RespondWithError(w, 401, "Unauthorized", errId)
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
 			return
 		}
 
@@ -35,7 +35,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 			// No IDs -> Fetch all certificates
 			rv, err := getAllCertificates(state, r.Context(), userId)
 			if err != nil {
-				handlers.RespondWithError(w, 500, "Error fetching certificates", err)
+				handlers.RespondWithError(w, r, 500, "Error fetching certificates", err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -46,9 +46,9 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 			rv, err := certificates.GetCertificateFromId(state, r.Context(), idsParam[0], userId)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Certificate not found", err)
+					handlers.RespondWithError(w, r, 404, "Certificate not found", err)
 				} else {
-					handlers.RespondWithError(w, 500, "Error fetching certificate", err)
+					handlers.RespondWithError(w, r, 500, "Error fetching certificate", err)
 				}
 				return
 			}
@@ -56,7 +56,7 @@ func HandlerApiGetCerts(state *internal.ApiState) http.HandlerFunc {
 			return
 
 		default:
-			handlers.RespondWithError(w, 400, "Too many ids", nil)
+			handlers.RespondWithError(w, r, 400, "Too many ids", nil)
 			return
 
 		}

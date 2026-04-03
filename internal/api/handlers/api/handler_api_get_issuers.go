@@ -26,7 +26,7 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 		if idParam == "" && nameParam == "" {
 			rv, err := getAllIssuers(state, r.Context())
 			if err != nil {
-				handlers.RespondWithError(w, 500, "Error fetching issuers", err)
+				handlers.RespondWithError(w, r, 500, "Error fetching issuers", err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -37,9 +37,9 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 			rv, err := getIssuerFromId(state, r.Context(), idParam)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Issuer not found", err)
+					handlers.RespondWithError(w, r, 404, "Issuer not found", err)
 				} else {
-					handlers.RespondWithError(w, 500, "Error fetching issuer", err)
+					handlers.RespondWithError(w, r, 500, "Error fetching issuer", err)
 				}
 				return
 			}
@@ -51,9 +51,9 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 			rv, err := getIssuerFromName(state, r.Context(), nameParam)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Issuer not found", err)
+					handlers.RespondWithError(w, r, 404, "Issuer not found", err)
 				} else {
-					handlers.RespondWithError(w, 500, "Error fetching issuer", err)
+					handlers.RespondWithError(w, r, 500, "Error fetching issuer", err)
 				}
 				return
 			}

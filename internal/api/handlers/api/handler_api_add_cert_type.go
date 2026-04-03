@@ -22,7 +22,7 @@ func HandlerApiAddCertType(state *internal.ApiState) http.HandlerFunc {
 		params := dto.ParamsAddCertificateType{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
 			return
 		}
 
@@ -32,7 +32,7 @@ func HandlerApiAddCertType(state *internal.ApiState) http.HandlerFunc {
 
 		certType, errCertType := cert_types.WriteNewCertType(state, r.Context(), params, creatorId, isAdmin)
 		if errCertType != nil {
-			handlers.RespondWithError(w, 500, "Error creating certificate type", errCertType)
+			handlers.RespondWithError(w, r, 500, "Error creating certificate type", errCertType)
 			return
 		}
 

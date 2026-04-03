@@ -11,36 +11,36 @@ func HandlerAdminReset(state *internal.ApiState) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !state.IsDev {
-			handlers.RespondWithError(w, 403, "Forbidden", nil)
+			handlers.RespondWithError(w, r, 403, "Forbidden", nil)
 			return
 		}
 
 		errResetSuccessions := state.Queries.ResetSuccessions(r.Context())
 		if errResetSuccessions != nil {
-			handlers.RespondWithError(w, 500, "Error resetting successions", errResetSuccessions)
+			handlers.RespondWithError(w, r, 500, "Error resetting successions", errResetSuccessions)
 		}
 
 		errResetCerts := state.Queries.ResetCerts(r.Context())
 		if errResetCerts != nil {
-			handlers.RespondWithError(w, 500, "Error resetting certificates", errResetCerts)
+			handlers.RespondWithError(w, r, 500, "Error resetting certificates", errResetCerts)
 			return
 		}
 
 		errResetCertTypes := state.Queries.ResetCertTypes(r.Context())
 		if errResetCertTypes != nil {
-			handlers.RespondWithError(w, 500, "Error resetting certificate types", errResetCertTypes)
+			handlers.RespondWithError(w, r, 500, "Error resetting certificate types", errResetCertTypes)
 			return
 		}
 
 		errResetIssuers := state.Queries.ResetIssuers(r.Context())
 		if errResetIssuers != nil {
-			handlers.RespondWithError(w, 500, "Error resetting issuers", errResetIssuers)
+			handlers.RespondWithError(w, r, 500, "Error resetting issuers", errResetIssuers)
 			return
 		}
 
 		errResetUsers := state.Queries.ResetUsers(r.Context())
 		if errResetUsers != nil {
-			handlers.RespondWithError(w, 500, "Error resetting users", errResetUsers)
+			handlers.RespondWithError(w, r, 500, "Error resetting users", errResetUsers)
 			return
 		}
 

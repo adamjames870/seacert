@@ -18,18 +18,18 @@ func HandlerAdminResolveCertType(state *internal.ApiState) http.HandlerFunc {
 		params := dto.ParamsResolveCertificateType{}
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
 			return
 		}
 
 		if params.ProvisionalId == "" || params.ReplacementId == "" {
-			handlers.RespondWithError(w, 400, "Both provisional-id and replacement-id are required", nil)
+			handlers.RespondWithError(w, r, 400, "Both provisional-id and replacement-id are required", nil)
 			return
 		}
 
 		errResolve := cert_types.ResolveProvisionalCertType(state, r.Context(), params)
 		if errResolve != nil {
-			handlers.RespondWithError(w, 500, "Error resolving certificate type", errResolve)
+			handlers.RespondWithError(w, r, 500, "Error resolving certificate type", errResolve)
 			return
 		}
 

@@ -17,7 +17,7 @@ func HandlerUpdateIssuer(state *internal.ApiState) http.HandlerFunc {
 
 		idParam := r.URL.Query().Get("id")
 		if idParam == "" {
-			handlers.RespondWithError(w, 400, "Missing required parameter 'id'", nil)
+			handlers.RespondWithError(w, r, 400, "Missing required parameter 'id'", nil)
 			return
 		}
 
@@ -28,13 +28,13 @@ func HandlerUpdateIssuer(state *internal.ApiState) http.HandlerFunc {
 
 		errDecode := decoder.Decode(&params)
 		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+			handlers.RespondWithError(w, r, 400, "Invalid request payload", errDecode)
 			return
 		}
 
 		issuer, errIssuer := issuers.UpdateIssuer(state, r.Context(), params)
 		if errIssuer != nil {
-			handlers.RespondWithError(w, 500, "Error updating issuer", errIssuer)
+			handlers.RespondWithError(w, r, 500, "Error updating issuer", errIssuer)
 			return
 		}
 

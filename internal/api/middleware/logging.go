@@ -53,6 +53,7 @@ func Logging(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 
 		duration := time.Since(start)
+		requestID := GetRequestID(r.Context())
 
 		logger := slog.Default()
 		if user, ok := auth.UserFromContext(r.Context()); ok {
@@ -65,6 +66,7 @@ func Logging(next http.Handler) http.Handler {
 			"status", rw.status,
 			"duration", duration,
 			"ip", r.RemoteAddr,
+			"request_id", requestID,
 		)
 
 		if len(body) > 0 {
