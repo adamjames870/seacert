@@ -4,8 +4,7 @@ import {
   Button, 
   Typography, 
   Box, 
-  Paper,
-  Link
+  Paper
 } from '@mui/material';
 import CookieIcon from '@mui/icons-material/Cookie';
 
