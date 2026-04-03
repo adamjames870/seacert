@@ -129,9 +129,29 @@ function App() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    handleClose()
-    navigate('/login')
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Error during signOut:', error.message)
+      }
+    } catch (err) {
+      console.error('Unexpected error during logout:', err)
+    } finally {
+      // Clear all local state regardless of server response
+      setSession(null)
+      setUserData(null)
+      
+      // Explicitly clear any Supabase related items from localStorage
+      // This is a "bulletproof" step to ensure no stale session remains
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key)
+        }
+      })
+      
+      handleClose()
+      navigate('/')
+    }
   }
 
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
