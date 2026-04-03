@@ -417,8 +417,12 @@ const Certificates = () => {
   };
 
   return (
-    <Container>
-      <Box sx={{ mt: 4 }}>
+    <Container sx={{ position: 'relative', minHeight: '60vh' }}>
+      <Box sx={{ 
+        mt: 4, 
+        opacity: !loading && !error && certificates.length === 0 ? 0.3 : 1,
+        transition: 'opacity 0.3s'
+      }}>
         <Stack 
           direction={{ xs: 'column', md: 'row' }} 
           spacing={2} 
@@ -496,12 +500,6 @@ const Certificates = () => {
           <Alert severity="error" sx={{ mt: 2 }}>
             {error}
           </Alert>
-        )}
-
-        {!loading && !error && certificates.length === 0 && (
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            No certificates found.
-          </Typography>
         )}
 
         {!loading && !error && certificates.length > 0 && filteredCertificates.length === 0 && (
@@ -1311,6 +1309,54 @@ const Certificates = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {!loading && !error && certificates.length === 0 && (
+        <Box 
+          sx={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center', 
+            justifyContent: 'center',
+            textAlign: 'center',
+            gap: 3,
+            zIndex: 10,
+            width: '100%',
+            maxWidth: 500,
+            p: 4,
+            pointerEvents: 'auto'
+          }}
+        >
+          <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 500 }}>
+            Your certificate list is empty
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            startIcon={<AddIcon />}
+            component={RouterLink}
+            to="/add-certificate"
+            sx={{ 
+              px: 6, 
+              py: 2, 
+              fontSize: '1.2rem',
+              borderRadius: 4,
+              boxShadow: 6,
+              '&:hover': {
+                boxShadow: 10,
+                transform: 'translateY(-2px)'
+              },
+              transition: 'all 0.2s'
+            }}
+          >
+            Add First Certificate
+          </Button>
+        </Box>
+      )}
     </Container>
   );
 };
