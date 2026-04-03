@@ -34,6 +34,7 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import CookieConsent from './components/CookieConsent'
 import './App.css'
 import { supabase } from './supabaseClient'
 import { API_BASE_URL } from './config'
@@ -132,9 +133,12 @@ function App() {
   // or if we have a session but haven't started fetching user data yet.
   if (session === undefined || (session && loadingUserData && !userData)) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
+      <>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <CircularProgress />
+        </Box>
+        <CookieConsent />
+      </>
     )
   }
 
@@ -294,6 +298,7 @@ function App() {
           </Typography>
         </Container>
       </Box>
+      <CookieConsent />
     </>
   )
 }
