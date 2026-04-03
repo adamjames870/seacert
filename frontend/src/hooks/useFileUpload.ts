@@ -16,13 +16,16 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isPdfSizeError, setIsPdfSizeError] = useState(false);
 
   const uploadFile = async (file: File) => {
     // 1. Validate file size
     const MAX_FILE_SIZE = maxSizeMB * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
+      const isPdf = file.type === 'application/pdf';
       const err = `File is too large. Maximum size is ${maxSizeMB}MB.`;
       setError(err);
+      setIsPdfSizeError(isPdf);
       throw new Error(err);
     }
 
@@ -30,12 +33,14 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
     if (!allowedTypes.includes(file.type)) {
       const err = `Only ${allowedTypes.join(', ')} files are allowed`;
       setError(err);
+      setIsPdfSizeError(false);
       throw new Error(err);
     }
 
     setUploading(true);
     setProgress(0);
     setError(null);
+    setIsPdfSizeError(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -98,5 +103,5 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
     }
   };
 
-  return { uploadFile, uploading, progress, error, setError };
+  return { uploadFile, uploading, progress, error, setError, isPdfSizeError };
 };

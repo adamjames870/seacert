@@ -24,7 +24,7 @@ import { Anchor } from 'lucide-react'
 import Home from './pages/Home'
 import SignUp from './pages/SignUp'
 import Login from './pages/Login'
-import Certificates from './pages/Certificates.tsx'
+import Certificates from './pages/Certificates'
 import AddCertificate from './pages/AddCertificate'
 import AddIssuer from './pages/AddIssuer'
 import UpdateCertificate from './pages/UpdateCertificate'
@@ -34,6 +34,8 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import ReportPreviewDialog from './components/ReportPreviewDialog'
+import CookieConsent from './components/CookieConsent'
 import './App.css'
 import { supabase } from './supabaseClient'
 import { API_BASE_URL } from './config'
@@ -50,6 +52,7 @@ interface UserData {
 function App() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null)
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
   const [session, setSession] = useState<any>(undefined)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loadingUserData, setLoadingUserData] = useState(true)
@@ -120,6 +123,11 @@ function App() {
     setAccountAnchorEl(null)
   }
 
+  const handleOpenReport = () => {
+    setReportDialogOpen(true)
+    handleClose()
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     handleClose()
@@ -132,9 +140,13 @@ function App() {
   // or if we have a session but haven't started fetching user data yet.
   if (session === undefined || (session && loadingUserData && !userData)) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
+      <>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <CircularProgress />
+        </Box>
+        <CookieConsent />
+        <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
+      </>
     )
   }
 
@@ -164,6 +176,9 @@ function App() {
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
+            </MenuItem>
+            <MenuItem onClick={handleOpenReport}>
+              Certificate Report
             </MenuItem>
             {isAdmin && [
               <Divider key="divider" />,
@@ -294,6 +309,8 @@ function App() {
           </Typography>
         </Container>
       </Box>
+      <CookieConsent />
+      <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
     </>
   )
 }
