@@ -2,14 +2,14 @@
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/api/handlers"
+	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/domain/issuers"
 	"github.com/adamjames870/seacert/internal/dto"
+	"github.com/google/uuid"
 )
 
 func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
@@ -24,9 +24,10 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 		nameParam := r.URL.Query().Get("name")
 
 		if idParam == "" && nameParam == "" {
-			rv, err := getAllIssuers(state, r.Context())
+			rv, err := getAllIssuers(r.Context(), state.Repo)
 			if err != nil {
-				handlers.RespondWithError(w, 500, "Error fetching issuers", err)
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -34,13 +35,15 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		if idParam != "" {
-			rv, err := getIssuerFromId(state, r.Context(), idParam)
+			uid, errParse := uuid.Parse(idParam)
+			if errParse != nil {
+				handlers.RespondWithError(w, r, 400, "Invalid ID", errParse)
+				return
+			}
+			rv, err := getIssuerFromId(r.Context(), state.Repo, uid)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Issuer not found", err)
-				} else {
-					handlers.RespondWithError(w, 500, "Error fetching issuer", err)
-				}
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -48,13 +51,10 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		if nameParam != "" {
-			rv, err := getIssuerFromName(state, r.Context(), nameParam)
+			rv, err := getIssuerFromName(r.Context(), state.Repo, nameParam)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					handlers.RespondWithError(w, 404, "Issuer not found", err)
-				} else {
-					handlers.RespondWithError(w, 500, "Error fetching issuer", err)
-				}
+				code, msg := handlers.MapDomainError(err)
+				handlers.RespondWithError(w, r, code, msg, err)
 				return
 			}
 			handlers.RespondWithJSON(w, 200, rv)
@@ -63,8 +63,8 @@ func HandlerApiGetIssuers(state *internal.ApiState) http.HandlerFunc {
 	}
 }
 
-func getAllIssuers(state *internal.ApiState, ctx context.Context) ([]dto.Issuer, error) {
-	dbIssuers, errIssuers := issuers.GetIssuers(state, ctx)
+func getAllIssuers(ctx context.Context, repo domain.Repository) ([]dto.Issuer, error) {
+	dbIssuers, errIssuers := issuers.GetIssuers(ctx, repo)
 	if errIssuers != nil {
 		return nil, errIssuers
 	}
@@ -76,16 +76,16 @@ func getAllIssuers(state *internal.ApiState, ctx context.Context) ([]dto.Issuer,
 	return rv, nil
 }
 
-func getIssuerFromId(state *internal.ApiState, ctx context.Context, id string) (dto.Issuer, error) {
-	dbIssuer, erIssuer := issuers.GetIssuerFromId(state, ctx, id)
+func getIssuerFromId(ctx context.Context, repo domain.Repository, id uuid.UUID) (dto.Issuer, error) {
+	dbIssuer, erIssuer := issuers.GetIssuerById(ctx, repo, id)
 	if erIssuer != nil {
 		return dto.Issuer{}, erIssuer
 	}
 	return issuers.MapIssuerDomainToDto(dbIssuer), nil
 }
 
-func getIssuerFromName(state *internal.ApiState, ctx context.Context, name string) (dto.Issuer, error) {
-	dbIssuer, errIssuer := issuers.GetIssuerFromName(state, ctx, name)
+func getIssuerFromName(ctx context.Context, repo domain.Repository, name string) (dto.Issuer, error) {
+	dbIssuer, errIssuer := issuers.GetIssuerByName(ctx, repo, name)
 	if errIssuer != nil {
 		return dto.Issuer{}, errIssuer
 	}

@@ -1,7 +1,6 @@
 ﻿package api
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -17,24 +16,22 @@ func HandlerUpdateCertType(state *internal.ApiState) http.HandlerFunc {
 
 		idParam := r.URL.Query().Get("id")
 		if idParam == "" {
-			handlers.RespondWithError(w, 400, "Missing required parameter 'id'", nil)
+			handlers.RespondWithError(w, r, 400, "Missing required parameter 'id'", nil)
 			return
 		}
 
-		decoder := json.NewDecoder(r.Body)
 		params := dto.ParamsUpdateCertificateType{}
-
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
 		params.Id = idParam
 
-		certType, errCertType := cert_types.UpdateCertificateType(state, r.Context(), params)
+		certType, errCertType := cert_types.UpdateCertificateType(r.Context(), state.Repo, params)
 		if errCertType != nil {
-			handlers.RespondWithError(w, 500, "Error updating certificate type", errCertType)
+			code, msg := handlers.MapDomainError(errCertType)
+			handlers.RespondWithError(w, r, code, msg, errCertType)
 			return
 		}
 

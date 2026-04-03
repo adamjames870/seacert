@@ -67,7 +67,7 @@ func TestCertificateMapping(t *testing.T) {
 			Issuer:       issuer,
 			ManualExpiry: manualExpiry,
 		}
-		got := certificates.MapCertificateDomainToDto(domainCert)
+		got := certificates.MapCertificateDomainToDto(nil, nil, domainCert)
 		if got.Id != certId.String() {
 			t.Errorf("expected ID %s, got %s", certId.String(), got.Id)
 		}
@@ -127,7 +127,7 @@ func TestCertificateMapping(t *testing.T) {
 				},
 			},
 		}
-		got := certificates.MapCertificateDomainToDto(domainCert)
+		got := certificates.MapCertificateDomainToDto(nil, nil, domainCert)
 		if len(got.Predecessors) != 1 {
 			t.Fatalf("expected 1 predecessor, got %d", len(got.Predecessors))
 		}

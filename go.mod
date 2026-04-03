@@ -12,7 +12,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.13
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.13
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0
+	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0
+	github.com/johnfercher/maroto/v2 v2.3.1
 	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/supabase-community/supabase-go v0.0.4
 )
@@ -36,12 +38,15 @@ require (
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/f-amaral/go-async v0.3.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/hhrutter/lzw v1.0.0 // indirect
 	github.com/hhrutter/tiff v1.0.1 // indirect
 	github.com/johnfercher/go-tree v1.0.5 // indirect
-	github.com/johnfercher/maroto/v2 v2.3.1 // indirect
 	github.com/jung-kurt/gofpdf v1.16.2 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
@@ -57,9 +62,9 @@ require (
 	github.com/supabase-community/postgrest-go v0.0.11 // indirect
 	github.com/supabase-community/storage-go v0.7.0 // indirect
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/image v0.18.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

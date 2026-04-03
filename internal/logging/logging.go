@@ -38,13 +38,28 @@ func (h *PrettyHandler) Handle(ctx context.Context, r slog.Record) error {
 	fmt.Printf("[%s] %s%-5s%s %s", timeStr, levelColor, level, resetColor, msg)
 
 	r.Attrs(func(a slog.Attr) bool {
-		fmt.Printf(" %s=%v", a.Key, a.Value.Any())
+		h.formatAttr(a)
 		return true
 	})
 
 	fmt.Println()
 
 	return nil
+}
+
+func (h *PrettyHandler) formatAttr(a slog.Attr) {
+	if a.Value.Kind() == slog.KindGroup {
+		fmt.Printf(" %s=[", a.Key)
+		for i, attr := range a.Value.Group() {
+			if i > 0 {
+				fmt.Print(" ")
+			}
+			h.formatAttr(attr)
+		}
+		fmt.Print("]")
+	} else {
+		fmt.Printf(" %s=%v", a.Key, a.Value.Any())
+	}
 }
 
 func NewLogger() *slog.Logger {

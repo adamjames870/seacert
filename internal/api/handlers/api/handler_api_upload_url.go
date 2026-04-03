@@ -1,7 +1,6 @@
 ﻿package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -26,21 +25,19 @@ type ResponseUploadURL struct {
 func HandlerApiGetUploadURL(state *internal.ApiState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if state.Storage == nil {
-			handlers.RespondWithError(w, 501, "Storage not configured", nil)
+			handlers.RespondWithError(w, r, 501, "Storage not configured", nil)
 			return
 		}
 
-		decoder := json.NewDecoder(r.Body)
 		params := ParamsUploadURL{}
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
 		userId, errId := auth.UserIdFromContext(r.Context())
 		if errId != nil {
-			handlers.RespondWithError(w, 401, "Unauthorized", errId)
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
 			return
 		}
 
@@ -66,9 +63,11 @@ func HandlerApiGetUploadURL(state *internal.ApiState) http.HandlerFunc {
 
 		uploadURL, err := state.Storage.GetPresignedUploadURL(r.Context(), fileKey, params.ContentType, 15*time.Minute)
 		if err != nil {
-			handlers.RespondWithError(w, 500, "Error generating upload URL", err)
+			handlers.RespondWithError(w, r, 500, "Error generating upload URL", err)
 			return
 		}
+
+		state.Logger.Info("Presigned upload URL generated", "user_id", userId, "file_key", fileKey)
 
 		handlers.RespondWithJSON(w, 200, ResponseUploadURL{
 			UploadURL: uploadURL,

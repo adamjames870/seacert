@@ -1,7 +1,6 @@
 ﻿package admin
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
@@ -14,22 +13,16 @@ func HandlerAdminResolveCertType(state *internal.ApiState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// POST /admin/cert-types/resolve
 
-		decoder := json.NewDecoder(r.Body)
 		params := dto.ParamsResolveCertificateType{}
-		errDecode := decoder.Decode(&params)
-		if errDecode != nil {
-			handlers.RespondWithError(w, 400, "Invalid request payload", errDecode)
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
 			return
 		}
 
-		if params.ProvisionalId == "" || params.ReplacementId == "" {
-			handlers.RespondWithError(w, 400, "Both provisional-id and replacement-id are required", nil)
-			return
-		}
-
-		errResolve := cert_types.ResolveProvisionalCertType(state, r.Context(), params)
+		errResolve := cert_types.ResolveProvisionalCertType(r.Context(), state.Repo, params)
 		if errResolve != nil {
-			handlers.RespondWithError(w, 500, "Error resolving certificate type", errResolve)
+			code, msg := handlers.MapDomainError(errResolve)
+			handlers.RespondWithError(w, r, code, msg, errResolve)
 			return
 		}
 

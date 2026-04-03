@@ -12,6 +12,7 @@ import (
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/logging"
+	"github.com/adamjames870/seacert/internal/repository/postgres"
 	"github.com/adamjames870/seacert/internal/storage"
 	"github.com/joho/godotenv"
 )
@@ -87,6 +88,7 @@ func loadDb(state *internal.ApiState) error {
 	}
 
 	state.Queries = sqlc.New(db)
+	state.Repo = postgres.NewRepository(db)
 
 	return nil
 }

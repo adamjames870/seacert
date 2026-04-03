@@ -17,7 +17,7 @@ func BuildRouter(state *internal.ApiState) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return middleware.Cors(middleware.Logging(mux)), nil
+	return middleware.Cors(middleware.RequestID(middleware.Recovery(middleware.Logging(mux)))), nil
 }
 
 func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
@@ -28,7 +28,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 		ExpectedAudience: os.Getenv("SUPABASE_AUDIENCE"),
 	}
 
-	adapter := &userStoreAdapter{state: state}
+	adapter := &userStoreAdapter{repo: state.Repo}
 
 	authMw, errAuthMw := auth.NewAuthMiddleware(authInfo, adapter)
 	if errAuthMw != nil {
