@@ -1,6 +1,6 @@
-﻿import { Typography, Container, Box, Button, Grid, Stack } from '@mui/material';
+﻿import { Typography, Container, Box, Button, Grid, Stack, Card, CardContent, CardMedia } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Anchor, ShieldCheck, Smartphone, Clock } from 'lucide-react';
+import { Anchor, ShieldCheck, FileText, DownloadCloud, AlertCircle } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -61,52 +61,71 @@ const Home = () => {
           <Typography variant="h4" component="h2" align="center" gutterBottom sx={{ fontWeight: 700, mb: 8 }}>
             Why Use SeaCert?
           </Typography>
-          <Grid container spacing={6} justifyContent="center">
+          <Grid container spacing={4} justifyContent="center">
             {[
               {
                 icon: <ShieldCheck size={48} />,
-                title: "Compliance Ready",
-                description: "Easily track all your STCW and mandatory certificates required for your next contract."
+                title: "Complete Records",
+                description: "Maintain comprehensive records of all your certifications and STCW training in one secure location.",
+                image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070"
               },
               {
-                icon: <Smartphone size={48} />,
-                title: "Always Accessible",
-                description: "Access your certificate details anytime, anywhere. On the ship or at home."
+                icon: <AlertCircle size={48} />,
+                title: "Expiry Reminder",
+                description: "Easily see when your certificates need renewing. Plan your renewal before they expire so you're always ready for your next contract.",
+                image: "https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&q=80&w=2070"
               },
               {
-                icon: <Clock size={48} />,
-                title: "Time Saving",
-                description: "No more digging through folders. Find issuer details and certificate numbers in seconds."
+                icon: <DownloadCloud size={48} />,
+                title: "Easy Access Anywhere",
+                description: "Store secure copies of your certificates for instant access. Download them on ship or at home, whenever you need them.",
+                image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2072"
+              },
+              {
+                icon: <FileText size={48} />,
+                title: "Professional Reports",
+                description: "Generate a comprehensive report of all your certifications in seconds. Perfect for sending to crewing agents and employers.",
+                image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=2070"
               }
             ].map((feature, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} sx={{ display: 'flex' }}>
-                <Stack 
-                  spacing={2} 
-                  alignItems="center" 
-                  textAlign="center"
-                  sx={{ width: '100%' }}
-                >
-                  <Box 
-                    sx={{ 
-                      color: 'primary.main', 
-                      bgcolor: 'rgba(74, 109, 140, 0.1)', 
-                      p: 2, 
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 1
-                    }}
-                  >
-                    {feature.icon}
-                  </Box>
-                  <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 280 }}>
-                    {feature.description}
-                  </Typography>
-                </Stack>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} sx={{ display: 'flex' }}>
+                <Card sx={{ 
+                  width: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: 'translateY(-8px)' },
+                  boxShadow: 2
+                }}>
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={feature.image}
+                    alt={feature.title}
+                  />
+                  <CardContent sx={{ flexGrow: 1, textAlign: 'center', pt: 3 }}>
+                    <Box 
+                      sx={{ 
+                        color: 'primary.main', 
+                        bgcolor: 'rgba(74, 109, 140, 0.1)', 
+                        p: 2, 
+                        borderRadius: '50%',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mb: 2
+                      }}
+                    >
+                      {feature.icon}
+                    </Box>
+                    <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
               </Grid>
             ))}
           </Grid>
