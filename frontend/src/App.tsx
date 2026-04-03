@@ -20,6 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import EditIcon from '@mui/icons-material/Edit'
+import DescriptionIcon from '@mui/icons-material/Description'
 import { Anchor } from 'lucide-react'
 import Home from './pages/Home'
 import SignUp from './pages/SignUp'
@@ -34,6 +35,7 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
 import './App.css'
 import { supabase } from './supabaseClient'
@@ -51,6 +53,7 @@ interface UserData {
 function App() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null)
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
   const [session, setSession] = useState<any>(undefined)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loadingUserData, setLoadingUserData] = useState(true)
@@ -121,6 +124,11 @@ function App() {
     setAccountAnchorEl(null)
   }
 
+  const handleOpenReport = () => {
+    setReportDialogOpen(true)
+    handleClose()
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     handleClose()
@@ -138,6 +146,7 @@ function App() {
           <CircularProgress />
         </Box>
         <CookieConsent />
+        <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
       </>
     )
   }
@@ -168,6 +177,9 @@ function App() {
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
+            </MenuItem>
+            <MenuItem onClick={handleOpenReport}>
+              Certificate Report
             </MenuItem>
             {isAdmin && [
               <Divider key="divider" />,
@@ -299,6 +311,7 @@ function App() {
         </Container>
       </Box>
       <CookieConsent />
+      <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
     </>
   )
 }

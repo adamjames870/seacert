@@ -48,12 +48,14 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DownloadIcon from '@mui/icons-material/Download';
+import DescriptionIcon from '@mui/icons-material/Description';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
 import { getCountryName } from '../utils/countryData';
+import ReportPreviewDialog from '../components/ReportPreviewDialog';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 interface Predecessor {
@@ -104,6 +106,7 @@ const Certificates = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeMenuCertId, setActiveMenuCertId] = useState<string | null>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [draggedOverCertId, setDraggedOverCertId] = useState<string | null>(null);
 
   const navigate = useNavigate();
@@ -453,6 +456,15 @@ const Certificates = () => {
               }}
               sx={{ minWidth: { xs: '100%', sm: 250 } }}
             />
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<DescriptionIcon />}
+              onClick={() => setReportDialogOpen(true)}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              Report
+            </Button>
             <Button
               variant="contained"
               color="primary"
@@ -1309,6 +1321,7 @@ const Certificates = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
 
       {!loading && !error && certificates.length === 0 && (
         <Box 
