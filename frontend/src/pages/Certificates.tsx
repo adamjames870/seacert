@@ -343,10 +343,11 @@ const Certificates = () => {
     }
 
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       cert['cert-type-name'].toLowerCase().includes(query) ||
-      cert['issuer-name'].toLowerCase().includes(query)
-    );
+      cert['issuer-name'].toLowerCase().includes(query);
+    
+    return matchesSearch;
   });
 
   const sortedCertificates = [...filteredCertificates].sort((a, b) => {
@@ -490,6 +491,7 @@ const Certificates = () => {
                 {activeCertificates.map((cert) => {
                   const status = getExpiryStatus(cert['expiry-date']);
                   const styles = getStatusStyles(status);
+                  const hasAttachment = !!cert['document-path'];
                   
                   return (
                     <Paper 
@@ -500,7 +502,18 @@ const Certificates = () => {
                         border: 1, 
                         borderColor: styles.borderColor, 
                         bgcolor: styles.bgcolor,
-                        overflow: 'hidden' 
+                        overflow: 'hidden',
+                        position: 'relative',
+                        '&::before': !hasAttachment ? {
+                          content: '""',
+                          position: 'absolute',
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '4px',
+                          bgcolor: 'warning.light',
+                          opacity: 0.6
+                        } : {}
                       }}
                     >
                       <ListItemButton 
@@ -861,6 +874,7 @@ const Certificates = () => {
                 <AccordionDetails sx={{ p: 0, mt: 2 }}>
                   <List>
                     {retiredCertificates.map((cert) => {
+                      const hasAttachment = !!cert['document-path'];
                       return (
                         <Paper 
                           key={cert.id} 
@@ -871,7 +885,18 @@ const Certificates = () => {
                             borderColor: 'divider', 
                             bgcolor: 'action.hover',
                             opacity: 0.8,
-                            overflow: 'hidden' 
+                            overflow: 'hidden',
+                            position: 'relative',
+                            '&::before': !hasAttachment ? {
+                              content: '""',
+                              position: 'absolute',
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: '4px',
+                              bgcolor: 'warning.light',
+                              opacity: 0.6
+                            } : {}
                           }}
                         >
                           <ListItemButton 
