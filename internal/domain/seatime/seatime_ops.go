@@ -288,6 +288,180 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 	return result, err
 }
 
+func UpdateSeatime(ctx context.Context, repo domain.Repository, params dto.ParamsUpdateSeatime, userId uuid.UUID) (Seatime, error) {
+	var result Seatime
+
+	seatimeId, err := uuid.Parse(params.Id)
+	if err != nil {
+		return result, fmt.Errorf("invalid seatime id: %w", err)
+	}
+
+	startDate, err := time.Parse("2006-01-02", params.StartDate)
+	if err != nil {
+		return result, fmt.Errorf("invalid start date: %w", err)
+	}
+
+	endDate, err := time.Parse("2006-01-02", params.EndDate)
+	if err != nil {
+		return result, fmt.Errorf("invalid end date: %w", err)
+	}
+
+	if startDate.After(endDate) {
+		return result, fmt.Errorf("start date must be before end date")
+	}
+
+	var shipId uuid.UUID
+	if params.ShipId != nil {
+		shipId, err = uuid.Parse(*params.ShipId)
+		if err != nil {
+			return result, fmt.Errorf("invalid ship id: %w", err)
+		}
+	}
+
+	voyageTypeId, err := uuid.Parse(params.VoyageTypeId)
+	if err != nil {
+		return result, fmt.Errorf("invalid voyage type id: %w", err)
+	}
+
+	err = repo.WithTx(ctx, func(txRepo domain.Repository) error {
+		// If ship details are provided, we should handle them (create/update)
+		// But for now, let's look at how CreateSeatime does it.
+		// CreateSeatime allows providing ship details or shipId.
+		// UpdateSeatime should probably do the same if we want to support the same flexibility.
+		// However, the issue description points to a foreign key violation on ship_id.
+
+		if params.ShipId == nil && params.Ship != nil {
+			// Handle inline ship creation/update (similar to CreateSeatime)
+			// For simplicity in this fix, we assume the ship already exists or shipId is provided.
+			// If we need to support inline ship creation in Update too, we'd need to copy that logic.
+			// Let's check if we should just use shipId if it's there.
+		}
+
+		if shipId == uuid.Nil && params.Ship != nil {
+			// Copying logic from AddSeatime to support inline ship creation/resolution
+			shipTypeId, err := uuid.Parse(params.Ship.ShipTypeId)
+			if err != nil {
+				return fmt.Errorf("invalid ship type id: %w", err)
+			}
+
+			// Check if ship exists by IMO
+			existingShips, err := txRepo.GetShips(ctx)
+			if err == nil {
+				for _, s := range existingShips {
+					if s.ImoNumber == params.Ship.ImoNumber {
+						shipId = s.ID
+						break
+					}
+				}
+			}
+
+			if shipId == uuid.Nil {
+				newShip, err := txRepo.CreateShip(ctx, sqlc.CreateShipParams{
+					ID:              uuid.New(),
+					Name:            params.Ship.Name,
+					ShipTypeID:      shipTypeId,
+					ImoNumber:       params.Ship.ImoNumber,
+					Gt:              params.Ship.Gt,
+					Flag:            params.Ship.Flag,
+					PropulsionPower: domain.ToNullInt32FromPointer(params.Ship.PropulsionPower),
+					Status:          "approved",
+					CreatedBy:       uuid.NullUUID{UUID: userId, Valid: true},
+					CreatedAt:       time.Now(),
+					UpdatedAt:       time.Now(),
+				})
+				if err != nil {
+					return fmt.Errorf("failed to create ship: %w", err)
+				}
+				shipId = newShip.ID
+			}
+		}
+
+		if shipId == uuid.Nil {
+			return fmt.Errorf("ship_id or ship details must be provided")
+		}
+
+		// Update main seatime record
+		_, err := txRepo.UpdateSeatime(ctx, sqlc.UpdateSeatimeParams{
+			ID:             seatimeId,
+			UserID:         userId,
+			ShipID:         shipId,
+			VoyageTypeID:   voyageTypeId,
+			UpdatedAt:      time.Now(),
+			StartDate:      startDate,
+			StartLocation:  params.StartLocation,
+			EndDate:        endDate,
+			EndLocation:    params.EndLocation,
+			TotalDays:      params.TotalDays,
+			Company:        params.Company,
+			Capacity:       params.Capacity,
+			IsWatchkeeping: params.IsWatchkeeping,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update seatime: %w", err)
+		}
+
+		// Delete existing periods and recreate them
+		err = txRepo.DeleteSeatimePeriods(ctx, seatimeId)
+		if err != nil {
+			return fmt.Errorf("failed to delete seatime periods: %w", err)
+		}
+
+		for _, p := range params.Periods {
+			periodTypeId, err := uuid.Parse(p.PeriodTypeId)
+			if err != nil {
+				return fmt.Errorf("invalid period type id: %w", err)
+			}
+
+			pStartDate, err := time.Parse("2006-01-02", p.StartDate)
+			if err != nil {
+				return fmt.Errorf("invalid period start date: %w", err)
+			}
+
+			pEndDate, err := time.Parse("2006-01-02", p.EndDate)
+			if err != nil {
+				return fmt.Errorf("invalid period end date: %w", err)
+			}
+
+			if pStartDate.Before(startDate) || pEndDate.After(endDate) {
+				return fmt.Errorf("period must be within voyage dates")
+			}
+
+			_, err = txRepo.CreateSeatimePeriod(ctx, sqlc.CreateSeatimePeriodParams{
+				ID:           uuid.New(),
+				SeatimeID:    seatimeId,
+				PeriodTypeID: periodTypeId,
+				StartDate:    pStartDate,
+				EndDate:      pEndDate,
+				Days:         p.Days,
+				Remarks:      domain.ToNullStringFromPointer(&p.Remarks),
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create seatime period: %w", err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return result, err
+	}
+
+	// Fetch full updated record
+	sts, err := GetSeatime(ctx, repo, userId)
+	if err != nil {
+		return result, err
+	}
+
+	for _, st := range sts {
+		if st.Id == seatimeId {
+			return st, nil
+		}
+	}
+
+	return result, fmt.Errorf("updated seatime not found")
+}
+
 func GetSeatime(ctx context.Context, repo domain.Repository, userId uuid.UUID) ([]Seatime, error) {
 	rows, err := repo.GetSeatimeByUserId(ctx, userId)
 	if err != nil {

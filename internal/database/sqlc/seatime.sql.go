@@ -243,6 +243,15 @@ func (q *Queries) DeleteSeatimePeriodType(ctx context.Context, id uuid.UUID) err
 	return err
 }
 
+const deleteSeatimePeriods = `-- name: DeleteSeatimePeriods :exec
+DELETE FROM seatime_periods WHERE seatime_id = $1
+`
+
+func (q *Queries) DeleteSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteSeatimePeriods, seatimeID)
+	return err
+}
+
 const deleteShip = `-- name: DeleteShip :exec
 DELETE FROM ships WHERE id = $1
 `
@@ -733,6 +742,65 @@ func (q *Queries) GetVoyageTypes(ctx context.Context) ([]VoyageType, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSeatime = `-- name: UpdateSeatime :one
+UPDATE seatime
+SET ship_id = $3, voyage_type_id = $4, updated_at = $5, start_date = $6, start_location = $7, end_date = $8, end_location = $9, total_days = $10, company = $11, capacity = $12, is_watchkeeping = $13
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, ship_id, voyage_type_id, created_at, updated_at, start_date, start_location, end_date, end_location, total_days, company, capacity, is_watchkeeping
+`
+
+type UpdateSeatimeParams struct {
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	ShipID         uuid.UUID
+	VoyageTypeID   uuid.UUID
+	UpdatedAt      time.Time
+	StartDate      time.Time
+	StartLocation  string
+	EndDate        time.Time
+	EndLocation    string
+	TotalDays      int32
+	Company        string
+	Capacity       string
+	IsWatchkeeping bool
+}
+
+func (q *Queries) UpdateSeatime(ctx context.Context, arg UpdateSeatimeParams) (Seatime, error) {
+	row := q.db.QueryRowContext(ctx, updateSeatime,
+		arg.ID,
+		arg.UserID,
+		arg.ShipID,
+		arg.VoyageTypeID,
+		arg.UpdatedAt,
+		arg.StartDate,
+		arg.StartLocation,
+		arg.EndDate,
+		arg.EndLocation,
+		arg.TotalDays,
+		arg.Company,
+		arg.Capacity,
+		arg.IsWatchkeeping,
+	)
+	var i Seatime
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ShipID,
+		&i.VoyageTypeID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartDate,
+		&i.StartLocation,
+		&i.EndDate,
+		&i.EndLocation,
+		&i.TotalDays,
+		&i.Company,
+		&i.Capacity,
+		&i.IsWatchkeeping,
+	)
+	return i, err
 }
 
 const updateSeatimePeriodType = `-- name: UpdateSeatimePeriodType :one

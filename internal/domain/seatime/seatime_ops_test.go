@@ -97,6 +97,14 @@ func (m *mockRepo) CreateSeatimePeriod(ctx context.Context, arg sqlc.CreateSeati
 	return sqlc.SeatimePeriod{ID: arg.ID}, nil
 }
 
+func (m *mockRepo) UpdateSeatime(ctx context.Context, arg sqlc.UpdateSeatimeParams) (sqlc.Seatime, error) {
+	return sqlc.Seatime{ID: arg.ID}, nil
+}
+
+func (m *mockRepo) DeleteSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) error {
+	return nil
+}
+
 func (m *mockRepo) GetShips(ctx context.Context) ([]sqlc.GetShipsRow, error) {
 	return []sqlc.GetShipsRow{
 		{
@@ -180,6 +188,15 @@ func (m *mockRepo) GetVoyageTypes(ctx context.Context) ([]sqlc.VoyageType, error
 func (m *mockRepo) GetSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) ([]sqlc.GetSeatimePeriodsRow, error) {
 	return nil, nil
 }
+
+func (m *mockRepo) GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error) {
+	if mockGetSeatimeByUserId != nil {
+		return mockGetSeatimeByUserId(ctx, userID)
+	}
+	return nil, nil
+}
+
+var mockGetSeatimeByUserId func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error)
 
 func TestCreateSeatimeValidation(t *testing.T) {
 	repo := &mockRepo{}
@@ -418,6 +435,98 @@ func TestResolveShip(t *testing.T) {
 			t.Errorf("ResolveShip should fail for invalid UUID")
 		}
 	})
+}
+
+func TestUpdateSeatimeValidation(t *testing.T) {
+	repo := &mockRepo{}
+	userId := uuid.New()
+	seatimeId := uuid.New().String()
+	shipId := uuid.New().String()
+	voyageTypeId := uuid.New().String()
+
+	tests := []struct {
+		name    string
+		params  dto.ParamsUpdateSeatime
+		wantErr bool
+	}{
+		{
+			name: "Valid update",
+			params: dto.ParamsUpdateSeatime{
+				Id:             seatimeId,
+				ShipId:         &shipId,
+				VoyageTypeId:   voyageTypeId,
+				StartDate:      "2024-01-01",
+				EndDate:        "2024-01-10",
+				StartLocation:  "London",
+				EndLocation:    "New York",
+				TotalDays:      10,
+				Company:        "Updated Co",
+				Capacity:       "Chief Mate",
+				IsWatchkeeping: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Invalid ID",
+			params: dto.ParamsUpdateSeatime{
+				Id: "invalid-uuid",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Period outside voyage dates",
+			params: dto.ParamsUpdateSeatime{
+				Id:            seatimeId,
+				ShipId:        &shipId,
+				VoyageTypeId:  voyageTypeId,
+				StartDate:     "2024-01-01",
+				EndDate:       "2024-01-10",
+				StartLocation: "London",
+				EndLocation:   "New York",
+				TotalDays:     10,
+				Company:       "Updated Co",
+				Capacity:      "Chief Mate",
+				Periods: []dto.ParamsAddSeatimePeriod{
+					{
+						PeriodTypeId: uuid.New().String(),
+						StartDate:    "2023-12-31",
+						EndDate:      "2024-01-05",
+						Days:         5,
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr {
+				mockGetSeatimeByUserId = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error) {
+					id, _ := uuid.Parse(tt.params.Id)
+					var sId uuid.UUID
+					if tt.params.ShipId != nil {
+						sId, _ = uuid.Parse(*tt.params.ShipId)
+					}
+					voyageTypeId, _ := uuid.Parse(tt.params.VoyageTypeId)
+					return []sqlc.GetSeatimeByUserIdRow{
+						{
+							ID:           id,
+							UserID:       userID,
+							ShipID:       sId,
+							VoyageTypeID: voyageTypeId,
+							StartDate:    time.Now(),
+							EndDate:      time.Now(),
+						},
+					}, nil
+				}
+			}
+			_, err := UpdateSeatime(context.Background(), repo, tt.params, userId)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UpdateSeatime() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }
 
 func TestStandaloneShipOps(t *testing.T) {

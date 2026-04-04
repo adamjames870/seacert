@@ -88,6 +88,22 @@ type ParamsAddSeatime struct {
 	Periods        []ParamsAddSeatimePeriod `json:"periods,omitempty"`
 }
 
+type ParamsUpdateSeatime struct {
+	Id             string                   `json:"id" validate:"required"`
+	ShipId         *string                  `json:"ship-id,omitempty"`
+	Ship           *ParamsAddShip           `json:"ship,omitempty"`
+	VoyageTypeId   string                   `json:"voyage-type-id" validate:"required"`
+	StartDate      string                   `json:"start-date" validate:"required"`
+	StartLocation  string                   `json:"start-location" validate:"required"`
+	EndDate        string                   `json:"end-date" validate:"required"`
+	EndLocation    string                   `json:"end-location" validate:"required"`
+	TotalDays      int32                    `json:"total-days" validate:"required"`
+	Company        string                   `json:"company" validate:"required"`
+	Capacity       string                   `json:"capacity" validate:"required"`
+	IsWatchkeeping bool                     `json:"is-watchkeeping"`
+	Periods        []ParamsAddSeatimePeriod `json:"periods,omitempty"`
+}
+
 type ParamsAddShip struct {
 	Name            string `json:"name" validate:"required"`
 	ShipTypeId      string `json:"ship-type-id" validate:"required"`

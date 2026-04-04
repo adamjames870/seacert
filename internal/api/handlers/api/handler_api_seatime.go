@@ -148,3 +148,42 @@ func HandlerApiUpdateShip(state *internal.ApiState) http.HandlerFunc {
 		handlers.RespondWithJSON(w, 200, seatime.MapShipToDto(s))
 	}
 }
+
+func HandlerApiUpdateSeatime(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			handlers.RespondWithError(w, r, 400, "Seatime ID is required", nil)
+			return
+		}
+
+		params := dto.ParamsUpdateSeatime{}
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
+			return
+		}
+
+		if params.Id != id {
+			handlers.RespondWithError(w, r, 400, "Seatime ID in path and body must match", nil)
+			return
+		}
+
+		userId, errId := auth.UserIdFromContext(r.Context())
+		if errId != nil {
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
+			return
+		}
+
+		st, err := seatime.UpdateSeatime(r.Context(), state.Repo, params, userId)
+		if err != nil {
+			code, msg := handlers.MapDomainError(err)
+			handlers.RespondWithError(w, r, code, msg, err)
+			return
+		}
+
+		state.Logger.Info("Seatime updated", "user_id", userId, "seatime_id", st.Id)
+		rv := seatime.MapSeatimeDomainToDto(st)
+
+		handlers.RespondWithJSON(w, 200, rv)
+	}
+}

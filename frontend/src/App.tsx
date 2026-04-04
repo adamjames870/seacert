@@ -252,14 +252,14 @@ function App() {
               Seatime History
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
-              Record Voyage
-            </MenuItem>
-            <MenuItem onClick={handleClose} component={RouterLink} to="/add-ship">
-              Add Ship
+              Record Seatime Period
             </MenuItem>
             
             {isAdmin && [
-              <Divider key="divider" />,
+              <Divider key="divider-admin" />,
+              <MenuItem key="add-ship" onClick={handleClose} component={RouterLink} to="/add-ship">
+                Add Ship
+              </MenuItem>,
               <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers">
                 Issuers
               </MenuItem>,
@@ -378,8 +378,8 @@ function App() {
         <Route path="/add-seatime" element={session ? <AddSeatime /> : <Navigate to="/login" replace />} />
         <Route path="/update-seatime/:id" element={session ? <UpdateSeatime /> : <Navigate to="/login" replace />} />
         <Route path="/ships" element={isAdmin ? <Ships /> : <Navigate to="/certificates" replace />} />
-        <Route path="/add-ship" element={session ? <ShipForm /> : <Navigate to="/login" replace />} />
-        <Route path="/edit-ship/:id" element={session ? <ShipForm /> : <Navigate to="/login" replace />} />
+        <Route path="/add-ship" element={isAdmin ? <ShipForm /> : <Navigate to="/certificates" replace />} />
+        <Route path="/edit-ship/:id" element={isAdmin ? <ShipForm /> : <Navigate to="/certificates" replace />} />
         <Route path="/admin/seatime-lookups" element={isAdmin ? <ManageSeatimeLookups /> : <Navigate to="/certificates" replace />} />
         
         {/* Certificate Types: Admin can see all, Users can add types from AddCertificate flow */}

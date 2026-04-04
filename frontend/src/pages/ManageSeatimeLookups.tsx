@@ -23,8 +23,7 @@ import {
   TextField,
   Stack
 } from '@mui/material';
-import { Edit, Trash2, Plus, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Edit, Trash2, Plus } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 
@@ -156,7 +155,7 @@ const ManageSeatimeLookups = () => {
       <Paper sx={{ width: '100%', mb: 2 }}>
         <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tab label="Ship Types" />
-          <Tab label="Voyage Types" />
+          <Tab label="Seatime Period Types" />
           <Tab label="Period Types" />
         </Tabs>
         

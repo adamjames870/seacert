@@ -70,6 +70,8 @@ type Repository interface {
 	DeleteShip(ctx context.Context, id uuid.UUID) error
 	CreateSeatime(ctx context.Context, arg sqlc.CreateSeatimeParams) (sqlc.Seatime, error)
 	CreateSeatimePeriod(ctx context.Context, arg sqlc.CreateSeatimePeriodParams) (sqlc.SeatimePeriod, error)
+	UpdateSeatime(ctx context.Context, arg sqlc.UpdateSeatimeParams) (sqlc.Seatime, error)
+	DeleteSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) error
 	GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error)
 	GetSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) ([]sqlc.GetSeatimePeriodsRow, error)
 	DeleteSeatime(ctx context.Context, arg sqlc.DeleteSeatimeParams) error

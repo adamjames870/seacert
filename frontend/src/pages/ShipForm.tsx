@@ -13,7 +13,8 @@ import {
   MenuItem, 
   Stack,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Chip
 } from '@mui/material';
 import { 
   Ship, 
@@ -212,7 +213,7 @@ const ShipForm = () => {
             />
 
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   required
                   fullWidth
@@ -222,7 +223,7 @@ const ShipForm = () => {
                   onChange={(e) => setGt(e.target.value === '' ? '' : Number(e.target.value))}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   required
                   fullWidth

@@ -17,8 +17,6 @@ import {
   Stack,
   Alert,
   CircularProgress,
-  Card,
-  CardContent,
   Autocomplete,
   Chip
 } from '@mui/material';
@@ -41,7 +39,7 @@ interface ShipType {
   description: string;
 }
 
-interface VoyageType {
+interface SeatimePeriodType {
   id: string;
   name: string;
   description: string;
@@ -83,14 +81,14 @@ const UpdateSeatime = () => {
   
   // Lookups
   const [shipTypes, setShipTypes] = useState<ShipType[]>([]);
-  const [voyageTypes, setVoyageTypes] = useState<VoyageType[]>([]);
+  const [seatimePeriodTypes, setSeatimePeriodTypes] = useState<SeatimePeriodType[]>([]);
   const [periodTypes, setPeriodTypes] = useState<PeriodType[]>([]);
   const [ships, setShips] = useState<ShipRecord[]>([]);
   
   // Form State
   const [selectedShip, setSelectedShip] = useState<ShipRecord | null>(null);
   
-  const [voyageTypeId, setVoyageTypeId] = useState('');
+  const [seatimePeriodTypeId, setSeatimePeriodTypeId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [startLocation, setStartLocation] = useState('');
@@ -134,26 +132,36 @@ const UpdateSeatime = () => {
       if (!lookupResp.ok) throw new Error('Failed to fetch lookups');
       const lookups = await lookupResp.json();
       setShipTypes(lookups['ship-types']);
-      setVoyageTypes(lookups['voyage-types']);
+      setSeatimePeriodTypes(lookups['voyage-types']);
       setPeriodTypes(lookups['period-types']);
 
       // Fetch Ships for autocomplete
-      const shipsResp = await fetch(`${API_BASE_URL}/api/ships`, {
+      const shipsDataResponse = await fetch(`${API_BASE_URL}/api/ships`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
-      if (shipsResp.ok) {
-        const shipsData = await shipsResp.json();
-        setShips(shipsData);
+      let fetchedShips: ShipRecord[] = [];
+      if (shipsDataResponse.ok) {
+        fetchedShips = await shipsDataResponse.json();
+        setShips(fetchedShips);
       }
 
-      // Fetch Record - Note: Assuming there's a GET /api/seatime/:id or we find it in the list
-      // Since specific GET endpoint isn't documented, we'll fetch all and find it
-      const recordResp = await fetch(`${API_BASE_URL}/api/seatime`, {
+      // Fetch Record - Note: Backend might provide specific endpoint or use list
+      const recordResp = await fetch(`${API_BASE_URL}/api/seatime/${id}`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
-      if (!recordResp.ok) throw new Error('Failed to fetch seatime records');
-      const records = await recordResp.json();
-      const record = records.find((r: any) => r.id === id);
+      
+      let record;
+      if (recordResp.ok) {
+        record = await recordResp.json();
+      } else {
+        // Fallback to list search if single fetch fails
+        const listResp = await fetch(`${API_BASE_URL}/api/seatime`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (!listResp.ok) throw new Error('Failed to fetch seatime records');
+        const records = await listResp.json();
+        record = records.find((r: any) => r.id === id);
+      }
       
       if (!record) throw new Error('Record not found');
 
@@ -162,11 +170,15 @@ const UpdateSeatime = () => {
       // Populate form
       if (record.ship) {
         setSelectedShip(record.ship);
+      } else if (record['ship-id']) {
+        // Find ship in list if only ID provided
+        const ship = fetchedShips.find(s => s.id === record['ship-id']);
+        if (ship) setSelectedShip(ship);
       } else {
         setSelectedShip(null);
       }
       
-      setVoyageTypeId(record['voyage-type-id'] || '');
+      setSeatimePeriodTypeId(record['voyage-type-id'] || '');
       setStartDate(record['start-date'] ? record['start-date'].split('T')[0] : '');
       setEndDate(record['end-date'] ? record['end-date'].split('T')[0] : '');
       setStartLocation(record['start-location'] || '');
@@ -193,13 +205,23 @@ const UpdateSeatime = () => {
   };
 
   const handleAddPeriod = () => {
+    let initialDays = 0;
+    if (startDate && endDate) {
+      const pStart = new Date(startDate);
+      const pEnd = new Date(endDate);
+      if (pEnd >= pStart && !isNaN(pStart.getTime()) && !isNaN(pEnd.getTime())) {
+        const diffTime = Math.abs(pEnd.getTime() - pStart.getTime());
+        initialDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      }
+    }
+
     setPeriods([
       ...periods,
       {
         'period-type-id': '',
         'start-date': startDate,
         'end-date': endDate,
-        days: 0,
+        days: initialDays,
         remarks: ''
       }
     ]);
@@ -242,19 +264,30 @@ const UpdateSeatime = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const body: any = {
+      const body = {
+        id,
         'ship-id': selectedShip?.id,
-        'voyage-type-id': voyageTypeId,
+        'voyage-type-id': seatimePeriodTypeId,
         'start-date': startDate,
         'end-date': endDate,
         'start-location': startLocation,
         'end-location': endLocation,
-        'total-days': totalDays,
+        'total-days': Number(totalDays),
         company,
         capacity,
         'is-watchkeeping': isWatchkeeping,
-        periods: periods.filter(p => p['period-type-id'] !== '')
+        periods: periods
+          .filter(p => p['period-type-id'] !== '')
+          .map(p => {
+            const { id: _ignoredId, ...rest } = p;
+            return {
+              ...rest,
+              days: Number(rest.days)
+            };
+          })
       };
+
+      console.log('Update body:', body);
 
       // Note: Assuming PUT /api/seatime/:id exists as per proposal
       const response = await fetch(`${API_BASE_URL}/api/seatime/${id}`, {
@@ -267,8 +300,9 @@ const UpdateSeatime = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Failed to update seatime');
+        const responseData = await response.json().catch(() => ({}));
+        console.error('Update error response:', responseData);
+        throw new Error(responseData.message || responseData.error || 'Failed to update seatime');
       }
 
       navigate('/seatime');
@@ -300,7 +334,7 @@ const UpdateSeatime = () => {
       </Button>
 
       <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
-        Update Voyage
+        Update Seatime Period
       </Typography>
 
       {error && (
@@ -318,14 +352,14 @@ const UpdateSeatime = () => {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>Ship Details</Typography>
             </Box>
             
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid size={12}>
                 <Autocomplete
                   options={ships}
                   getOptionLabel={(option) => `${option.name} (${option['imo-number']})`}
                   value={selectedShip}
                   onChange={(_, newValue) => setSelectedShip(newValue)}
-                  sx={{ mb: 1 }}
+                  fullWidth
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -335,7 +369,13 @@ const UpdateSeatime = () => {
                       fullWidth
                       InputProps={{
                         ...params.InputProps,
-                        sx: { fontSize: '1.2rem', py: 1.5 }
+                        sx: { 
+                          fontSize: '1.2rem', 
+                          py: 1,
+                          '& .MuiOutlinedInput-input': {
+                            padding: '10px 14px',
+                          }
+                        }
                       }}
                     />
                   )}
@@ -361,7 +401,7 @@ const UpdateSeatime = () => {
               </Grid>
 
               {selectedShip && (
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
                     <Typography variant="body2" color="text.secondary">
                       Type: {getShipTypeDescription(selectedShip)} | Flag: {selectedShip.flag} | GT: {selectedShip.gt}
@@ -372,119 +412,108 @@ const UpdateSeatime = () => {
             </Grid>
           </Paper>
 
-          {/* Voyage Details */}
+          {/* Seatime Period Details */}
           <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <Calendar size={24} className="text-primary" />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>Voyage Details</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Seatime Period Details</Typography>
             </Box>
 
-            <Grid container spacing={3}>
-              {/* Row 1: Voyage Type and Watchkeeping */}
-              <Grid item xs={12} container spacing={2} alignItems="center">
-                <Grid item xs={12} md={8}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Voyage Type</InputLabel>
-                    <Select
-                      value={voyageTypeId}
-                      label="Voyage Type"
-                      onChange={(e) => setVoyageTypeId(e.target.value)}
-                    >
-                      {voyageTypes.map((type) => (
-                        <MenuItem key={type.id} value={type.id}>{type.description}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <FormControlLabel
-                    control={
-                      <Switch 
-                        checked={isWatchkeeping} 
-                        onChange={(e) => setIsWatchkeeping(e.target.checked)} 
-                      />
-                    }
-                    label="Watchkeeping"
-                    sx={{ ml: 1 }}
-                  />
-                </Grid>
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid size={{ xs: 12, md: 9 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Seatime Period Type</InputLabel>
+                  <Select
+                    value={seatimePeriodTypeId}
+                    label="Seatime Period Type"
+                    onChange={(e) => setSeatimePeriodTypeId(e.target.value)}
+                  >
+                    {seatimePeriodTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.id}>{type.description}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
-              
-              {/* Row 2: Capacity and Company */}
-              <Grid item xs={12} container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Capacity / Rank"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Company / Employer"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                  />
-                </Grid>
+              <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                <FormControlLabel
+                  control={
+                    <Switch 
+                      checked={isWatchkeeping} 
+                      onChange={(e) => setIsWatchkeeping(e.target.checked)} 
+                    />
+                  }
+                  label="Watchkeeping"
+                />
               </Grid>
 
-              {/* Row 3: Start Date and Location */}
-              <Grid item xs={12} container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="date"
-                    label="Start Date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Start Location"
-                    placeholder="e.g. Southampton"
-                    value={startLocation}
-                    onChange={(e) => setStartLocation(e.target.value)}
-                  />
-                </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Capacity / Rank"
+                  placeholder="e.g. Chief Officer"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Company / Employer"
+                  placeholder="e.g. Global Shipping Ltd"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
               </Grid>
 
-              {/* Row 4: End Date and Location */}
-              <Grid item xs={12} container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="date"
-                    label="End Date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="End Location"
-                    placeholder="e.g. New York"
-                    value={endLocation}
-                    onChange={(e) => setEndLocation(e.target.value)}
-                  />
-                </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  type="date"
+                  label="Start Date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Start Location"
+                  placeholder="e.g. Southampton"
+                  value={startLocation}
+                  onChange={(e) => setStartLocation(e.target.value)}
+                />
               </Grid>
 
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', p: 2, bgcolor: 'primary.light', borderRadius: 1, color: 'primary.contrastText' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  type="date"
+                  label="End Date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="End Location"
+                  placeholder="e.g. New York"
+                  value={endLocation}
+                  onChange={(e) => setEndLocation(e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', p: 1.5, bgcolor: 'primary.light', borderRadius: 1, color: 'primary.contrastText' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                     Total Calculated Days: {totalDays}
                   </Typography>
                 </Box>
@@ -493,8 +522,8 @@ const UpdateSeatime = () => {
           </Paper>
 
           {/* Specialized Periods */}
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Clock size={24} className="text-primary" />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>Specialized Service Periods</Typography>
@@ -509,21 +538,16 @@ const UpdateSeatime = () => {
               </Button>
             </Box>
 
-            <Stack spacing={2}>
-              {periods.map((period, index) => (
-                <Card key={index} variant="outlined">
-                  <CardContent sx={{ position: 'relative', pt: 4 }}>
-                    <IconButton 
-                      size="small" 
-                      color="error" 
-                      onClick={() => handleRemovePeriod(index)}
-                      sx={{ position: 'absolute', top: 8, right: 8 }}
-                    >
-                      <Trash2 size={18} />
-                    </IconButton>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={4}>
+            {periods.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                No specialized periods (Polar, DP, etc.) added to this seatime period.
+              </Typography>
+            ) : (
+              <Stack spacing={3}>
+                {periods.map((period, index) => (
+                  <Box key={index} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, position: 'relative' }}>
+                    <Grid container spacing={3} alignItems="center">
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <FormControl fullWidth required size="small">
                           <InputLabel>Period Type</InputLabel>
                           <Select
@@ -537,7 +561,7 @@ const UpdateSeatime = () => {
                           </Select>
                         </FormControl>
                       </Grid>
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                           required
                           fullWidth
@@ -549,7 +573,7 @@ const UpdateSeatime = () => {
                           InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                           required
                           fullWidth
@@ -561,26 +585,34 @@ const UpdateSeatime = () => {
                           InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
-                      <Grid item xs={12} md={9}>
+                      <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mr: 2 }}>
+                          {period.days} Days
+                        </Typography>
+                        <IconButton 
+                          size="small" 
+                          color="error" 
+                          onClick={() => handleRemovePeriod(index)}
+                        >
+                          <Trash2 size={18} />
+                        </IconButton>
+                      </Grid>
+                      <Grid size={12}>
                         <TextField
                           fullWidth
                           size="small"
                           label="Remarks"
+                          placeholder="Optional remarks"
                           value={period.remarks}
                           onChange={(e) => handlePeriodChange(index, 'remarks', e.target.value)}
                         />
                       </Grid>
-                      <Grid item xs={12} md={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          Days: {period.days}
-                        </Typography>
-                      </Grid>
                     </Grid>
-                  </CardContent>
-                </Card>
-              ))}
-            </Stack>
-          </Box>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Paper>
 
           <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
             <Button

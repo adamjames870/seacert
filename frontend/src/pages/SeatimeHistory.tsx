@@ -4,12 +4,6 @@ import {
   Container, 
   Box, 
   Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
   Button, 
   CircularProgress, 
   Alert,
@@ -27,10 +21,7 @@ import {
   Edit, 
   Ship, 
   Calendar, 
-  MapPin, 
-  Clock,
-  ChevronRight,
-  Info
+  MapPin
 } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -64,6 +55,7 @@ interface SeatimeRecord {
   'voyage-type-id': string;
   'voyage-type-name': string;
   'voyage-type-description'?: string;
+  'seatime-period-type-description'?: string;
   'start-date': string;
   'end-date': string;
   'start-location': string;
@@ -91,7 +83,6 @@ const SeatimeHistory = () => {
   const [records, setRecords] = useState<SeatimeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lookups, setLookups] = useState<SeatimeLookups | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -118,7 +109,6 @@ const SeatimeHistory = () => {
       let lookupData: SeatimeLookups | null = null;
       if (lookupResponse.ok) {
         lookupData = await lookupResponse.json();
-        setLookups(lookupData);
       }
 
       const response = await fetch(`${API_BASE_URL}/api/seatime`, {
@@ -144,7 +134,7 @@ const SeatimeHistory = () => {
             ...record.ship,
             'ship-type-description': shipType?.description || record.ship['ship-type-name']
           },
-          'voyage-type-description': voyageType?.description || record['voyage-type-name'],
+          'seatime-period-type-description': voyageType?.description || record['voyage-type-name'],
           periods: (record.periods || []).map(p => {
             const periodType = lookupData?.['period-types'].find(pt => pt.id === p['period-type-id']);
             return {
@@ -187,7 +177,7 @@ const SeatimeHistory = () => {
             component={RouterLink}
             to="/add-seatime"
           >
-            Record New Voyage
+            Record New Seatime Period
           </Button>
         )}
       </Box>
@@ -236,7 +226,7 @@ const SeatimeHistory = () => {
               No Seatime Records
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
-              You haven't recorded any sea service yet. Start logging your voyages to build your professional profile.
+              You haven't recorded any sea service yet. Start logging your seatime periods to build your professional profile.
             </Typography>
             <Button 
               variant="contained" 
@@ -257,7 +247,7 @@ const SeatimeHistory = () => {
               <CardContent sx={{ p: 0 }}>
                 <Box sx={{ p: 3 }}>
                   <Grid container spacing={3} alignItems="flex-start">
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <Stack spacing={1}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Ship size={20} className="text-primary" style={{ color: '#1976d2' }} />
@@ -274,7 +264,7 @@ const SeatimeHistory = () => {
                       </Stack>
                     </Grid>
                     
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <Stack spacing={1}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'primary.main' }}>
                           {record.capacity}
@@ -290,7 +280,7 @@ const SeatimeHistory = () => {
                         </Box>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                           <Chip 
-                            label={record['voyage-type-description']} 
+                            label={record['seatime-period-type-description']} 
                             size="small" 
                             color="primary" 
                             variant="outlined" 
@@ -302,7 +292,7 @@ const SeatimeHistory = () => {
                       </Stack>
                     </Grid>
 
-                    <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center', ml: 'auto' }}>
+                    <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center', ml: 'auto' }}>
                       <Stack spacing={0.5} alignItems={{ md: 'flex-end' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Calendar size={18} color="#666" />
@@ -321,7 +311,7 @@ const SeatimeHistory = () => {
                       </Stack>
                     </Grid>
 
-                    <Grid item xs={12} md={1} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center' }}>
+                    <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center' }}>
                       <IconButton 
                         size="small" 
                         color="primary"

@@ -23,8 +23,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  Divider
+  MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';

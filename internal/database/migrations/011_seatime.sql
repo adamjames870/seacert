@@ -28,8 +28,9 @@ CREATE TABLE voyage_types (
 );
 
 INSERT INTO voyage_types (id, name, description) VALUES
-                                                     ('00000000-0000-0000-0000-000000000001', 'near_coastal', 'Voyages within a defined distance from the coast'),
-                                                     ('00000000-0000-0000-0000-000000000002', 'international', 'Voyages between different countries');
+                                                     ('00000000-0000-0000-0000-000000000001', 'near_coastal', 'NCV (Near Coastal)'),
+                                                     ('00000000-0000-0000-0000-000000000002', 'international', 'FGN (International)'),
+                                                     ('00000000-0000-0000-0000-000000000003', 'offshore', 'OFFSH (Offshore)');
 
 -- Reference table for specialized period types
 CREATE TABLE seatime_period_types (
@@ -39,9 +40,9 @@ CREATE TABLE seatime_period_types (
 );
 
 INSERT INTO seatime_period_types (id, name, description) VALUES
-                                                             ('00000000-0000-0000-0000-000000000003', 'polar', 'Service in polar waters'),
-                                                             ('00000000-0000-0000-0000-000000000004', 'dp', 'Dynamic Positioning service'),
-                                                             ('00000000-0000-0000-0000-000000000005', 'tanker', 'Service on tanker vessels');
+                                                             ('00000000-0000-0000-0000-000000000003', 'polar', 'Polar waters'),
+                                                             ('00000000-0000-0000-0000-000000000004', 'dp', 'Dynamic Positioning'),
+                                                             ('00000000-0000-0000-0000-000000000005', 'tanker', 'Service on Tankers');
 
 -- Ships table referencing ship_types
 CREATE TABLE ships (

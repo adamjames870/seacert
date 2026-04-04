@@ -144,3 +144,12 @@ WHERE sp.seatime_id = $1;
 
 -- name: DeleteSeatime :exec
 DELETE FROM seatime WHERE id = $1 AND user_id = $2;
+
+-- name: UpdateSeatime :one
+UPDATE seatime
+SET ship_id = $3, voyage_type_id = $4, updated_at = $5, start_date = $6, start_location = $7, end_date = $8, end_location = $9, total_days = $10, company = $11, capacity = $12, is_watchkeeping = $13
+WHERE id = $1 AND user_id = $2
+RETURNING *;
+
+-- name: DeleteSeatimePeriods :exec
+DELETE FROM seatime_periods WHERE seatime_id = $1;
