@@ -61,5 +61,9 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("POST /api/issuers", authMw(api.HandlerApiAddIssuer(state)))
 	mux.Handle("PUT /api/issuers", authMw(api.HandlerUpdateIssuer(state)))
 
+	mux.Handle("GET /api/seatime/lookups", authMw(api.HandlerApiGetSeatimeLookups(state)))
+	mux.Handle("POST /api/seatime", authMw(api.HandlerApiAddSeatime(state)))
+	mux.Handle("GET /api/seatime", authMw(api.HandlerApiListSeatime(state)))
+
 	return nil
 }

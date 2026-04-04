@@ -41,6 +41,19 @@ type Repository interface {
 	CreateUser(ctx context.Context, arg sqlc.CreateUserParams) (sqlc.User, error)
 	UpdateUser(ctx context.Context, arg sqlc.UpdateUserParams) (sqlc.User, error)
 
+	// Seatime
+	GetShipTypes(ctx context.Context) ([]sqlc.ShipType, error)
+	GetVoyageTypes(ctx context.Context) ([]sqlc.VoyageType, error)
+	GetSeatimePeriodTypes(ctx context.Context) ([]sqlc.SeatimePeriodType, error)
+	GetShipByImo(ctx context.Context, imoNumber string) (sqlc.GetShipByImoRow, error)
+	GetShipById(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error)
+	CreateShip(ctx context.Context, arg sqlc.CreateShipParams) (sqlc.Ship, error)
+	CreateSeatime(ctx context.Context, arg sqlc.CreateSeatimeParams) (sqlc.Seatime, error)
+	CreateSeatimePeriod(ctx context.Context, arg sqlc.CreateSeatimePeriodParams) (sqlc.SeatimePeriod, error)
+	GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error)
+	GetSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) ([]sqlc.GetSeatimePeriodsRow, error)
+	DeleteSeatime(ctx context.Context, arg sqlc.DeleteSeatimeParams) error
+
 	ResetAll(ctx context.Context) error
 
 	WithTx(ctx context.Context, fn func(Repository) error) error

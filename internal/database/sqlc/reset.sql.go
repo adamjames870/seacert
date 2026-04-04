@@ -36,6 +36,33 @@ func (q *Queries) ResetIssuers(ctx context.Context) error {
 	return err
 }
 
+const resetSeatime = `-- name: ResetSeatime :exec
+DELETE from seatime
+`
+
+func (q *Queries) ResetSeatime(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetSeatime)
+	return err
+}
+
+const resetSeatimePeriods = `-- name: ResetSeatimePeriods :exec
+DELETE from seatime_periods
+`
+
+func (q *Queries) ResetSeatimePeriods(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetSeatimePeriods)
+	return err
+}
+
+const resetShips = `-- name: ResetShips :exec
+DELETE from ships
+`
+
+func (q *Queries) ResetShips(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetShips)
+	return err
+}
+
 const resetSuccessions = `-- name: ResetSuccessions :exec
 DELETE from successions
 `
