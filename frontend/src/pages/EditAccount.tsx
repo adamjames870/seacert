@@ -9,7 +9,9 @@ import {
   Alert, 
   Grid,
   CircularProgress,
-  Autocomplete
+  Autocomplete,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -20,7 +22,8 @@ const EditAccount = () => {
   const [formData, setFormData] = useState({
     forename: '',
     surname: '',
-    nationality: ''
+    nationality: '',
+    email_consent: false
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +60,8 @@ const EditAccount = () => {
           setFormData({
             forename: user.forename || '',
             surname: user.surname || '',
-            nationality: user.nationality || ''
+            nationality: user.nationality || '',
+            email_consent: !!user.email_consent
           });
         }
       } catch (err: any) {
@@ -93,7 +97,10 @@ const EditAccount = () => {
         body: JSON.stringify({
           forename: formData.forename,
           surname: formData.surname,
-          nationality: formData.nationality || null
+          nationality: formData.nationality || null,
+          email_consent: formData.email_consent,
+          email_consent_version: '2026-03-01',
+          email_consent_source: 'profile_settings'
         }),
       });
 
@@ -181,6 +188,22 @@ const EditAccount = () => {
                       }}
                     />
                   )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox 
+                      checked={formData.email_consent} 
+                      onChange={(e) => setFormData(prev => ({ ...prev, email_consent: e.target.checked }))} 
+                      color="primary" 
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      I agree to receive email updates and notifications from SeaCert.
+                    </Typography>
+                  }
                 />
               </Grid>
 

@@ -38,6 +38,7 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
+import EmailConsentModal from './components/EmailConsentModal'
 import './App.css'
 import { supabase } from './supabaseClient'
 import { API_BASE_URL } from './config'
@@ -49,6 +50,10 @@ interface UserData {
   email: string;
   nationality: string;
   role?: string;
+  email_consent?: boolean;
+  email_consent_timestamp?: string;
+  email_consent_version?: string;
+  email_consent_source?: string;
 }
 
 function App() {
@@ -157,6 +162,37 @@ function App() {
   }
 
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
+
+  const handleConsentClose = (updatedUser?: UserData) => {
+    if (updatedUser) {
+      setUserData(updatedUser);
+    } else {
+      // Re-fetch user data if for some reason modal didn't pass it back
+      const reFetch = async () => {
+        if (session?.access_token) {
+          try {
+            const response = await fetch(`${API_BASE_URL}/admin/users`, {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const data = await response.json();
+              if (Array.isArray(data)) {
+                const user = data.find(u => u.id === session.user.id);
+                setUserData(user || null);
+              } else {
+                setUserData(data);
+              }
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+      reFetch();
+    }
+  }
 
   // Only block the whole app if we're waiting for the initial session check
   // or if we have a session but haven't started fetching user data yet.
@@ -341,6 +377,10 @@ function App() {
         </Container>
       </Box>
       <CookieConsent />
+      <EmailConsentModal 
+        open={!!(session && userData && userData.email_consent_timestamp === null)} 
+        onClose={handleConsentClose} 
+      />
       <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
     </>
   )

@@ -8,9 +8,12 @@ import {
   Paper, 
   Link,
   Alert,
+  FormControlLabel,
+  Checkbox,
   Snackbar
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 import { supabase } from '../supabaseClient';
 
 const SignUp = () => {
@@ -20,6 +23,7 @@ const SignUp = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [emailConsent, setEmailConsent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +37,28 @@ const SignUp = () => {
     }
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) throw error;
+
+      if (data.session?.access_token) {
+        // Record consent
+        await fetch(`${API_BASE_URL}/admin/users`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.session.access_token}`,
+          },
+          body: JSON.stringify({
+            email_consent: emailConsent,
+            email_consent_version: '2026-03-01',
+            email_consent_source: 'signup_form'
+          }),
+        });
+      }
       
       setSuccess(true);
       setEmail('');
@@ -123,6 +143,21 @@ const SignUp = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               variant="outlined"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={emailConsent} 
+                  onChange={(e) => setEmailConsent(e.target.checked)} 
+                  color="primary" 
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  I agree to receive email updates and notifications from SeaCert.
+                </Typography>
+              }
+              sx={{ mt: 1, textAlign: 'left' }}
             />
             <Button
               type="submit"
