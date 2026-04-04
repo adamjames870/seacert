@@ -8,6 +8,13 @@ import App from './App.tsx'
 
 const posthogOptions = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  // Ensure we don't capture anything until consent is explicitly given
+  loaded: (posthog: any) => {
+    const consent = localStorage.getItem('cookie-consent');
+    if (consent !== 'accepted') {
+      posthog.opt_out_capturing();
+    }
+  }
 }
 
 function Main() {
