@@ -113,9 +113,9 @@ func (q *Queries) CreateSeatimePeriod(ctx context.Context, arg CreateSeatimePeri
 }
 
 const createShip = `-- name: CreateShip :one
-INSERT INTO ships (id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power
+INSERT INTO ships (id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power, status, created_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power, status, created_by
 `
 
 type CreateShipParams struct {
@@ -128,6 +128,8 @@ type CreateShipParams struct {
 	Gt              int32
 	Flag            string
 	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
 }
 
 func (q *Queries) CreateShip(ctx context.Context, arg CreateShipParams) (Ship, error) {
@@ -141,6 +143,8 @@ func (q *Queries) CreateShip(ctx context.Context, arg CreateShipParams) (Ship, e
 		arg.Gt,
 		arg.Flag,
 		arg.PropulsionPower,
+		arg.Status,
+		arg.CreatedBy,
 	)
 	var i Ship
 	err := row.Scan(
@@ -153,6 +157,8 @@ func (q *Queries) CreateShip(ctx context.Context, arg CreateShipParams) (Ship, e
 		&i.Gt,
 		&i.Flag,
 		&i.PropulsionPower,
+		&i.Status,
+		&i.CreatedBy,
 	)
 	return i, err
 }
@@ -171,6 +177,15 @@ func (q *Queries) DeleteSeatime(ctx context.Context, arg DeleteSeatimeParams) er
 	return err
 }
 
+const deleteShip = `-- name: DeleteShip :exec
+DELETE FROM ships WHERE id = $1
+`
+
+func (q *Queries) DeleteShip(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteShip, id)
+	return err
+}
+
 const getSeatimeByUserId = `-- name: GetSeatimeByUserId :many
 SELECT 
     s.id, s.user_id, s.ship_id, s.voyage_type_id, s.created_at, s.updated_at, s.start_date, s.start_location, s.end_date, s.end_location, s.total_days, s.company, s.capacity, s.is_watchkeeping, 
@@ -179,6 +194,11 @@ SELECT
     sh.gt as ship_gt,
     sh.flag as ship_flag,
     sh.propulsion_power as ship_propulsion_power,
+    sh.ship_type_id as ship_type_id,
+    sh.created_at as ship_created_at,
+    sh.updated_at as ship_updated_at,
+    sh.status as ship_status,
+    sh.created_by as ship_created_by,
     st.name as ship_type_name,
     vt.name as voyage_type_name
 FROM seatime s
@@ -209,6 +229,11 @@ type GetSeatimeByUserIdRow struct {
 	ShipGt              int32
 	ShipFlag            string
 	ShipPropulsionPower sql.NullInt32
+	ShipTypeID          uuid.UUID
+	ShipCreatedAt       time.Time
+	ShipUpdatedAt       time.Time
+	ShipStatus          string
+	ShipCreatedBy       uuid.NullUUID
 	ShipTypeName        string
 	VoyageTypeName      string
 }
@@ -242,6 +267,11 @@ func (q *Queries) GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]G
 			&i.ShipGt,
 			&i.ShipFlag,
 			&i.ShipPropulsionPower,
+			&i.ShipTypeID,
+			&i.ShipCreatedAt,
+			&i.ShipUpdatedAt,
+			&i.ShipStatus,
+			&i.ShipCreatedBy,
 			&i.ShipTypeName,
 			&i.VoyageTypeName,
 		); err != nil {
@@ -336,7 +366,7 @@ func (q *Queries) GetSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) ([
 }
 
 const getShipById = `-- name: GetShipById :one
-SELECT s.id, s.created_at, s.updated_at, s.name, s.ship_type_id, s.imo_number, s.gt, s.flag, s.propulsion_power, st.name as ship_type_name
+SELECT s.id, s.created_at, s.updated_at, s.name, s.ship_type_id, s.imo_number, s.gt, s.flag, s.propulsion_power, s.status, s.created_by, st.name as ship_type_name
 FROM ships s
 JOIN ship_types st ON s.ship_type_id = st.id
 WHERE s.id = $1
@@ -352,6 +382,8 @@ type GetShipByIdRow struct {
 	Gt              int32
 	Flag            string
 	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
 	ShipTypeName    string
 }
 
@@ -368,13 +400,15 @@ func (q *Queries) GetShipById(ctx context.Context, id uuid.UUID) (GetShipByIdRow
 		&i.Gt,
 		&i.Flag,
 		&i.PropulsionPower,
+		&i.Status,
+		&i.CreatedBy,
 		&i.ShipTypeName,
 	)
 	return i, err
 }
 
 const getShipByImo = `-- name: GetShipByImo :one
-SELECT s.id, s.created_at, s.updated_at, s.name, s.ship_type_id, s.imo_number, s.gt, s.flag, s.propulsion_power, st.name as ship_type_name
+SELECT s.id, s.created_at, s.updated_at, s.name, s.ship_type_id, s.imo_number, s.gt, s.flag, s.propulsion_power, s.status, s.created_by, st.name as ship_type_name
 FROM ships s
 JOIN ship_types st ON s.ship_type_id = st.id
 WHERE s.imo_number = $1
@@ -390,6 +424,8 @@ type GetShipByImoRow struct {
 	Gt              int32
 	Flag            string
 	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
 	ShipTypeName    string
 }
 
@@ -406,6 +442,8 @@ func (q *Queries) GetShipByImo(ctx context.Context, imoNumber string) (GetShipBy
 		&i.Gt,
 		&i.Flag,
 		&i.PropulsionPower,
+		&i.Status,
+		&i.CreatedBy,
 		&i.ShipTypeName,
 	)
 	return i, err
@@ -425,6 +463,121 @@ func (q *Queries) GetShipTypes(ctx context.Context) ([]ShipType, error) {
 	for rows.Next() {
 		var i ShipType
 		if err := rows.Scan(&i.ID, &i.Name, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getShips = `-- name: GetShips :many
+SELECT s.id, s.created_at, s.updated_at, s.name, s.ship_type_id, s.imo_number, s.gt, s.flag, s.propulsion_power, s.status, s.created_by, st.name as ship_type_name
+FROM ships s
+JOIN ship_types st ON s.ship_type_id = st.id
+`
+
+type GetShipsRow struct {
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Name            string
+	ShipTypeID      uuid.UUID
+	ImoNumber       string
+	Gt              int32
+	Flag            string
+	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
+	ShipTypeName    string
+}
+
+func (q *Queries) GetShips(ctx context.Context) ([]GetShipsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getShips)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetShipsRow
+	for rows.Next() {
+		var i GetShipsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.ShipTypeID,
+			&i.ImoNumber,
+			&i.Gt,
+			&i.Flag,
+			&i.PropulsionPower,
+			&i.Status,
+			&i.CreatedBy,
+			&i.ShipTypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getShipsForUser = `-- name: GetShipsForUser :many
+SELECT s.id, s.created_at, s.updated_at, s.name, s.ship_type_id, s.imo_number, s.gt, s.flag, s.propulsion_power, s.status, s.created_by, st.name as ship_type_name
+FROM ships s
+JOIN ship_types st ON s.ship_type_id = st.id
+WHERE s.status = 'approved' OR s.created_by = $1
+`
+
+type GetShipsForUserRow struct {
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Name            string
+	ShipTypeID      uuid.UUID
+	ImoNumber       string
+	Gt              int32
+	Flag            string
+	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
+	ShipTypeName    string
+}
+
+func (q *Queries) GetShipsForUser(ctx context.Context, createdBy uuid.NullUUID) ([]GetShipsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getShipsForUser, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetShipsForUserRow
+	for rows.Next() {
+		var i GetShipsForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.ShipTypeID,
+			&i.ImoNumber,
+			&i.Gt,
+			&i.Flag,
+			&i.PropulsionPower,
+			&i.Status,
+			&i.CreatedBy,
+			&i.ShipTypeName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -463,4 +616,93 @@ func (q *Queries) GetVoyageTypes(ctx context.Context) ([]VoyageType, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateShip = `-- name: UpdateShip :one
+UPDATE ships
+SET name = $2, ship_type_id = $3, imo_number = $4, gt = $5, flag = $6, propulsion_power = $7, updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power, status, created_by
+`
+
+type UpdateShipParams struct {
+	ID              uuid.UUID
+	Name            string
+	ShipTypeID      uuid.UUID
+	ImoNumber       string
+	Gt              int32
+	Flag            string
+	PropulsionPower sql.NullInt32
+}
+
+func (q *Queries) UpdateShip(ctx context.Context, arg UpdateShipParams) (Ship, error) {
+	row := q.db.QueryRowContext(ctx, updateShip,
+		arg.ID,
+		arg.Name,
+		arg.ShipTypeID,
+		arg.ImoNumber,
+		arg.Gt,
+		arg.Flag,
+		arg.PropulsionPower,
+	)
+	var i Ship
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.ShipTypeID,
+		&i.ImoNumber,
+		&i.Gt,
+		&i.Flag,
+		&i.PropulsionPower,
+		&i.Status,
+		&i.CreatedBy,
+	)
+	return i, err
+}
+
+const updateShipReferences = `-- name: UpdateShipReferences :exec
+UPDATE seatime SET ship_id = $2 WHERE ship_id = $1
+`
+
+type UpdateShipReferencesParams struct {
+	ShipID   uuid.UUID
+	ShipID_2 uuid.UUID
+}
+
+func (q *Queries) UpdateShipReferences(ctx context.Context, arg UpdateShipReferencesParams) error {
+	_, err := q.db.ExecContext(ctx, updateShipReferences, arg.ShipID, arg.ShipID_2)
+	return err
+}
+
+const updateShipStatus = `-- name: UpdateShipStatus :one
+UPDATE ships
+SET status = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power, status, created_by
+`
+
+type UpdateShipStatusParams struct {
+	ID     uuid.UUID
+	Status string
+}
+
+func (q *Queries) UpdateShipStatus(ctx context.Context, arg UpdateShipStatusParams) (Ship, error) {
+	row := q.db.QueryRowContext(ctx, updateShipStatus, arg.ID, arg.Status)
+	var i Ship
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.ShipTypeID,
+		&i.ImoNumber,
+		&i.Gt,
+		&i.Flag,
+		&i.PropulsionPower,
+		&i.Status,
+		&i.CreatedBy,
+	)
+	return i, err
 }

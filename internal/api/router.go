@@ -44,6 +44,8 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("PUT /admin/users", authMw(admin.HandlerAdminUpdateUser(state)))
 	mux.Handle("GET /admin/users", authMw(admin.HandlerAdminGetUser(state)))
 	mux.Handle("POST /admin/cert-types/resolve", authMw(adminMw(admin.HandlerAdminResolveCertType(state))))
+	mux.Handle("POST /api/admin/ships/resolve", authMw(adminMw(admin.HandlerAdminResolveShip(state))))
+	mux.Handle("POST /api/admin/ships/approve/{id}", authMw(adminMw(admin.HandlerAdminApproveShip(state))))
 
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates/upload-url", authMw(api.HandlerApiGetUploadURL(state)))
@@ -64,6 +66,9 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("GET /api/seatime/lookups", authMw(api.HandlerApiGetSeatimeLookups(state)))
 	mux.Handle("POST /api/seatime", authMw(api.HandlerApiAddSeatime(state)))
 	mux.Handle("GET /api/seatime", authMw(api.HandlerApiListSeatime(state)))
+	mux.Handle("GET /api/ships", authMw(api.HandlerApiGetShips(state)))
+	mux.Handle("POST /api/ships", authMw(api.HandlerApiAddShip(state)))
+	mux.Handle("PATCH /api/ships", authMw(api.HandlerApiUpdateShip(state)))
 
 	return nil
 }

@@ -47,7 +47,13 @@ type Repository interface {
 	GetSeatimePeriodTypes(ctx context.Context) ([]sqlc.SeatimePeriodType, error)
 	GetShipByImo(ctx context.Context, imoNumber string) (sqlc.GetShipByImoRow, error)
 	GetShipById(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error)
+	GetShips(ctx context.Context) ([]sqlc.GetShipsRow, error)
+	GetShipsForUser(ctx context.Context, createdBy uuid.NullUUID) ([]sqlc.GetShipsForUserRow, error)
 	CreateShip(ctx context.Context, arg sqlc.CreateShipParams) (sqlc.Ship, error)
+	UpdateShip(ctx context.Context, arg sqlc.UpdateShipParams) (sqlc.Ship, error)
+	UpdateShipStatus(ctx context.Context, arg sqlc.UpdateShipStatusParams) (sqlc.Ship, error)
+	UpdateShipReferences(ctx context.Context, arg sqlc.UpdateShipReferencesParams) error
+	DeleteShip(ctx context.Context, id uuid.UUID) error
 	CreateSeatime(ctx context.Context, arg sqlc.CreateSeatimeParams) (sqlc.Seatime, error)
 	CreateSeatimePeriod(ctx context.Context, arg sqlc.CreateSeatimePeriodParams) (sqlc.SeatimePeriod, error)
 	GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error)

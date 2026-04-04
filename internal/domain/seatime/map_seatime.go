@@ -4,6 +4,28 @@ import (
 	"github.com/adamjames870/seacert/internal/dto"
 )
 
+func MapShipToDto(s Ship) dto.Ship {
+	return dto.Ship{
+		Id:              s.Id.String(),
+		CreatedAt:       s.CreatedAt,
+		UpdatedAt:       s.UpdatedAt,
+		Name:            s.Name,
+		ShipTypeId:      s.ShipTypeId.String(),
+		ShipTypeName:    s.ShipTypeName,
+		ImoNumber:       s.ImoNumber,
+		Gt:              s.Gt,
+		Flag:            s.Flag,
+		PropulsionPower: s.PropulsionPower,
+		Status:          s.Status,
+		CreatedBy: func() string {
+			if s.CreatedBy != nil {
+				return s.CreatedBy.String()
+			}
+			return ""
+		}(),
+	}
+}
+
 func MapSeatimeDomainToDto(st Seatime) dto.Seatime {
 	rv := dto.Seatime{
 		Id:             st.Id.String(),
@@ -20,18 +42,7 @@ func MapSeatimeDomainToDto(st Seatime) dto.Seatime {
 		Company:        st.Company,
 		Capacity:       st.Capacity,
 		IsWatchkeeping: st.IsWatchkeeping,
-		Ship: dto.Ship{
-			Id:              st.Ship.Id.String(),
-			CreatedAt:       st.Ship.CreatedAt,
-			UpdatedAt:       st.Ship.UpdatedAt,
-			Name:            st.Ship.Name,
-			ShipTypeId:      st.Ship.ShipTypeId.String(),
-			ShipTypeName:    st.Ship.ShipTypeName,
-			ImoNumber:       st.Ship.ImoNumber,
-			Gt:              st.Ship.Gt,
-			Flag:            st.Ship.Flag,
-			PropulsionPower: st.Ship.PropulsionPower,
-		},
+		Ship:           MapShipToDto(st.Ship),
 	}
 
 	for _, p := range st.Periods {

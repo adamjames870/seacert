@@ -20,9 +20,38 @@ JOIN ship_types st ON s.ship_type_id = st.id
 WHERE s.id = $1;
 
 -- name: CreateShip :one
-INSERT INTO ships (id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO ships (id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power, status, created_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING *;
+
+-- name: GetShips :many
+SELECT s.*, st.name as ship_type_name
+FROM ships s
+JOIN ship_types st ON s.ship_type_id = st.id;
+
+-- name: GetShipsForUser :many
+SELECT s.*, st.name as ship_type_name
+FROM ships s
+JOIN ship_types st ON s.ship_type_id = st.id
+WHERE s.status = 'approved' OR s.created_by = $1;
+
+-- name: UpdateShip :one
+UPDATE ships
+SET name = $2, ship_type_id = $3, imo_number = $4, gt = $5, flag = $6, propulsion_power = $7, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateShipStatus :one
+UPDATE ships
+SET status = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateShipReferences :exec
+UPDATE seatime SET ship_id = $2 WHERE ship_id = $1;
+
+-- name: DeleteShip :exec
+DELETE FROM ships WHERE id = $1;
 
 -- name: CreateSeatime :one
 INSERT INTO seatime (id, user_id, ship_id, voyage_type_id, created_at, updated_at, start_date, start_location, end_date, end_location, total_days, company, capacity, is_watchkeeping)
@@ -42,6 +71,11 @@ SELECT
     sh.gt as ship_gt,
     sh.flag as ship_flag,
     sh.propulsion_power as ship_propulsion_power,
+    sh.ship_type_id as ship_type_id,
+    sh.created_at as ship_created_at,
+    sh.updated_at as ship_updated_at,
+    sh.status as ship_status,
+    sh.created_by as ship_created_by,
     st.name as ship_type_name,
     vt.name as voyage_type_name
 FROM seatime s

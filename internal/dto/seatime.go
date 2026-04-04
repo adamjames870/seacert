@@ -33,6 +33,13 @@ type Ship struct {
 	Gt              int32     `json:"gt"`
 	Flag            string    `json:"flag"`
 	PropulsionPower *int32    `json:"propulsion-power,omitzero"`
+	Status          string    `json:"status"`
+	CreatedBy       string    `json:"created-by,omitzero"`
+}
+
+type ParamsResolveShip struct {
+	ProvisionalId string `json:"provisional-id" validate:"required"`
+	ReplacementId string `json:"replacement-id" validate:"required"`
 }
 
 type Seatime struct {
@@ -82,6 +89,16 @@ type ParamsAddSeatime struct {
 }
 
 type ParamsAddShip struct {
+	Name            string `json:"name" validate:"required"`
+	ShipTypeId      string `json:"ship-type-id" validate:"required"`
+	ImoNumber       string `json:"imo-number" validate:"required"`
+	Gt              int32  `json:"gt" validate:"required"`
+	Flag            string `json:"flag" validate:"required"`
+	PropulsionPower *int32 `json:"propulsion-power,omitempty"`
+}
+
+type ParamsUpdateShip struct {
+	Id              string `json:"id" validate:"required"`
 	Name            string `json:"name" validate:"required"`
 	ShipTypeId      string `json:"ship-type-id" validate:"required"`
 	ImoNumber       string `json:"imo-number" validate:"required"`

@@ -28,7 +28,12 @@ func HandlerAdminUpdateUser(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		params.Id = userId.String()
+		// If the ID is not provided in params, or if the caller is NOT an admin,
+		// we force the ID to be the caller's ID.
+		// If the caller IS an admin and provided an ID, we allow updating that user.
+		if params.Id == "" || !auth.IsAdmin(r.Context()) {
+			params.Id = userId.String()
+		}
 
 		user, userErr := users.UpdateUser(r.Context(), state.Repo, params)
 		if userErr != nil {

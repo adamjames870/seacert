@@ -53,7 +53,12 @@ CREATE TABLE ships (
                        imo_number TEXT NOT NULL UNIQUE,
                        gt INT NOT NULL,
                        flag TEXT NOT NULL,
-                       propulsion_power INT -- Optional
+                       propulsion_power INT, -- Optional
+                       status VARCHAR(20) NOT NULL DEFAULT 'approved',
+                       created_by UUID,
+
+                       CONSTRAINT fk_cert_types_created_by
+                        FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
 -- Main seatime record table

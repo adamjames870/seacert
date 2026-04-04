@@ -20,7 +20,7 @@ func CalculateDays(start, end time.Time) int32 {
 	return days
 }
 
-func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.ParamsAddSeatime, userId uuid.UUID) (Seatime, error) {
+func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.ParamsAddSeatime, userId uuid.UUID, isAdmin bool) (Seatime, error) {
 	var result Seatime
 
 	startDate, err := time.Parse("2006-01-02", params.StartDate)
@@ -53,6 +53,8 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 		var shipPropulsionPower *int32
 		var shipCreatedAt, shipUpdatedAt time.Time
 		var shipShipTypeId uuid.UUID
+		var shipStatus string
+		var shipCreatedBy *uuid.UUID
 
 		if params.ShipId != nil && *params.ShipId != "" {
 			var err error
@@ -74,11 +76,20 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 			shipUpdatedAt = s.UpdatedAt
 			shipShipTypeId = s.ShipTypeID
 			shipTypeName = s.ShipTypeName
+			shipStatus = s.Status
+			if s.CreatedBy.Valid {
+				shipCreatedBy = &s.CreatedBy.UUID
+			}
 		} else if params.Ship != nil {
 			// Create new ship
 			shipTypeId, err := uuid.Parse(params.Ship.ShipTypeId)
 			if err != nil {
 				return fmt.Errorf("invalid ship type id: %w", err)
+			}
+
+			status := "provisional"
+			if isAdmin {
+				status = "approved"
 			}
 
 			newShip, err := txRepo.CreateShip(ctx, sqlc.CreateShipParams{
@@ -91,6 +102,11 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 				Gt:              params.Ship.Gt,
 				Flag:            params.Ship.Flag,
 				PropulsionPower: domain.ToNullInt32FromPointer(params.Ship.PropulsionPower),
+				Status:          status,
+				CreatedBy: uuid.NullUUID{
+					UUID:  userId,
+					Valid: userId != uuid.Nil,
+				},
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create ship: %w", err)
@@ -104,6 +120,10 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 			shipCreatedAt = newShip.CreatedAt
 			shipUpdatedAt = newShip.UpdatedAt
 			shipShipTypeId = newShip.ShipTypeID
+			shipStatus = newShip.Status
+			if newShip.CreatedBy.Valid {
+				shipCreatedBy = &newShip.CreatedBy.UUID
+			}
 
 			// Fetch ship type name
 			st, err := txRepo.GetShipById(ctx, shipId)
@@ -220,6 +240,8 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 				Gt:              shipGt,
 				Flag:            shipFlag,
 				PropulsionPower: shipPropulsionPower,
+				Status:          shipStatus,
+				CreatedBy:       shipCreatedBy,
 			},
 		}
 
@@ -280,6 +302,8 @@ func GetSeatime(ctx context.Context, repo domain.Repository, userId uuid.UUID) (
 			ShipId:         row.ShipID,
 			VoyageTypeId:   row.VoyageTypeID,
 			VoyageTypeName: row.VoyageTypeName,
+			CreatedAt:      row.CreatedAt,
+			UpdatedAt:      row.UpdatedAt,
 			StartDate:      row.StartDate,
 			StartLocation:  row.StartLocation,
 			EndDate:        row.EndDate,
@@ -291,11 +315,21 @@ func GetSeatime(ctx context.Context, repo domain.Repository, userId uuid.UUID) (
 			Ship: Ship{
 				Id:              row.ShipID,
 				Name:            row.ShipName,
+				ShipTypeId:      row.ShipTypeID,
+				ShipTypeName:    row.ShipTypeName,
 				ImoNumber:       row.ShipImo,
 				Gt:              row.ShipGt,
 				Flag:            row.ShipFlag,
 				PropulsionPower: domain.FromNullInt32(row.ShipPropulsionPower),
-				ShipTypeName:    row.ShipTypeName,
+				CreatedAt:       row.ShipCreatedAt,
+				UpdatedAt:       row.ShipUpdatedAt,
+				Status:          row.ShipStatus,
+				CreatedBy: func() *uuid.UUID {
+					if row.ShipCreatedBy.Valid {
+						return &row.ShipCreatedBy.UUID
+					}
+					return nil
+				}(),
 			},
 		}
 
@@ -361,4 +395,201 @@ func GetSeatimeLookups(ctx context.Context, repo domain.Repository) (dto.Seatime
 	}
 
 	return lookups, nil
+}
+
+func GetShips(ctx context.Context, repo domain.Repository, userId *uuid.UUID, isAdmin bool) ([]Ship, error) {
+	result := make([]Ship, 0)
+
+	if isAdmin {
+		ships, err := repo.GetShips(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, s := range ships {
+			var createdBy *uuid.UUID
+			if s.CreatedBy.Valid {
+				createdBy = &s.CreatedBy.UUID
+			}
+			result = append(result, Ship{
+				Id:              s.ID,
+				CreatedAt:       s.CreatedAt,
+				UpdatedAt:       s.UpdatedAt,
+				Name:            s.Name,
+				ShipTypeId:      s.ShipTypeID,
+				ShipTypeName:    s.ShipTypeName,
+				ImoNumber:       s.ImoNumber,
+				Gt:              s.Gt,
+				Flag:            s.Flag,
+				PropulsionPower: domain.FromNullInt32(s.PropulsionPower),
+				Status:          s.Status,
+				CreatedBy:       createdBy,
+			})
+		}
+	} else {
+		var userShipCreatedBy uuid.NullUUID
+		if userId != nil {
+			userShipCreatedBy = uuid.NullUUID{UUID: *userId, Valid: true}
+		} else {
+			userShipCreatedBy = uuid.NullUUID{Valid: false}
+		}
+
+		ships, err := repo.GetShipsForUser(ctx, userShipCreatedBy)
+		if err != nil {
+			return nil, err
+		}
+		for _, s := range ships {
+			var createdBy *uuid.UUID
+			if s.CreatedBy.Valid {
+				createdBy = &s.CreatedBy.UUID
+			}
+			result = append(result, Ship{
+				Id:              s.ID,
+				CreatedAt:       s.CreatedAt,
+				UpdatedAt:       s.UpdatedAt,
+				Name:            s.Name,
+				ShipTypeId:      s.ShipTypeID,
+				ShipTypeName:    s.ShipTypeName,
+				ImoNumber:       s.ImoNumber,
+				Gt:              s.Gt,
+				Flag:            s.Flag,
+				PropulsionPower: domain.FromNullInt32(s.PropulsionPower),
+				Status:          s.Status,
+				CreatedBy:       createdBy,
+			})
+		}
+	}
+
+	return result, nil
+}
+
+func ResolveShip(ctx context.Context, repo domain.Repository, params dto.ParamsResolveShip) error {
+	provisionalId, errProv := uuid.Parse(params.ProvisionalId)
+	if errProv != nil {
+		return domain.ErrInvalidInput
+	}
+
+	replacementId, errRepl := uuid.Parse(params.ReplacementId)
+	if errRepl != nil {
+		return domain.ErrInvalidInput
+	}
+
+	return repo.WithTx(ctx, func(txRepo domain.Repository) error {
+		err := txRepo.UpdateShipReferences(ctx, sqlc.UpdateShipReferencesParams{
+			ShipID:   provisionalId,
+			ShipID_2: replacementId,
+		})
+		if err != nil {
+			return err
+		}
+
+		return txRepo.DeleteShip(ctx, provisionalId)
+	})
+}
+
+func CreateShipStandalone(ctx context.Context, repo domain.Repository, params dto.ParamsAddShip, userId uuid.UUID, isAdmin bool) (Ship, error) {
+	shipTypeId, err := uuid.Parse(params.ShipTypeId)
+	if err != nil {
+		return Ship{}, domain.ErrInvalidInput
+	}
+
+	status := "provisional"
+	if isAdmin {
+		status = "approved"
+	}
+
+	s, err := repo.CreateShip(ctx, sqlc.CreateShipParams{
+		ID:              uuid.New(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		Name:            params.Name,
+		ShipTypeID:      shipTypeId,
+		ImoNumber:       params.ImoNumber,
+		Gt:              params.Gt,
+		Flag:            params.Flag,
+		PropulsionPower: domain.ToNullInt32FromPointer(params.PropulsionPower),
+		Status:          status,
+		CreatedBy:       uuid.NullUUID{UUID: userId, Valid: true},
+	})
+	if err != nil {
+		return Ship{}, err
+	}
+
+	// Fetch with type name
+	return GetShipById(ctx, repo, s.ID)
+}
+
+func UpdateShip(ctx context.Context, repo domain.Repository, params dto.ParamsUpdateShip, userId uuid.UUID, isAdmin bool) (Ship, error) {
+	shipId, err := uuid.Parse(params.Id)
+	if err != nil {
+		return Ship{}, domain.ErrInvalidInput
+	}
+
+	shipTypeId, err := uuid.Parse(params.ShipTypeId)
+	if err != nil {
+		return Ship{}, domain.ErrInvalidInput
+	}
+
+	// Check ownership if not admin
+	if !isAdmin {
+		existing, err := repo.GetShipById(ctx, shipId)
+		if err != nil {
+			return Ship{}, err
+		}
+		if !existing.CreatedBy.Valid || existing.CreatedBy.UUID != userId {
+			return Ship{}, domain.ErrUnauthorized
+		}
+		if existing.Status == "approved" {
+			return Ship{}, domain.ErrForbidden // Cannot edit approved ship unless admin
+		}
+	}
+
+	s, err := repo.UpdateShip(ctx, sqlc.UpdateShipParams{
+		ID:              shipId,
+		Name:            params.Name,
+		ShipTypeID:      shipTypeId,
+		ImoNumber:       params.ImoNumber,
+		Gt:              params.Gt,
+		Flag:            params.Flag,
+		PropulsionPower: domain.ToNullInt32FromPointer(params.PropulsionPower),
+	})
+	if err != nil {
+		return Ship{}, err
+	}
+
+	return GetShipById(ctx, repo, s.ID)
+}
+
+func ApproveShip(ctx context.Context, repo domain.Repository, shipId uuid.UUID) error {
+	_, err := repo.UpdateShipStatus(ctx, sqlc.UpdateShipStatusParams{
+		ID:     shipId,
+		Status: "approved",
+	})
+	return err
+}
+
+func GetShipById(ctx context.Context, repo domain.Repository, id uuid.UUID) (Ship, error) {
+	s, err := repo.GetShipById(ctx, id)
+	if err != nil {
+		return Ship{}, err
+	}
+
+	var createdBy *uuid.UUID
+	if s.CreatedBy.Valid {
+		createdBy = &s.CreatedBy.UUID
+	}
+
+	return Ship{
+		Id:              s.ID,
+		CreatedAt:       s.CreatedAt,
+		UpdatedAt:       s.UpdatedAt,
+		Name:            s.Name,
+		ShipTypeId:      s.ShipTypeID,
+		ShipTypeName:    s.ShipTypeName,
+		ImoNumber:       s.ImoNumber,
+		Gt:              s.Gt,
+		Flag:            s.Flag,
+		PropulsionPower: domain.FromNullInt32(s.PropulsionPower),
+		Status:          s.Status,
+		CreatedBy:       createdBy,
+	}, nil
 }

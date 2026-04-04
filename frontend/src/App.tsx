@@ -34,6 +34,10 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import SeatimeHistory from './pages/SeatimeHistory'
+import AddSeatime from './pages/AddSeatime'
+import UpdateSeatime from './pages/UpdateSeatime'
+import ManageSeatimeLookups from './pages/ManageSeatimeLookups'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
@@ -232,8 +236,14 @@ function App() {
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
               Certificates
             </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/seatime">
+              Seatime History
+            </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
+            </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
+              Record Voyage
             </MenuItem>
             <MenuItem onClick={handleOpenReport}>
               Certificate Report
@@ -245,6 +255,9 @@ function App() {
               </MenuItem>,
               <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
                 Certificate Types
+              </MenuItem>,
+              <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups">
+                Seatime Lookups
               </MenuItem>
             ]}
           </Menu>
@@ -346,6 +359,11 @@ function App() {
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
+
+        <Route path="/seatime" element={session ? <SeatimeHistory /> : <Navigate to="/login" replace />} />
+        <Route path="/add-seatime" element={session ? <AddSeatime /> : <Navigate to="/login" replace />} />
+        <Route path="/update-seatime/:id" element={session ? <UpdateSeatime /> : <Navigate to="/login" replace />} />
+        <Route path="/admin/seatime-lookups" element={isAdmin ? <ManageSeatimeLookups /> : <Navigate to="/certificates" replace />} />
         
         {/* Certificate Types: Admin can see all, Users can add types from AddCertificate flow */}
         <Route path="/cert-types" element={isAdmin ? <CertTypes /> : <Navigate to="/certificates" replace />} />

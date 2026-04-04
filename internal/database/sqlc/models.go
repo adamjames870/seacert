@@ -100,6 +100,8 @@ type Ship struct {
 	Gt              int32
 	Flag            string
 	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
 }
 
 type ShipType struct {

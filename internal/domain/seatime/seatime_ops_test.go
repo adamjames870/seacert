@@ -77,11 +77,15 @@ func (m *mockRepo) WithTx(ctx context.Context, fn func(domain.Repository) error)
 
 func (m *mockRepo) CreateShip(ctx context.Context, arg sqlc.CreateShipParams) (sqlc.Ship, error) {
 	return sqlc.Ship{
-		ID:        arg.ID,
-		Name:      arg.Name,
-		ImoNumber: arg.ImoNumber,
-		Gt:        arg.Gt,
-		Flag:      arg.Flag,
+		ID:              arg.ID,
+		Name:            arg.Name,
+		ImoNumber:       arg.ImoNumber,
+		Gt:              arg.Gt,
+		Flag:            arg.Flag,
+		Status:          arg.Status,
+		CreatedBy:       arg.CreatedBy,
+		ShipTypeID:      arg.ShipTypeID,
+		PropulsionPower: arg.PropulsionPower,
 	}, nil
 }
 
@@ -93,8 +97,80 @@ func (m *mockRepo) CreateSeatimePeriod(ctx context.Context, arg sqlc.CreateSeati
 	return sqlc.SeatimePeriod{ID: arg.ID}, nil
 }
 
+func (m *mockRepo) GetShips(ctx context.Context) ([]sqlc.GetShipsRow, error) {
+	return []sqlc.GetShipsRow{
+		{
+			ID:           uuid.New(),
+			Name:         "Admin Ship 1",
+			ShipTypeName: "Tanker",
+			Status:       "approved",
+		},
+		{
+			ID:           uuid.New(),
+			Name:         "Admin Ship 2",
+			ShipTypeName: "Bulk",
+			Status:       "provisional",
+		},
+	}, nil
+}
+
+func (m *mockRepo) GetShipsForUser(ctx context.Context, createdBy uuid.NullUUID) ([]sqlc.GetShipsForUserRow, error) {
+	return []sqlc.GetShipsForUserRow{
+		{
+			ID:           uuid.New(),
+			Name:         "Approved Ship",
+			ShipTypeName: "Tanker",
+			Status:       "approved",
+		},
+		{
+			ID:           uuid.New(),
+			Name:         "My Provisional Ship",
+			ShipTypeName: "Bulk",
+			Status:       "provisional",
+			CreatedBy:    createdBy,
+		},
+	}, nil
+}
+
+func (m *mockRepo) UpdateShipReferences(ctx context.Context, arg sqlc.UpdateShipReferencesParams) error {
+	return nil
+}
+
+func (m *mockRepo) UpdateShip(ctx context.Context, arg sqlc.UpdateShipParams) (sqlc.Ship, error) {
+	return sqlc.Ship{
+		ID:              arg.ID,
+		Name:            arg.Name,
+		ShipTypeID:      arg.ShipTypeID,
+		ImoNumber:       arg.ImoNumber,
+		Gt:              arg.Gt,
+		Flag:            arg.Flag,
+		PropulsionPower: arg.PropulsionPower,
+	}, nil
+}
+
+func (m *mockRepo) UpdateShipStatus(ctx context.Context, arg sqlc.UpdateShipStatusParams) (sqlc.Ship, error) {
+	return sqlc.Ship{
+		ID:     arg.ID,
+		Status: arg.Status,
+	}, nil
+}
+
+func (m *mockRepo) DeleteShip(ctx context.Context, id uuid.UUID) error {
+	return nil
+}
+
+var mockGetShipById func(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error)
+
 func (m *mockRepo) GetShipById(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error) {
-	return sqlc.GetShipByIdRow{ID: id}, nil
+	if mockGetShipById != nil {
+		return mockGetShipById(ctx, id)
+	}
+	return sqlc.GetShipByIdRow{
+		ID:           id,
+		Name:         "Mock Ship",
+		ShipTypeName: "Mock Type",
+		Status:       "approved",
+	}, nil
 }
 
 func (m *mockRepo) GetVoyageTypes(ctx context.Context) ([]sqlc.VoyageType, error) {
@@ -268,7 +344,7 @@ func TestCreateSeatimeValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := CreateSeatime(context.Background(), repo, tt.params, userId)
+			res, err := CreateSeatime(context.Background(), repo, tt.params, userId, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateSeatime() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -286,4 +362,168 @@ func TestCreateSeatimeValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetShips(t *testing.T) {
+	repo := &mockRepo{}
+	userId := uuid.New()
+
+	t.Run("Admin sees all ships", func(t *testing.T) {
+		ships, err := GetShips(context.Background(), repo, &userId, true)
+		if err != nil {
+			t.Fatalf("GetShips failed: %v", err)
+		}
+		if len(ships) != 2 {
+			t.Errorf("Expected 2 ships for admin, got %d", len(ships))
+		}
+	})
+
+	t.Run("User sees filtered ships", func(t *testing.T) {
+		ships, err := GetShips(context.Background(), repo, &userId, false)
+		if err != nil {
+			t.Fatalf("GetShips failed: %v", err)
+		}
+		if len(ships) != 2 {
+			t.Errorf("Expected 2 ships for user, got %d", len(ships))
+		}
+		for _, s := range ships {
+			if s.Status == "provisional" && (s.CreatedBy == nil || *s.CreatedBy != userId) {
+				t.Errorf("User should not see others' provisional ships")
+			}
+		}
+	})
+}
+
+func TestResolveShip(t *testing.T) {
+	repo := &mockRepo{}
+
+	t.Run("Valid resolve", func(t *testing.T) {
+		params := dto.ParamsResolveShip{
+			ProvisionalId: uuid.New().String(),
+			ReplacementId: uuid.New().String(),
+		}
+		err := ResolveShip(context.Background(), repo, params)
+		if err != nil {
+			t.Errorf("ResolveShip failed: %v", err)
+		}
+	})
+
+	t.Run("Invalid UUIDs", func(t *testing.T) {
+		params := dto.ParamsResolveShip{
+			ProvisionalId: "invalid",
+			ReplacementId: uuid.New().String(),
+		}
+		err := ResolveShip(context.Background(), repo, params)
+		if err == nil {
+			t.Errorf("ResolveShip should fail for invalid UUID")
+		}
+	})
+}
+
+func TestStandaloneShipOps(t *testing.T) {
+	repo := &mockRepo{}
+	userId := uuid.New()
+	shipTypeId := uuid.New().String()
+
+	t.Run("CreateShipStandalone as User", func(t *testing.T) {
+		mockGetShipById = func(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error) {
+			return sqlc.GetShipByIdRow{
+				ID:     id,
+				Status: "provisional",
+				Name:   "Test Ship",
+			}, nil
+		}
+		params := dto.ParamsAddShip{
+			Name:       "Test Ship",
+			ShipTypeId: shipTypeId,
+			ImoNumber:  "IMO123",
+			Gt:         100,
+			Flag:       "UK",
+		}
+		s, err := CreateShipStandalone(context.Background(), repo, params, userId, false)
+		if err != nil {
+			t.Fatalf("CreateShipStandalone failed: %v", err)
+		}
+		if s.Status != "provisional" {
+			t.Errorf("Expected provisional status, got %s", s.Status)
+		}
+	})
+
+	t.Run("CreateShipStandalone as Admin", func(t *testing.T) {
+		mockGetShipById = func(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error) {
+			return sqlc.GetShipByIdRow{
+				ID:     id,
+				Status: "approved",
+				Name:   "Admin Ship",
+			}, nil
+		}
+		params := dto.ParamsAddShip{
+			Name:       "Admin Ship",
+			ShipTypeId: shipTypeId,
+			ImoNumber:  "IMO456",
+			Gt:         100,
+			Flag:       "UK",
+		}
+		s, err := CreateShipStandalone(context.Background(), repo, params, userId, true)
+		if err != nil {
+			t.Fatalf("CreateShipStandalone failed: %v", err)
+		}
+		if s.Status != "approved" {
+			t.Errorf("Expected approved status, got %s", s.Status)
+		}
+	})
+
+	t.Run("UpdateShip as Owner", func(t *testing.T) {
+		shipId := uuid.New()
+		mockGetShipById = func(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error) {
+			return sqlc.GetShipByIdRow{
+				ID:         id,
+				Status:     "provisional",
+				Name:       "Updated Name",
+				CreatedBy:  uuid.NullUUID{UUID: userId, Valid: true},
+				ShipTypeID: uuid.MustParse(shipTypeId),
+			}, nil
+		}
+		params := dto.ParamsUpdateShip{
+			Id:         shipId.String(),
+			Name:       "Updated Name",
+			ShipTypeId: shipTypeId,
+		}
+		s, err := UpdateShip(context.Background(), repo, params, userId, false)
+		if err != nil {
+			t.Fatalf("UpdateShip failed: %v", err)
+		}
+		if s.Name != "Updated Name" {
+			t.Errorf("Expected name Updated Name, got %s", s.Name)
+		}
+	})
+
+	t.Run("UpdateShip Forbidden for Approved", func(t *testing.T) {
+		shipId := uuid.New()
+		mockGetShipById = func(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error) {
+			return sqlc.GetShipByIdRow{
+				ID:         id,
+				Status:     "approved",
+				CreatedBy:  uuid.NullUUID{UUID: userId, Valid: true},
+				ShipTypeID: uuid.MustParse(shipTypeId),
+			}, nil
+		}
+		params := dto.ParamsUpdateShip{
+			Id:         shipId.String(),
+			Name:       "Updated Name",
+			ShipTypeId: shipTypeId,
+		}
+		_, err := UpdateShip(context.Background(), repo, params, userId, false)
+		if err != domain.ErrForbidden {
+			t.Errorf("Expected ErrForbidden, got %v", err)
+		}
+	})
+
+	t.Run("ApproveShip", func(t *testing.T) {
+		shipId := uuid.New()
+		err := ApproveShip(context.Background(), repo, shipId)
+		if err != nil {
+			t.Errorf("ApproveShip failed: %v", err)
+		}
+	})
 }

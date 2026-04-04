@@ -24,9 +24,7 @@ func HandlerApiAddSeatime(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		params.UserId = userId.String()
-
-		st, err := seatime.CreateSeatime(r.Context(), state.Repo, params, userId)
+		st, err := seatime.CreateSeatime(r.Context(), state.Repo, params, userId, auth.IsAdmin(r.Context()))
 		if err != nil {
 			code, msg := handlers.MapDomainError(err)
 			handlers.RespondWithError(w, r, code, msg, err)
@@ -74,5 +72,79 @@ func HandlerApiGetSeatimeLookups(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		handlers.RespondWithJSON(w, 200, lookups)
+	}
+}
+
+func HandlerApiGetShips(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId, errId := auth.UserIdFromContext(r.Context())
+		if errId != nil {
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
+			return
+		}
+
+		ships, err := seatime.GetShips(r.Context(), state.Repo, &userId, auth.IsAdmin(r.Context()))
+		if err != nil {
+			code, msg := handlers.MapDomainError(err)
+			handlers.RespondWithError(w, r, code, msg, err)
+			return
+		}
+
+		var rv []dto.Ship
+		for _, s := range ships {
+			rv = append(rv, seatime.MapShipToDto(s))
+		}
+
+		handlers.RespondWithJSON(w, 200, rv)
+	}
+}
+
+func HandlerApiAddShip(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := dto.ParamsAddShip{}
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
+			return
+		}
+
+		userId, errId := auth.UserIdFromContext(r.Context())
+		if errId != nil {
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
+			return
+		}
+
+		s, err := seatime.CreateShipStandalone(r.Context(), state.Repo, params, userId, auth.IsAdmin(r.Context()))
+		if err != nil {
+			code, msg := handlers.MapDomainError(err)
+			handlers.RespondWithError(w, r, code, msg, err)
+			return
+		}
+
+		handlers.RespondWithJSON(w, 201, seatime.MapShipToDto(s))
+	}
+}
+
+func HandlerApiUpdateShip(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := dto.ParamsUpdateShip{}
+		if err := handlers.DecodeAndValidate(r, &params); err != nil {
+			handlers.RespondWithError(w, r, 400, err.Error(), err)
+			return
+		}
+
+		userId, errId := auth.UserIdFromContext(r.Context())
+		if errId != nil {
+			handlers.RespondWithError(w, r, 401, "Unauthorized", errId)
+			return
+		}
+
+		s, err := seatime.UpdateShip(r.Context(), state.Repo, params, userId, auth.IsAdmin(r.Context()))
+		if err != nil {
+			code, msg := handlers.MapDomainError(err)
+			handlers.RespondWithError(w, r, code, msg, err)
+			return
+		}
+
+		handlers.RespondWithJSON(w, 200, seatime.MapShipToDto(s))
 	}
 }

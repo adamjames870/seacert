@@ -35,6 +35,8 @@ type Ship struct {
 	Gt              int32
 	Flag            string
 	PropulsionPower *int32
+	Status          string
+	CreatedBy       *uuid.UUID
 }
 
 type Seatime struct {
