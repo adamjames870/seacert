@@ -34,6 +34,8 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
 import './App.css'
@@ -317,12 +319,21 @@ function App() {
         <Route path="/edit-issuer/:id" element={<EditIssuer />} />
         
         <Route path="/edit-account" element={<EditAccount />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
       </Routes>
       
       <Box component="footer" sx={{ py: 3, borderTop: 1, borderColor: 'divider', mt: 'auto', bgcolor: 'background.paper' }}>
         <Container maxWidth="lg">
           <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} SeaCert. Contact us: {' '}
+            © {new Date().getFullYear()} SeaCert. {' '}
+            <Link component={RouterLink} to="/privacy" color="inherit" sx={{ fontWeight: 600, mr: 2 }}>
+              Privacy Policy
+            </Link>
+            <Link component={RouterLink} to="/terms" color="inherit" sx={{ fontWeight: 600, mr: 2 }}>
+              Terms & Conditions
+            </Link>
+            Contact us: {' '}
             <Link href="mailto:hello@seacert.app" color="inherit" sx={{ fontWeight: 600 }}>
               hello@seacert.app
             </Link>

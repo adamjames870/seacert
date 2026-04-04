@@ -14,19 +14,23 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, email, forename, surname, nationality)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, forename, surname, email, nationality
+INSERT INTO users (id, created_at, updated_at, email, forename, surname, nationality, email_consent, email_consent_timestamp, email_consent_version, email_consent_source)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, created_at, updated_at, forename, surname, email, nationality, email_consent, email_consent_timestamp, email_consent_version, email_consent_source
 `
 
 type CreateUserParams struct {
-	ID          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Email       string
-	Forename    sql.NullString
-	Surname     sql.NullString
-	Nationality sql.NullString
+	ID                    uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	Email                 string
+	Forename              sql.NullString
+	Surname               sql.NullString
+	Nationality           sql.NullString
+	EmailConsent          bool
+	EmailConsentTimestamp sql.NullTime
+	EmailConsentVersion   sql.NullString
+	EmailConsentSource    sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -38,6 +42,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Forename,
 		arg.Surname,
 		arg.Nationality,
+		arg.EmailConsent,
+		arg.EmailConsentTimestamp,
+		arg.EmailConsentVersion,
+		arg.EmailConsentSource,
 	)
 	var i User
 	err := row.Scan(
@@ -48,12 +56,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Surname,
 		&i.Email,
 		&i.Nationality,
+		&i.EmailConsent,
+		&i.EmailConsentTimestamp,
+		&i.EmailConsentVersion,
+		&i.EmailConsentSource,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, created_at, updated_at, forename, surname, email, nationality
+SELECT id, created_at, updated_at, forename, surname, email, nationality, email_consent, email_consent_timestamp, email_consent_version, email_consent_source
 FROM users
 WHERE email = $1
 `
@@ -69,12 +81,16 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Surname,
 		&i.Email,
 		&i.Nationality,
+		&i.EmailConsent,
+		&i.EmailConsentTimestamp,
+		&i.EmailConsentVersion,
+		&i.EmailConsentSource,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, created_at, updated_at, forename, surname, email, nationality
+SELECT id, created_at, updated_at, forename, surname, email, nationality, email_consent, email_consent_timestamp, email_consent_version, email_consent_source
 FROM users
 WHERE id = $1
 `
@@ -90,6 +106,10 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Surname,
 		&i.Email,
 		&i.Nationality,
+		&i.EmailConsent,
+		&i.EmailConsentTimestamp,
+		&i.EmailConsentVersion,
+		&i.EmailConsentSource,
 	)
 	return i, err
 }
@@ -100,16 +120,24 @@ SET
     forename = COALESCE($2, forename),
     surname = COALESCE($3, surname),
     nationality = COALESCE($4, nationality),
+    email_consent = COALESCE($5, email_consent),
+    email_consent_timestamp = COALESCE($6, email_consent_timestamp),
+    email_consent_version = COALESCE($7, email_consent_version),
+    email_consent_source = COALESCE($8, email_consent_source),
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, forename, surname, email, nationality
+RETURNING id, created_at, updated_at, forename, surname, email, nationality, email_consent, email_consent_timestamp, email_consent_version, email_consent_source
 `
 
 type UpdateUserParams struct {
-	ID          uuid.UUID
-	Forename    sql.NullString
-	Surname     sql.NullString
-	Nationality sql.NullString
+	ID                    uuid.UUID
+	Forename              sql.NullString
+	Surname               sql.NullString
+	Nationality           sql.NullString
+	EmailConsent          sql.NullBool
+	EmailConsentTimestamp sql.NullTime
+	EmailConsentVersion   sql.NullString
+	EmailConsentSource    sql.NullString
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -118,6 +146,10 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.Forename,
 		arg.Surname,
 		arg.Nationality,
+		arg.EmailConsent,
+		arg.EmailConsentTimestamp,
+		arg.EmailConsentVersion,
+		arg.EmailConsentSource,
 	)
 	var i User
 	err := row.Scan(
@@ -128,6 +160,10 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Surname,
 		&i.Email,
 		&i.Nationality,
+		&i.EmailConsent,
+		&i.EmailConsentTimestamp,
+		&i.EmailConsentVersion,
+		&i.EmailConsentSource,
 	)
 	return i, err
 }
