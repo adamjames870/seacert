@@ -20,8 +20,9 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import EditIcon from '@mui/icons-material/Edit'
-import { Anchor } from 'lucide-react'
+import { Anchor, Shield, Ship as ShipIcon } from 'lucide-react'
 import Home from './pages/Home'
+import Dashboard from './pages/Dashboard'
 import SignUp from './pages/SignUp'
 import Login from './pages/Login'
 import Certificates from './pages/Certificates'
@@ -236,6 +237,9 @@ function App() {
             onClose={handleClose}
             disableScrollLock={true}
           >
+            <MenuItem onClick={handleClose} component={RouterLink} to="/">
+              Dashboard
+            </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
               Certificates
             </MenuItem>
@@ -257,20 +261,29 @@ function App() {
             
             {isAdmin && [
               <Divider key="divider-admin" />,
-              <MenuItem key="add-ship" onClick={handleClose} component={RouterLink} to="/add-ship">
-                Add Ship
-              </MenuItem>,
-              <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers">
+              <Box key="admin-certs-header" sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Shield size={16} color="gray" />
+                <Typography variant="overline" sx={{ fontWeight: 700, color: 'text.secondary' }}>Admin: Certificates</Typography>
+              </Box>,
+              <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers" sx={{ pl: 4 }}>
                 Issuers
               </MenuItem>,
-              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
+              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types" sx={{ pl: 4 }}>
                 Certificate Types
               </MenuItem>,
-              <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups">
-                Seatime Lookups
-              </MenuItem>,
-              <MenuItem key="ships" onClick={handleClose} component={RouterLink} to="/ships">
+              
+              <Box key="admin-seatime-header" sx={{ px: 2, py: 1, mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ShipIcon size={16} color="gray" />
+                <Typography variant="overline" sx={{ fontWeight: 700, color: 'text.secondary' }}>Admin: Seatime & Ships</Typography>
+              </Box>,
+              <MenuItem key="ships" onClick={handleClose} component={RouterLink} to="/ships" sx={{ pl: 4 }}>
                 Ships
+              </MenuItem>,
+              <MenuItem key="add-ship" onClick={handleClose} component={RouterLink} to="/add-ship" sx={{ pl: 4 }}>
+                Add Ship
+              </MenuItem>,
+              <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups" sx={{ pl: 4 }}>
+                Seatime Lookups
               </MenuItem>
             ]}
           </Menu>
@@ -366,7 +379,7 @@ function App() {
       </AppBar>
       <Toolbar /> {/* Spacer to prevent content from being hidden under fixed AppBar */}
       <Routes>
-        <Route path="/" element={session ? <Navigate to="/certificates" replace /> : <Home />} />
+        <Route path="/" element={session ? <Dashboard /> : <Home />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/certificates" element={<Certificates />} />

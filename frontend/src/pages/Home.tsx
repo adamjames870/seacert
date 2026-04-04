@@ -1,6 +1,6 @@
 ﻿import { Typography, Container, Box, Button, Grid, Stack, Card, CardContent, CardMedia } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Anchor, ShieldCheck, FileText, DownloadCloud, AlertCircle } from 'lucide-react';
+import { Anchor, ShieldCheck, FileText, AlertCircle, Ship } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -26,7 +26,7 @@ const Home = () => {
                 Manage Your Sea Career
               </Typography>
               <Typography variant="h5" sx={{ opacity: 0.9, mb: 4 }}>
-                Keep all your maritime certificates in one place. Never miss an expiry date again.
+                Keep all your maritime certificates and seatime in one place. Never miss an expiry date again.
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -70,21 +70,21 @@ const Home = () => {
                 image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070"
               },
               {
+                icon: <Ship size={48} />,
+                title: "Seatime Tracking",
+                description: "Keep track of all your sea service and specialist periods. Automatically see how many seadays you have for the year.",
+                image: "https://images.unsplash.com/photo-1494412519320-aa613dfb7738?auto=format&fit=crop&q=80&w=2070"
+              },
+              {
                 icon: <AlertCircle size={48} />,
                 title: "Expiry Reminder",
                 description: "Easily see when your certificates need renewing. Plan your renewal before they expire so you're always ready for your next contract.",
                 image: "https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&q=80&w=2070"
               },
               {
-                icon: <DownloadCloud size={48} />,
-                title: "Easy Access Anywhere",
-                description: "Store secure copies of your certificates for instant access. Download them on ship or at home, whenever you need them.",
-                image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2072"
-              },
-              {
                 icon: <FileText size={48} />,
-                title: "Professional Reports",
-                description: "Generate a comprehensive report of all your certifications in seconds. Perfect for sending to crewing agents and employers.",
+                title: "Career Dashboard",
+                description: "Get a high-level summary of your career on one page. Track certificates, missing attachments, and total seadays at a glance.",
                 image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=2070"
               }
             ].map((feature, index) => (
