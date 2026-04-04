@@ -7,12 +7,16 @@ import (
 )
 
 type User struct {
-	Id          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Forename    string
-	Surname     string
-	Email       string
-	Nationality string
-	Role        string
+	Id                    uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	Forename              string
+	Surname               string
+	Email                 string
+	Nationality           string
+	Role                  string
+	EmailConsent          bool
+	EmailConsentTimestamp *time.Time
+	EmailConsentVersion   string
+	EmailConsentSource    string
 }

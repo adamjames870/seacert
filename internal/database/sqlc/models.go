@@ -65,11 +65,15 @@ type Succession struct {
 }
 
 type User struct {
-	ID          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Forename    sql.NullString
-	Surname     sql.NullString
-	Email       string
-	Nationality sql.NullString
+	ID                    uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	Forename              sql.NullString
+	Surname               sql.NullString
+	Email                 string
+	Nationality           sql.NullString
+	EmailConsent          bool
+	EmailConsentTimestamp sql.NullTime
+	EmailConsentVersion   sql.NullString
+	EmailConsentSource    sql.NullString
 }

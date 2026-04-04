@@ -7,9 +7,11 @@ import {
   Paper
 } from '@mui/material';
 import CookieIcon from '@mui/icons-material/Cookie';
+import { usePostHog } from 'posthog-js/react';
 
 const CookieConsent = () => {
   const [open, setOpen] = useState(false);
+  const posthog = usePostHog();
 
   useEffect(() => {
     // Check if user has already acknowledged the cookie information
@@ -20,7 +22,14 @@ const CookieConsent = () => {
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem('cookie-consent', 'true');
+    localStorage.setItem('cookie-consent', 'accepted');
+    posthog.opt_in_capturing();
+    setOpen(false);
+  };
+
+  const handleReject = () => {
+    localStorage.setItem('cookie-consent', 'rejected');
+    posthog.opt_out_capturing();
     setOpen(false);
   };
 
@@ -46,17 +55,25 @@ const CookieConsent = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <CookieIcon color="primary" />
           <Typography variant="body2" color="text.secondary">
-            We use cookies to improve your experience and for analytics. By continuing to use our site, you agree to our use of cookies.
+            We use cookies to improve your experience and for analytics. Please accept or reject our use of cookies.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, ml: 'auto', width: { xs: '100%', sm: 'auto' }, justifyContent: 'flex-end' }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleReject}
+            size="small"
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            Reject
+          </Button>
           <Button 
             variant="contained" 
             onClick={handleAccept}
             size="small"
             sx={{ whiteSpace: 'nowrap' }}
           >
-            I understand
+            Accept
           </Button>
         </Box>
       </Paper>

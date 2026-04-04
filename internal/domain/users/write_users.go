@@ -19,10 +19,14 @@ func CreateUser(ctx context.Context, repo domain.Repository, params dto.ParamsAd
 	}
 
 	newUser := sqlc.CreateUserParams{
-		ID:        id,
-		Email:     params.Email,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:                    id,
+		Email:                 params.Email,
+		CreatedAt:             time.Now(),
+		UpdatedAt:             time.Now(),
+		EmailConsent:          false,
+		EmailConsentTimestamp: sql.NullTime{},
+		EmailConsentVersion:   sql.NullString{},
+		EmailConsentSource:    sql.NullString{},
 	}
 
 	dbUser, err := repo.CreateUser(ctx, newUser)
@@ -39,11 +43,20 @@ func UpdateUser(ctx context.Context, repo domain.Repository, params dto.ParamsUp
 		return User{}, domain.ErrInvalidInput
 	}
 
+	var consentTimestamp sql.NullTime
+	if params.EmailConsent != nil {
+		consentTimestamp = sql.NullTime{Time: time.Now(), Valid: true}
+	}
+
 	updatedUser := sqlc.UpdateUserParams{
-		ID:          uuidId,
-		Forename:    domain.ToNullStringFromPointer(params.Forename),
-		Surname:     domain.ToNullStringFromPointer(params.Surname),
-		Nationality: domain.ToNullStringFromPointer(params.Nationality),
+		ID:                    uuidId,
+		Forename:              domain.ToNullStringFromPointer(params.Forename),
+		Surname:               domain.ToNullStringFromPointer(params.Surname),
+		Nationality:           domain.ToNullStringFromPointer(params.Nationality),
+		EmailConsent:          domain.ToNullBoolFromPointer(params.EmailConsent),
+		EmailConsentTimestamp: consentTimestamp,
+		EmailConsentVersion:   domain.ToNullStringFromPointer(params.EmailConsentVersion),
+		EmailConsentSource:    domain.ToNullStringFromPointer(params.EmailConsentSource),
 	}
 
 	dbUser, err := repo.UpdateUser(ctx, updatedUser)
