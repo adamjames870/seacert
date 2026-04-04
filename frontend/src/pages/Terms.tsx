@@ -22,7 +22,7 @@ const Terms = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
         <Box className="terms-conditions-container">
-          <div name="termly-embed" data-id="ade141d5-370d-4936-8e86-5c741af7e75c"></div>
+          <div data-id="ade141d5-370d-4936-8e86-5c741af7e75c"></div>
         </Box>
       </Paper>
     </Container>
