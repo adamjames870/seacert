@@ -55,6 +55,7 @@ interface SeatimeRecord {
     name: string;
     'ship-type-id': string;
     'ship-type-name': string;
+    'ship-type-description'?: string;
     'imo-number': string;
     gt: number;
     flag: string;
@@ -62,6 +63,7 @@ interface SeatimeRecord {
   };
   'voyage-type-id': string;
   'voyage-type-name': string;
+  'voyage-type-description'?: string;
   'start-date': string;
   'end-date': string;
   'start-location': string;
@@ -73,16 +75,29 @@ interface SeatimeRecord {
   periods: SpecializedPeriod[];
 }
 
+interface LookupItem {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface SeatimeLookups {
+  'ship-types': LookupItem[];
+  'voyage-types': LookupItem[];
+  'period-types': LookupItem[];
+}
+
 const SeatimeHistory = () => {
   const [records, setRecords] = useState<SeatimeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lookups, setLookups] = useState<SeatimeLookups | null>(null);
 
   useEffect(() => {
-    fetchSeatime();
+    fetchData();
   }, []);
 
-  const fetchSeatime = async () => {
+  const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -91,6 +106,19 @@ const SeatimeHistory = () => {
         setError('No active session. Please log in.');
         setLoading(false);
         return;
+      }
+
+      // Fetch lookups first for descriptions
+      const lookupResponse = await fetch(`${API_BASE_URL}/api/seatime/lookups`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      let lookupData: SeatimeLookups | null = null;
+      if (lookupResponse.ok) {
+        lookupData = await lookupResponse.json();
+        setLookups(lookupData);
       }
 
       const response = await fetch(`${API_BASE_URL}/api/seatime`, {
@@ -103,8 +131,31 @@ const SeatimeHistory = () => {
         throw new Error(`Failed to fetch seatime: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      setRecords(data);
+      const data: SeatimeRecord[] = await response.json();
+      
+      // Map descriptions if lookups are available
+      const recordsWithDescriptions = (data || []).map(record => {
+        const shipType = lookupData?.['ship-types'].find(t => t.id === record.ship['ship-type-id']);
+        const voyageType = lookupData?.['voyage-types'].find(t => t.id === record['voyage-type-id']);
+        
+        return {
+          ...record,
+          ship: {
+            ...record.ship,
+            'ship-type-description': shipType?.description || record.ship['ship-type-name']
+          },
+          'voyage-type-description': voyageType?.description || record['voyage-type-name'],
+          periods: (record.periods || []).map(p => {
+            const periodType = lookupData?.['period-types'].find(pt => pt.id === p['period-type-id']);
+            return {
+              ...p,
+              'period-type-description': periodType?.description || p['period-type-name']
+            };
+          })
+        };
+      });
+
+      setRecords(recordsWithDescriptions);
     } catch (err: any) {
       console.error('Error fetching seatime:', err);
       setError(err.message || 'An unexpected error occurred');
@@ -121,20 +172,24 @@ const SeatimeHistory = () => {
     );
   }
 
+  const isEmpty = records.length === 0;
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
           Seatime History
         </Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<Plus size={20} />}
-          component={RouterLink}
-          to="/add-seatime"
-        >
-          Record New Voyage
-        </Button>
+        {!isEmpty && (
+          <Button 
+            variant="contained" 
+            startIcon={<Plus size={20} />}
+            component={RouterLink}
+            to="/add-seatime"
+          >
+            Record New Voyage
+          </Button>
+        )}
       </Box>
 
       {error && (
@@ -143,64 +198,99 @@ const SeatimeHistory = () => {
         </Alert>
       )}
 
-      {records.length === 0 ? (
-        <Paper sx={{ p: 6, textAlign: 'center', bgcolor: 'background.default', border: '2px dashed', borderColor: 'divider' }}>
-          <Ship size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No seatime recorded yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Start building your maritime experience profile by logging your first voyage.
-          </Typography>
-          <Button 
-            variant="outlined" 
-            component={RouterLink}
-            to="/add-seatime"
-          >
-            Add Your First Entry
-          </Button>
-        </Paper>
+      {isEmpty ? (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '60vh',
+          textAlign: 'center'
+        }}>
+          <Paper sx={{ 
+            p: 8, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            borderRadius: 4,
+            bgcolor: 'background.paper',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: 'divider',
+            maxWidth: 600,
+            width: '100%'
+          }}>
+            <Box sx={{ 
+              mb: 3, 
+              p: 3, 
+              borderRadius: '50%', 
+              bgcolor: 'primary.light', 
+              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Ship size={64} />
+            </Box>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+              No Seatime Records
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
+              You haven't recorded any sea service yet. Start logging your voyages to build your professional profile.
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large"
+              startIcon={<Plus size={24} />}
+              component={RouterLink}
+              to="/add-seatime"
+              sx={{ px: 4, py: 1.5, borderRadius: 2, fontSize: '1.1rem', fontWeight: 700 }}
+            >
+              Add First Seatime Record
+            </Button>
+          </Paper>
+        </Box>
       ) : (
-        <Stack spacing={3}>
+        <Stack spacing={3} width="100%">
           {records.map((record) => (
-            <Card key={record.id} elevation={2} sx={{ borderRadius: 2 }}>
+            <Card key={record.id} elevation={2} sx={{ borderRadius: 2, width: '100%' }}>
               <CardContent sx={{ p: 0 }}>
                 <Box sx={{ p: 3 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
+                  <Grid container spacing={3} alignItems="flex-start">
+                    <Grid item xs={12} md={3}>
                       <Stack spacing={1}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Ship size={20} className="text-primary" />
+                          <Ship size={20} className="text-primary" style={{ color: '#1976d2' }} />
                           <Typography variant="h6" sx={{ fontWeight: 700 }}>
                             {record.ship.name}
                           </Typography>
                         </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {record.ship['ship-type-name']} • IMO: {record.ship['imo-number']}
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                          {record.ship['ship-type-description']}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {record.ship.gt} GT • {record.ship.flag}
+                        <Typography variant="caption" color="text.secondary">
+                          IMO: {record.ship['imo-number']} • {record.ship.gt} GT • {record.ship.flag}
                         </Typography>
                       </Stack>
                     </Grid>
                     
-                    <Grid item xs={12} md={5}>
+                    <Grid item xs={12} md={3}>
                       <Stack spacing={1}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Calendar size={18} />
-                          <Typography variant="body1">
-                            {formatDate(record['start-date'])} to {formatDate(record['end-date'])}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <MapPin size={18} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                          {record.capacity}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {record.company}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, opacity: 0.8 }}>
+                          <MapPin size={18} color="#666" />
                           <Typography variant="body2">
                             {record['start-location']} → {record['end-location']}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                           <Chip 
-                            label={record['voyage-type-name']} 
+                            label={record['voyage-type-description']} 
                             size="small" 
                             color="primary" 
                             variant="outlined" 
@@ -212,24 +302,35 @@ const SeatimeHistory = () => {
                       </Stack>
                     </Grid>
 
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center' }}>
-                      <Box sx={{ textAlign: { md: 'right' } }}>
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                          {record['total-days']}
-                        </Typography>
-                        <Typography variant="overline" sx={{ fontWeight: 700 }}>
-                          Total Days
-                        </Typography>
-                      </Box>
-                      <Button 
+                    <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center', ml: 'auto' }}>
+                      <Stack spacing={0.5} alignItems={{ md: 'flex-end' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Calendar size={18} color="#666" />
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {formatDate(record['start-date'])} — {formatDate(record['end-date'])}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: { md: 'right' } }}>
+                          <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.dark', lineHeight: 1 }}>
+                            {record['total-days']}
+                          </Typography>
+                          <Typography variant="overline" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                            Total Days
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Grid>
+
+                    <Grid item xs={12} md={1} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center' }}>
+                      <IconButton 
                         size="small" 
-                        startIcon={<Edit size={16} />}
+                        color="primary"
                         component={RouterLink}
                         to={`/update-seatime/${record.id}`}
-                        sx={{ mt: 1 }}
+                        sx={{ border: '1px solid', borderColor: 'primary.light' }}
                       >
-                        Edit Record
-                      </Button>
+                        <Edit size={18} />
+                      </IconButton>
                     </Grid>
                   </Grid>
                 </Box>
@@ -237,18 +338,15 @@ const SeatimeHistory = () => {
                 {record.periods && record.periods.length > 0 && (
                   <>
                     <Divider />
-                    <Box sx={{ p: 2, bgcolor: 'rgba(0,0,0,0.02)' }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, px: 1, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Clock size={16} /> Specialized Service Periods
-                      </Typography>
+                    <Box sx={{ p: 2, bgcolor: 'grey.50' }}>
                       <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                        {record.periods.map((period) => (
+                        {record.periods.map((period: any) => (
                           <Tooltip key={period.id} title={`${formatDate(period['start-date'])} - ${formatDate(period['end-date'])}: ${period.remarks}`}>
                             <Chip 
-                              label={`${period['period-type-name']}: ${period.days} days`}
+                              label={`${period['period-type-description']}: ${period.days} days`}
                               size="small"
                               variant="filled"
-                              sx={{ bgcolor: 'info.light', color: 'info.contrastText' }}
+                              sx={{ bgcolor: 'info.light', color: 'info.contrastText', fontWeight: 600 }}
                             />
                           </Tooltip>
                         ))}
@@ -256,12 +354,6 @@ const SeatimeHistory = () => {
                     </Box>
                   </>
                 )}
-                
-                <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Capacity: <strong>{record.capacity}</strong> • Company: <strong>{record.company}</strong>
-                  </Typography>
-                </Box>
               </CardContent>
             </Card>
           ))}

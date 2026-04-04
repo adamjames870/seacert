@@ -1,6 +1,8 @@
 ﻿package seatime
 
 import (
+	"github.com/adamjames870/seacert/internal/database/sqlc"
+	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/dto"
 )
 
@@ -59,4 +61,28 @@ func MapSeatimeDomainToDto(st Seatime) dto.Seatime {
 	}
 
 	return rv
+}
+
+func MapShipType(st sqlc.ShipType) dto.ShipType {
+	return dto.ShipType{
+		Id:          st.ID.String(),
+		Name:        st.Name,
+		Description: domain.FromNullString(st.Description),
+	}
+}
+
+func MapVoyageType(vt sqlc.VoyageType) dto.VoyageType {
+	return dto.VoyageType{
+		Id:          vt.ID.String(),
+		Name:        vt.Name,
+		Description: domain.FromNullString(vt.Description),
+	}
+}
+
+func MapPeriodType(pt sqlc.SeatimePeriodType) dto.PeriodType {
+	return dto.PeriodType{
+		Id:          pt.ID.String(),
+		Name:        pt.Name,
+		Description: domain.FromNullString(pt.Description),
+	}
 }

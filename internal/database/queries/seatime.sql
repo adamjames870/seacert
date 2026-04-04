@@ -1,11 +1,62 @@
 -- name: GetShipTypes :many
 SELECT * FROM ship_types ORDER BY name;
 
+-- name: GetShipTypeById :one
+SELECT * FROM ship_types WHERE id = $1;
+
+-- name: CreateShipType :one
+INSERT INTO ship_types (id, name, description)
+VALUES ($1, $2, $3)
+RETURNING *;
+
+-- name: UpdateShipType :one
+UPDATE ship_types
+SET name = $2, description = $3
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteShipType :exec
+DELETE FROM ship_types WHERE id = $1;
+
 -- name: GetVoyageTypes :many
 SELECT * FROM voyage_types ORDER BY name;
 
+-- name: GetVoyageTypeById :one
+SELECT * FROM voyage_types WHERE id = $1;
+
+-- name: CreateVoyageType :one
+INSERT INTO voyage_types (id, name, description)
+VALUES ($1, $2, $3)
+RETURNING *;
+
+-- name: UpdateVoyageType :one
+UPDATE voyage_types
+SET name = $2, description = $3
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteVoyageType :exec
+DELETE FROM voyage_types WHERE id = $1;
+
 -- name: GetSeatimePeriodTypes :many
 SELECT * FROM seatime_period_types ORDER BY name;
+
+-- name: GetSeatimePeriodTypeById :one
+SELECT * FROM seatime_period_types WHERE id = $1;
+
+-- name: CreateSeatimePeriodType :one
+INSERT INTO seatime_period_types (id, name, description)
+VALUES ($1, $2, $3)
+RETURNING *;
+
+-- name: UpdateSeatimePeriodType :one
+UPDATE seatime_period_types
+SET name = $2, description = $3
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteSeatimePeriodType :exec
+DELETE FROM seatime_period_types WHERE id = $1;
 
 -- name: GetShipByImo :one
 SELECT s.*, st.name as ship_type_name

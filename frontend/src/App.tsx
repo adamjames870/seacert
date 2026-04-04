@@ -38,6 +38,8 @@ import SeatimeHistory from './pages/SeatimeHistory'
 import AddSeatime from './pages/AddSeatime'
 import UpdateSeatime from './pages/UpdateSeatime'
 import ManageSeatimeLookups from './pages/ManageSeatimeLookups'
+import Ships from './pages/Ships'
+import ShipForm from './pages/ShipForm'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
@@ -232,22 +234,30 @@ function App() {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleClose}
+            disableScrollLock={true}
           >
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
               Certificates
             </MenuItem>
-            <MenuItem onClick={handleClose} component={RouterLink} to="/seatime">
-              Seatime History
-            </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
-            </MenuItem>
-            <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
-              Record Voyage
             </MenuItem>
             <MenuItem onClick={handleOpenReport}>
               Certificate Report
             </MenuItem>
+            
+            <Divider />
+            
+            <MenuItem onClick={handleClose} component={RouterLink} to="/seatime">
+              Seatime History
+            </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
+              Record Voyage
+            </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/add-ship">
+              Add Ship
+            </MenuItem>
+            
             {isAdmin && [
               <Divider key="divider" />,
               <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers">
@@ -258,6 +268,9 @@ function App() {
               </MenuItem>,
               <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups">
                 Seatime Lookups
+              </MenuItem>,
+              <MenuItem key="ships" onClick={handleClose} component={RouterLink} to="/ships">
+                Ships
               </MenuItem>
             ]}
           </Menu>
@@ -296,6 +309,7 @@ function App() {
                   anchorEl={accountAnchorEl}
                   open={Boolean(accountAnchorEl)}
                   onClose={handleClose}
+                  disableScrollLock={true}
                   anchorOrigin={{
                     vertical: 'bottom',
                     horizontal: 'right',
@@ -363,6 +377,9 @@ function App() {
         <Route path="/seatime" element={session ? <SeatimeHistory /> : <Navigate to="/login" replace />} />
         <Route path="/add-seatime" element={session ? <AddSeatime /> : <Navigate to="/login" replace />} />
         <Route path="/update-seatime/:id" element={session ? <UpdateSeatime /> : <Navigate to="/login" replace />} />
+        <Route path="/ships" element={isAdmin ? <Ships /> : <Navigate to="/certificates" replace />} />
+        <Route path="/add-ship" element={session ? <ShipForm /> : <Navigate to="/login" replace />} />
+        <Route path="/edit-ship/:id" element={session ? <ShipForm /> : <Navigate to="/login" replace />} />
         <Route path="/admin/seatime-lookups" element={isAdmin ? <ManageSeatimeLookups /> : <Navigate to="/certificates" replace />} />
         
         {/* Certificate Types: Admin can see all, Users can add types from AddCertificate flow */}

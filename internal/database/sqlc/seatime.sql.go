@@ -112,6 +112,25 @@ func (q *Queries) CreateSeatimePeriod(ctx context.Context, arg CreateSeatimePeri
 	return i, err
 }
 
+const createSeatimePeriodType = `-- name: CreateSeatimePeriodType :one
+INSERT INTO seatime_period_types (id, name, description)
+VALUES ($1, $2, $3)
+RETURNING id, name, description
+`
+
+type CreateSeatimePeriodTypeParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+func (q *Queries) CreateSeatimePeriodType(ctx context.Context, arg CreateSeatimePeriodTypeParams) (SeatimePeriodType, error) {
+	row := q.db.QueryRowContext(ctx, createSeatimePeriodType, arg.ID, arg.Name, arg.Description)
+	var i SeatimePeriodType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
+}
+
 const createShip = `-- name: CreateShip :one
 INSERT INTO ships (id, created_at, updated_at, name, ship_type_id, imo_number, gt, flag, propulsion_power, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -163,6 +182,44 @@ func (q *Queries) CreateShip(ctx context.Context, arg CreateShipParams) (Ship, e
 	return i, err
 }
 
+const createShipType = `-- name: CreateShipType :one
+INSERT INTO ship_types (id, name, description)
+VALUES ($1, $2, $3)
+RETURNING id, name, description
+`
+
+type CreateShipTypeParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+func (q *Queries) CreateShipType(ctx context.Context, arg CreateShipTypeParams) (ShipType, error) {
+	row := q.db.QueryRowContext(ctx, createShipType, arg.ID, arg.Name, arg.Description)
+	var i ShipType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
+}
+
+const createVoyageType = `-- name: CreateVoyageType :one
+INSERT INTO voyage_types (id, name, description)
+VALUES ($1, $2, $3)
+RETURNING id, name, description
+`
+
+type CreateVoyageTypeParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+func (q *Queries) CreateVoyageType(ctx context.Context, arg CreateVoyageTypeParams) (VoyageType, error) {
+	row := q.db.QueryRowContext(ctx, createVoyageType, arg.ID, arg.Name, arg.Description)
+	var i VoyageType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
+}
+
 const deleteSeatime = `-- name: DeleteSeatime :exec
 DELETE FROM seatime WHERE id = $1 AND user_id = $2
 `
@@ -177,12 +234,39 @@ func (q *Queries) DeleteSeatime(ctx context.Context, arg DeleteSeatimeParams) er
 	return err
 }
 
+const deleteSeatimePeriodType = `-- name: DeleteSeatimePeriodType :exec
+DELETE FROM seatime_period_types WHERE id = $1
+`
+
+func (q *Queries) DeleteSeatimePeriodType(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteSeatimePeriodType, id)
+	return err
+}
+
 const deleteShip = `-- name: DeleteShip :exec
 DELETE FROM ships WHERE id = $1
 `
 
 func (q *Queries) DeleteShip(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteShip, id)
+	return err
+}
+
+const deleteShipType = `-- name: DeleteShipType :exec
+DELETE FROM ship_types WHERE id = $1
+`
+
+func (q *Queries) DeleteShipType(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteShipType, id)
+	return err
+}
+
+const deleteVoyageType = `-- name: DeleteVoyageType :exec
+DELETE FROM voyage_types WHERE id = $1
+`
+
+func (q *Queries) DeleteVoyageType(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteVoyageType, id)
 	return err
 }
 
@@ -286,6 +370,17 @@ func (q *Queries) GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]G
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSeatimePeriodTypeById = `-- name: GetSeatimePeriodTypeById :one
+SELECT id, name, description FROM seatime_period_types WHERE id = $1
+`
+
+func (q *Queries) GetSeatimePeriodTypeById(ctx context.Context, id uuid.UUID) (SeatimePeriodType, error) {
+	row := q.db.QueryRowContext(ctx, getSeatimePeriodTypeById, id)
+	var i SeatimePeriodType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
 }
 
 const getSeatimePeriodTypes = `-- name: GetSeatimePeriodTypes :many
@@ -449,6 +544,17 @@ func (q *Queries) GetShipByImo(ctx context.Context, imoNumber string) (GetShipBy
 	return i, err
 }
 
+const getShipTypeById = `-- name: GetShipTypeById :one
+SELECT id, name, description FROM ship_types WHERE id = $1
+`
+
+func (q *Queries) GetShipTypeById(ctx context.Context, id uuid.UUID) (ShipType, error) {
+	row := q.db.QueryRowContext(ctx, getShipTypeById, id)
+	var i ShipType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
+}
+
 const getShipTypes = `-- name: GetShipTypes :many
 SELECT id, name, description FROM ship_types ORDER BY name
 `
@@ -591,6 +697,17 @@ func (q *Queries) GetShipsForUser(ctx context.Context, createdBy uuid.NullUUID) 
 	return items, nil
 }
 
+const getVoyageTypeById = `-- name: GetVoyageTypeById :one
+SELECT id, name, description FROM voyage_types WHERE id = $1
+`
+
+func (q *Queries) GetVoyageTypeById(ctx context.Context, id uuid.UUID) (VoyageType, error) {
+	row := q.db.QueryRowContext(ctx, getVoyageTypeById, id)
+	var i VoyageType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
+}
+
 const getVoyageTypes = `-- name: GetVoyageTypes :many
 SELECT id, name, description FROM voyage_types ORDER BY name
 `
@@ -616,6 +733,26 @@ func (q *Queries) GetVoyageTypes(ctx context.Context) ([]VoyageType, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSeatimePeriodType = `-- name: UpdateSeatimePeriodType :one
+UPDATE seatime_period_types
+SET name = $2, description = $3
+WHERE id = $1
+RETURNING id, name, description
+`
+
+type UpdateSeatimePeriodTypeParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+func (q *Queries) UpdateSeatimePeriodType(ctx context.Context, arg UpdateSeatimePeriodTypeParams) (SeatimePeriodType, error) {
+	row := q.db.QueryRowContext(ctx, updateSeatimePeriodType, arg.ID, arg.Name, arg.Description)
+	var i SeatimePeriodType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
 }
 
 const updateShip = `-- name: UpdateShip :one
@@ -704,5 +841,45 @@ func (q *Queries) UpdateShipStatus(ctx context.Context, arg UpdateShipStatusPara
 		&i.Status,
 		&i.CreatedBy,
 	)
+	return i, err
+}
+
+const updateShipType = `-- name: UpdateShipType :one
+UPDATE ship_types
+SET name = $2, description = $3
+WHERE id = $1
+RETURNING id, name, description
+`
+
+type UpdateShipTypeParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+func (q *Queries) UpdateShipType(ctx context.Context, arg UpdateShipTypeParams) (ShipType, error) {
+	row := q.db.QueryRowContext(ctx, updateShipType, arg.ID, arg.Name, arg.Description)
+	var i ShipType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
+	return i, err
+}
+
+const updateVoyageType = `-- name: UpdateVoyageType :one
+UPDATE voyage_types
+SET name = $2, description = $3
+WHERE id = $1
+RETURNING id, name, description
+`
+
+type UpdateVoyageTypeParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+func (q *Queries) UpdateVoyageType(ctx context.Context, arg UpdateVoyageTypeParams) (VoyageType, error) {
+	row := q.db.QueryRowContext(ctx, updateVoyageType, arg.ID, arg.Name, arg.Description)
+	var i VoyageType
+	err := row.Scan(&i.ID, &i.Name, &i.Description)
 	return i, err
 }

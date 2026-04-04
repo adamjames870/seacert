@@ -120,3 +120,36 @@ type SeatimeLookups struct {
 	VoyageTypes []VoyageType `json:"voyage-types"`
 	PeriodTypes []PeriodType `json:"period-types"`
 }
+
+type ParamsAddShipType struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+}
+
+type ParamsUpdateShipType struct {
+	Id          string `json:"id" validate:"required"`
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+}
+
+type ParamsAddVoyageType struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+}
+
+type ParamsUpdateVoyageType struct {
+	Id          string `json:"id" validate:"required"`
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+}
+
+type ParamsAddPeriodType struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+}
+
+type ParamsUpdatePeriodType struct {
+	Id          string `json:"id" validate:"required"`
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+}

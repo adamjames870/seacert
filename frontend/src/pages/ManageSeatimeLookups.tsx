@@ -95,28 +95,47 @@ const ManageSeatimeLookups = () => {
   };
 
   const handleSave = async () => {
-    // Note: Admin endpoints for managing lookups aren't explicitly defined in the task but proposed.
-    // We'll implement the UI assuming they follow REST conventions.
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const type = getCurrentType();
-      const url = editingItem 
-        ? `${API_BASE_URL}/admin/seatime/lookups/${type}/${editingItem.id}`
-        : `${API_BASE_URL}/admin/seatime/lookups/${type}`;
+      const baseUrl = `${API_BASE_URL}/api/admin/seatime/${type}`;
       
-      const response = await fetch(url, {
+      const response = await fetch(baseUrl, {
         method: editingItem ? 'PUT' : 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}` 
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(editingItem ? { ...formData, id: editingItem.id } : formData),
       });
 
       if (!response.ok) throw new Error('Failed to save lookup item');
       
       fetchLookups();
       handleCloseDialog();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const type = getCurrentType();
+      const url = `${API_BASE_URL}/api/admin/seatime/${type}/${id}`;
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${session?.access_token}` 
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete lookup item');
+      
+      fetchLookups();
     } catch (err: any) {
       alert(err.message);
     }
@@ -165,7 +184,7 @@ const ManageSeatimeLookups = () => {
                     <IconButton size="small" onClick={() => handleOpenDialog(item)}>
                       <Edit size={18} />
                     </IconButton>
-                    <IconButton size="small" color="error">
+                    <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
                       <Trash2 size={18} />
                     </IconButton>
                   </TableCell>

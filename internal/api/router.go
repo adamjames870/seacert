@@ -46,6 +46,15 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("POST /admin/cert-types/resolve", authMw(adminMw(admin.HandlerAdminResolveCertType(state))))
 	mux.Handle("POST /api/admin/ships/resolve", authMw(adminMw(admin.HandlerAdminResolveShip(state))))
 	mux.Handle("POST /api/admin/ships/approve/{id}", authMw(adminMw(admin.HandlerAdminApproveShip(state))))
+	mux.Handle("POST /api/admin/seatime/ship-types", authMw(adminMw(admin.HandlerAdminAddShipType(state))))
+	mux.Handle("PUT /api/admin/seatime/ship-types", authMw(adminMw(admin.HandlerAdminUpdateShipType(state))))
+	mux.Handle("DELETE /api/admin/seatime/ship-types/{id}", authMw(adminMw(admin.HandlerAdminDeleteShipType(state))))
+	mux.Handle("POST /api/admin/seatime/voyage-types", authMw(adminMw(admin.HandlerAdminAddVoyageType(state))))
+	mux.Handle("PUT /api/admin/seatime/voyage-types", authMw(adminMw(admin.HandlerAdminUpdateVoyageType(state))))
+	mux.Handle("DELETE /api/admin/seatime/voyage-types/{id}", authMw(adminMw(admin.HandlerAdminDeleteVoyageType(state))))
+	mux.Handle("POST /api/admin/seatime/period-types", authMw(adminMw(admin.HandlerAdminAddPeriodType(state))))
+	mux.Handle("PUT /api/admin/seatime/period-types", authMw(adminMw(admin.HandlerAdminUpdatePeriodType(state))))
+	mux.Handle("DELETE /api/admin/seatime/period-types/{id}", authMw(adminMw(admin.HandlerAdminDeletePeriodType(state))))
 
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates/upload-url", authMw(api.HandlerApiGetUploadURL(state)))

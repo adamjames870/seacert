@@ -593,3 +593,105 @@ func GetShipById(ctx context.Context, repo domain.Repository, id uuid.UUID) (Shi
 		CreatedBy:       createdBy,
 	}, nil
 }
+
+// Ship Types
+
+func CreateShipType(ctx context.Context, repo domain.Repository, params dto.ParamsAddShipType) (dto.ShipType, error) {
+	st, err := repo.CreateShipType(ctx, sqlc.CreateShipTypeParams{
+		ID:          uuid.New(),
+		Name:        params.Name,
+		Description: domain.ToNullString(params.Description),
+	})
+	if err != nil {
+		return dto.ShipType{}, err
+	}
+	return MapShipType(st), nil
+}
+
+func UpdateShipType(ctx context.Context, repo domain.Repository, params dto.ParamsUpdateShipType) (dto.ShipType, error) {
+	id, err := uuid.Parse(params.Id)
+	if err != nil {
+		return dto.ShipType{}, domain.ErrInvalidInput
+	}
+	st, err := repo.UpdateShipType(ctx, sqlc.UpdateShipTypeParams{
+		ID:          id,
+		Name:        params.Name,
+		Description: domain.ToNullString(params.Description),
+	})
+	if err != nil {
+		return dto.ShipType{}, err
+	}
+	return MapShipType(st), nil
+}
+
+func DeleteShipType(ctx context.Context, repo domain.Repository, id uuid.UUID) error {
+	return repo.DeleteShipType(ctx, id)
+}
+
+// Voyage Types
+
+func CreateVoyageType(ctx context.Context, repo domain.Repository, params dto.ParamsAddVoyageType) (dto.VoyageType, error) {
+	vt, err := repo.CreateVoyageType(ctx, sqlc.CreateVoyageTypeParams{
+		ID:          uuid.New(),
+		Name:        params.Name,
+		Description: domain.ToNullString(params.Description),
+	})
+	if err != nil {
+		return dto.VoyageType{}, err
+	}
+	return MapVoyageType(vt), nil
+}
+
+func UpdateVoyageType(ctx context.Context, repo domain.Repository, params dto.ParamsUpdateVoyageType) (dto.VoyageType, error) {
+	id, err := uuid.Parse(params.Id)
+	if err != nil {
+		return dto.VoyageType{}, domain.ErrInvalidInput
+	}
+	vt, err := repo.UpdateVoyageType(ctx, sqlc.UpdateVoyageTypeParams{
+		ID:          id,
+		Name:        params.Name,
+		Description: domain.ToNullString(params.Description),
+	})
+	if err != nil {
+		return dto.VoyageType{}, err
+	}
+	return MapVoyageType(vt), nil
+}
+
+func DeleteVoyageType(ctx context.Context, repo domain.Repository, id uuid.UUID) error {
+	return repo.DeleteVoyageType(ctx, id)
+}
+
+// Period Types
+
+func CreateSeatimePeriodType(ctx context.Context, repo domain.Repository, params dto.ParamsAddPeriodType) (dto.PeriodType, error) {
+	pt, err := repo.CreateSeatimePeriodType(ctx, sqlc.CreateSeatimePeriodTypeParams{
+		ID:          uuid.New(),
+		Name:        params.Name,
+		Description: domain.ToNullString(params.Description),
+	})
+	if err != nil {
+		return dto.PeriodType{}, err
+	}
+	return MapPeriodType(pt), nil
+}
+
+func UpdateSeatimePeriodType(ctx context.Context, repo domain.Repository, params dto.ParamsUpdatePeriodType) (dto.PeriodType, error) {
+	id, err := uuid.Parse(params.Id)
+	if err != nil {
+		return dto.PeriodType{}, domain.ErrInvalidInput
+	}
+	pt, err := repo.UpdateSeatimePeriodType(ctx, sqlc.UpdateSeatimePeriodTypeParams{
+		ID:          id,
+		Name:        params.Name,
+		Description: domain.ToNullString(params.Description),
+	})
+	if err != nil {
+		return dto.PeriodType{}, err
+	}
+	return MapPeriodType(pt), nil
+}
+
+func DeleteSeatimePeriodType(ctx context.Context, repo domain.Repository, id uuid.UUID) error {
+	return repo.DeleteSeatimePeriodType(ctx, id)
+}

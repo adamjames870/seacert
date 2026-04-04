@@ -18,7 +18,9 @@ import {
   Alert,
   CircularProgress,
   Card,
-  CardContent
+  CardContent,
+  Autocomplete,
+  Chip
 } from '@mui/material';
 import { 
   Trash2, 
@@ -27,8 +29,7 @@ import {
   Calendar, 
   Clock,
   Save,
-  ArrowLeft,
-  Search
+  ArrowLeft
 } from 'lucide-react';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -52,6 +53,18 @@ interface PeriodType {
   description: string;
 }
 
+interface ShipRecord {
+  id: string;
+  name: string;
+  'ship-type-id': string;
+  'ship-type-name': string;
+  'imo-number': string;
+  gt: number;
+  flag: string;
+  'propulsion-power': number;
+  status: 'approved' | 'provisional';
+}
+
 interface SpecializedPeriod {
   id?: string;
   'period-type-id': string;
@@ -72,15 +85,10 @@ const UpdateSeatime = () => {
   const [shipTypes, setShipTypes] = useState<ShipType[]>([]);
   const [voyageTypes, setVoyageTypes] = useState<VoyageType[]>([]);
   const [periodTypes, setPeriodTypes] = useState<PeriodType[]>([]);
+  const [ships, setShips] = useState<ShipRecord[]>([]);
   
   // Form State
-  const [shipId, setShipId] = useState<string | null>(null);
-  const [shipName, setShipName] = useState('');
-  const [shipTypeId, setShipTypeId] = useState('');
-  const [imoNumber, setImoNumber] = useState('');
-  const [gt, setGt] = useState<number | ''>('');
-  const [flag, setFlag] = useState('');
-  const [propulsionPower, setPropulsionPower] = useState<number | ''>('');
+  const [selectedShip, setSelectedShip] = useState<ShipRecord | null>(null);
   
   const [voyageTypeId, setVoyageTypeId] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -129,6 +137,15 @@ const UpdateSeatime = () => {
       setVoyageTypes(lookups['voyage-types']);
       setPeriodTypes(lookups['period-types']);
 
+      // Fetch Ships for autocomplete
+      const shipsResp = await fetch(`${API_BASE_URL}/api/ships`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (shipsResp.ok) {
+        const shipsData = await shipsResp.json();
+        setShips(shipsData);
+      }
+
       // Fetch Record - Note: Assuming there's a GET /api/seatime/:id or we find it in the list
       // Since specific GET endpoint isn't documented, we'll fetch all and find it
       const recordResp = await fetch(`${API_BASE_URL}/api/seatime`, {
@@ -140,29 +157,29 @@ const UpdateSeatime = () => {
       
       if (!record) throw new Error('Record not found');
 
+      console.log('Record found:', record);
+
       // Populate form
-      setShipId(record['ship-id']);
-      setShipName(record.ship.name);
-      setShipTypeId(record.ship['ship-type-id']);
-      setImoNumber(record.ship['imo-number']);
-      setGt(record.ship.gt);
-      setFlag(record.ship.flag);
-      setPropulsionPower(record.ship['propulsion-power'] || '');
+      if (record.ship) {
+        setSelectedShip(record.ship);
+      } else {
+        setSelectedShip(null);
+      }
       
-      setVoyageTypeId(record['voyage-type-id']);
-      setStartDate(record['start-date']);
-      setEndDate(record['end-date']);
-      setStartLocation(record['start-location']);
-      setEndLocation(record['end-location']);
-      setTotalDays(record['total-days']);
-      setCompany(record.company);
-      setCapacity(record.capacity);
-      setIsWatchkeeping(record['is-watchkeeping']);
-      setPeriods(record.periods.map((p: any) => ({
+      setVoyageTypeId(record['voyage-type-id'] || '');
+      setStartDate(record['start-date'] ? record['start-date'].split('T')[0] : '');
+      setEndDate(record['end-date'] ? record['end-date'].split('T')[0] : '');
+      setStartLocation(record['start-location'] || '');
+      setEndLocation(record['end-location'] || '');
+      setTotalDays(record['total-days'] || 0);
+      setCompany(record.company || '');
+      setCapacity(record.capacity || '');
+      setIsWatchkeeping(!!record['is-watchkeeping']);
+      setPeriods((record.periods || []).map((p: any) => ({
         id: p.id,
         'period-type-id': p['period-type-id'],
-        'start-date': p['start-date'],
-        'end-date': p['end-date'],
+        'start-date': p['start-date'] ? p['start-date'].split('T')[0] : '',
+        'end-date': p['end-date'] ? p['end-date'].split('T')[0] : '',
         days: p.days,
         remarks: p.remarks
       })));
@@ -194,6 +211,11 @@ const UpdateSeatime = () => {
     setPeriods(newPeriods);
   };
 
+  const getShipTypeDescription = (ship: ShipRecord) => {
+    const type = shipTypes.find(t => t.id === ship['ship-type-id']);
+    return type?.description || ship['ship-type-name'] || 'Unknown Type';
+  };
+
   const handlePeriodChange = (index: number, field: keyof SpecializedPeriod, value: any) => {
     const newPeriods = [...periods];
     newPeriods[index] = { ...newPeriods[index], [field]: value };
@@ -221,7 +243,7 @@ const UpdateSeatime = () => {
       if (!session) throw new Error('No active session');
 
       const body: any = {
-        'ship-id': shipId,
+        'ship-id': selectedShip?.id,
         'voyage-type-id': voyageTypeId,
         'start-date': startDate,
         'end-date': endDate,
@@ -289,16 +311,65 @@ const UpdateSeatime = () => {
 
       <form onSubmit={handleSubmit}>
         <Stack spacing={4}>
-          {/* Ship Details (Locked mostly, but can show) */}
-          <Paper elevation={2} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.default' }}>
+          {/* Ship Details */}
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Ship size={24} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>Ship Information</Typography>
+              <Ship size={24} className="text-primary" />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Ship Details</Typography>
             </Box>
-            <Typography variant="body1" sx={{ fontWeight: 700 }}>{shipName}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              IMO: {imoNumber} • {gt} GT • {flag}
-            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={ships}
+                  getOptionLabel={(option) => `${option.name} (${option['imo-number']})`}
+                  value={selectedShip}
+                  onChange={(_, newValue) => setSelectedShip(newValue)}
+                  sx={{ mb: 1 }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Ship"
+                      required
+                      variant="outlined"
+                      fullWidth
+                      InputProps={{
+                        ...params.InputProps,
+                        sx: { fontSize: '1.2rem', py: 1.5 }
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => {
+                    const { key, ...optionProps } = props as any;
+                    return (
+                      <li key={key} {...optionProps}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{option.name}</Typography>
+                            {option.status === 'provisional' && (
+                              <Chip label="Provisional" size="small" color="warning" variant="outlined" />
+                            )}
+                          </Box>
+                          <Typography variant="caption" color="text.secondary">
+                            IMO: {option['imo-number']} | {getShipTypeDescription(option)}
+                          </Typography>
+                        </Box>
+                      </li>
+                    );
+                  }}
+                />
+              </Grid>
+
+              {selectedShip && (
+                <Grid item xs={12}>
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Type: {getShipTypeDescription(selectedShip)} | Flag: {selectedShip.flag} | GT: {selectedShip.gt}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
           </Paper>
 
           {/* Voyage Details */}
@@ -309,91 +380,106 @@ const UpdateSeatime = () => {
             </Box>
 
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Voyage Type</InputLabel>
-                  <Select
-                    value={voyageTypeId}
-                    label="Voyage Type"
-                    onChange={(e) => setVoyageTypeId(e.target.value)}
-                  >
-                    {voyageTypes.map((type) => (
-                      <MenuItem key={type.id} value={type.id}>{type.description}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={isWatchkeeping} 
-                      onChange={(e) => setIsWatchkeeping(e.target.checked)} 
-                    />
-                  }
-                  label="Watchkeeping Service"
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  type="date"
-                  label="Start Date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  type="date"
-                  label="End Date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+              {/* Row 1: Voyage Type and Watchkeeping */}
+              <Grid item xs={12} container spacing={2} alignItems="center">
+                <Grid item xs={12} md={8}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Voyage Type</InputLabel>
+                    <Select
+                      value={voyageTypeId}
+                      label="Voyage Type"
+                      onChange={(e) => setVoyageTypeId(e.target.value)}
+                    >
+                      {voyageTypes.map((type) => (
+                        <MenuItem key={type.id} value={type.id}>{type.description}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={
+                      <Switch 
+                        checked={isWatchkeeping} 
+                        onChange={(e) => setIsWatchkeeping(e.target.checked)} 
+                      />
+                    }
+                    label="Watchkeeping"
+                    sx={{ ml: 1 }}
+                  />
+                </Grid>
               </Grid>
               
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Start Location"
-                  value={startLocation}
-                  onChange={(e) => setStartLocation(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="End Location"
-                  value={endLocation}
-                  onChange={(e) => setEndLocation(e.target.value)}
-                />
+              {/* Row 2: Capacity and Company */}
+              <Grid item xs={12} container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Capacity / Rank"
+                    value={capacity}
+                    onChange={(e) => setCapacity(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Company / Employer"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                  />
+                </Grid>
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Company"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                />
+              {/* Row 3: Start Date and Location */}
+              <Grid item xs={12} container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="date"
+                    label="Start Date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Start Location"
+                    placeholder="e.g. Southampton"
+                    value={startLocation}
+                    onChange={(e) => setStartLocation(e.target.value)}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Capacity"
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                />
+
+              {/* Row 4: End Date and Location */}
+              <Grid item xs={12} container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="date"
+                    label="End Date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="End Location"
+                    placeholder="e.g. New York"
+                    value={endLocation}
+                    onChange={(e) => setEndLocation(e.target.value)}
+                  />
+                </Grid>
               </Grid>
 
               <Grid item xs={12}>
@@ -446,7 +532,7 @@ const UpdateSeatime = () => {
                             onChange={(e) => handlePeriodChange(index, 'period-type-id', e.target.value)}
                           >
                             {periodTypes.map((type) => (
-                              <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+                              <MenuItem key={type.id} value={type.id}>{type.description}</MenuItem>
                             ))}
                           </Select>
                         </FormControl>

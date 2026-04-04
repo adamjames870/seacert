@@ -43,8 +43,22 @@ type Repository interface {
 
 	// Seatime
 	GetShipTypes(ctx context.Context) ([]sqlc.ShipType, error)
+	GetShipTypeById(ctx context.Context, id uuid.UUID) (sqlc.ShipType, error)
+	CreateShipType(ctx context.Context, arg sqlc.CreateShipTypeParams) (sqlc.ShipType, error)
+	UpdateShipType(ctx context.Context, arg sqlc.UpdateShipTypeParams) (sqlc.ShipType, error)
+	DeleteShipType(ctx context.Context, id uuid.UUID) error
+
 	GetVoyageTypes(ctx context.Context) ([]sqlc.VoyageType, error)
+	GetVoyageTypeById(ctx context.Context, id uuid.UUID) (sqlc.VoyageType, error)
+	CreateVoyageType(ctx context.Context, arg sqlc.CreateVoyageTypeParams) (sqlc.VoyageType, error)
+	UpdateVoyageType(ctx context.Context, arg sqlc.UpdateVoyageTypeParams) (sqlc.VoyageType, error)
+	DeleteVoyageType(ctx context.Context, id uuid.UUID) error
+
 	GetSeatimePeriodTypes(ctx context.Context) ([]sqlc.SeatimePeriodType, error)
+	GetSeatimePeriodTypeById(ctx context.Context, id uuid.UUID) (sqlc.SeatimePeriodType, error)
+	CreateSeatimePeriodType(ctx context.Context, arg sqlc.CreateSeatimePeriodTypeParams) (sqlc.SeatimePeriodType, error)
+	UpdateSeatimePeriodType(ctx context.Context, arg sqlc.UpdateSeatimePeriodTypeParams) (sqlc.SeatimePeriodType, error)
+	DeleteSeatimePeriodType(ctx context.Context, id uuid.UUID) error
 	GetShipByImo(ctx context.Context, imoNumber string) (sqlc.GetShipByImoRow, error)
 	GetShipById(ctx context.Context, id uuid.UUID) (sqlc.GetShipByIdRow, error)
 	GetShips(ctx context.Context) ([]sqlc.GetShipsRow, error)

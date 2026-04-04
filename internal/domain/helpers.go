@@ -37,7 +37,17 @@ func ToNullBoolFromPointer(b *bool) sql.NullBool {
 }
 
 func ToNullString(s string) sql.NullString {
+	if s == "" {
+		return sql.NullString{Valid: false}
+	}
 	return sql.NullString{String: s, Valid: true}
+}
+
+func FromNullString(s sql.NullString) string {
+	if !s.Valid {
+		return ""
+	}
+	return s.String
 }
 
 func ToNullInt32OrNil(v int32) sql.NullInt32 {
