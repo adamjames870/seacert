@@ -32,8 +32,8 @@ const Login = () => {
 
       if (error) throw error;
       
-      // On success, redirect to certificates
-      navigate('/certificates');
+      // On success, redirect to dashboard
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
     } finally {

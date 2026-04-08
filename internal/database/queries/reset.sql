@@ -1,3 +1,12 @@
+-- name: ResetShips :exec
+DELETE from ships;
+
+-- name: ResetSeatimePeriods :exec
+DELETE from seatime_periods;
+
+-- name: ResetSeatime :exec
+DELETE from seatime;
+
 -- name: ResetSuccessions :exec
 DELETE from successions;
 

@@ -20,8 +20,9 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import EditIcon from '@mui/icons-material/Edit'
-import { Anchor } from 'lucide-react'
+import { Anchor, Shield, Ship as ShipIcon } from 'lucide-react'
 import Home from './pages/Home'
+import Dashboard from './pages/Dashboard'
 import SignUp from './pages/SignUp'
 import Login from './pages/Login'
 import Certificates from './pages/Certificates'
@@ -34,6 +35,12 @@ import AddCertType from './pages/AddCertType'
 import EditCertType from './pages/EditCertType'
 import Issuers from './pages/Issuers'
 import EditIssuer from './pages/EditIssuer'
+import SeatimeHistory from './pages/SeatimeHistory'
+import AddSeatime from './pages/AddSeatime'
+import UpdateSeatime from './pages/UpdateSeatime'
+import ManageSeatimeLookups from './pages/ManageSeatimeLookups'
+import Ships from './pages/Ships'
+import ShipForm from './pages/ShipForm'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
@@ -228,7 +235,14 @@ function App() {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleClose}
+            disableScrollLock={true}
           >
+            <MenuItem onClick={handleClose} component={RouterLink} to="/">
+              Dashboard
+            </MenuItem>
+
+            <Divider />
+
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
               Certificates
             </MenuItem>
@@ -238,13 +252,38 @@ function App() {
             <MenuItem onClick={handleOpenReport}>
               Certificate Report
             </MenuItem>
+            
+            <Divider />
+            
+            <MenuItem onClick={handleClose} component={RouterLink} to="/seatime">
+              Seatime History
+            </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
+              Add Seatime Period
+            </MenuItem>
+            
             {isAdmin && [
-              <Divider key="divider" />,
-              <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers">
+              <Divider key="divider-admin" />,
+              <Box key="admin-certs-header" sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Shield size={16} color="gray" />
+                <Typography variant="overline" sx={{ fontWeight: 700, color: 'text.secondary' }}>Admin: Certificates</Typography>
+              </Box>,
+              <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers" sx={{ pl: 4 }}>
                 Issuers
               </MenuItem>,
-              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types">
+              <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types" sx={{ pl: 4 }}>
                 Certificate Types
+              </MenuItem>,
+              
+              <Box key="admin-seatime-header" sx={{ px: 2, py: 1, mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ShipIcon size={16} color="gray" />
+                <Typography variant="overline" sx={{ fontWeight: 700, color: 'text.secondary' }}>Admin: Seatime & Ships</Typography>
+              </Box>,
+              <MenuItem key="ships" onClick={handleClose} component={RouterLink} to="/ships" sx={{ pl: 4 }}>
+                Ships
+              </MenuItem>,
+              <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups" sx={{ pl: 4 }}>
+                Seatime Lookups
               </MenuItem>
             ]}
           </Menu>
@@ -283,6 +322,7 @@ function App() {
                   anchorEl={accountAnchorEl}
                   open={Boolean(accountAnchorEl)}
                   onClose={handleClose}
+                  disableScrollLock={true}
                   anchorOrigin={{
                     vertical: 'bottom',
                     horizontal: 'right',
@@ -339,13 +379,21 @@ function App() {
       </AppBar>
       <Toolbar /> {/* Spacer to prevent content from being hidden under fixed AppBar */}
       <Routes>
-        <Route path="/" element={session ? <Navigate to="/certificates" replace /> : <Home />} />
+        <Route path="/" element={session ? <Dashboard /> : <Home />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
+
+        <Route path="/seatime" element={session ? <SeatimeHistory /> : <Navigate to="/login" replace />} />
+        <Route path="/add-seatime" element={session ? <AddSeatime /> : <Navigate to="/login" replace />} />
+        <Route path="/update-seatime/:id" element={session ? <UpdateSeatime /> : <Navigate to="/login" replace />} />
+        <Route path="/ships" element={isAdmin ? <Ships /> : <Navigate to="/certificates" replace />} />
+        <Route path="/add-ship" element={isAdmin ? <ShipForm /> : <Navigate to="/certificates" replace />} />
+        <Route path="/edit-ship/:id" element={isAdmin ? <ShipForm /> : <Navigate to="/certificates" replace />} />
+        <Route path="/admin/seatime-lookups" element={isAdmin ? <ManageSeatimeLookups /> : <Navigate to="/certificates" replace />} />
         
         {/* Certificate Types: Admin can see all, Users can add types from AddCertificate flow */}
         <Route path="/cert-types" element={isAdmin ? <CertTypes /> : <Navigate to="/certificates" replace />} />

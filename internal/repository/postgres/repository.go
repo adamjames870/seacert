@@ -23,6 +23,9 @@ func NewRepository(db *sql.DB) domain.Repository {
 
 func (r *repository) ResetAll(ctx context.Context) error {
 	return r.WithTx(ctx, func(txRepo domain.Repository) error {
+		_ = r.Queries.ResetSeatimePeriods(ctx)
+		_ = r.Queries.ResetSeatime(ctx)
+		_ = r.Queries.ResetShips(ctx)
 		_ = r.Queries.ResetSuccessions(ctx)
 		_ = r.Queries.ResetCerts(ctx)
 		_ = r.Queries.ResetCertTypes(ctx)

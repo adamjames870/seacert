@@ -57,6 +57,59 @@ type Issuer struct {
 	Website   sql.NullString
 }
 
+type Seatime struct {
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	ShipID         uuid.UUID
+	VoyageTypeID   uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	StartDate      time.Time
+	StartLocation  string
+	EndDate        time.Time
+	EndLocation    string
+	TotalDays      int32
+	Company        string
+	Capacity       string
+	IsWatchkeeping bool
+}
+
+type SeatimePeriod struct {
+	ID           uuid.UUID
+	SeatimeID    uuid.UUID
+	PeriodTypeID uuid.UUID
+	StartDate    time.Time
+	EndDate      time.Time
+	Days         int32
+	Remarks      sql.NullString
+}
+
+type SeatimePeriodType struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
+type Ship struct {
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Name            string
+	ShipTypeID      uuid.UUID
+	ImoNumber       string
+	Gt              int32
+	Flag            string
+	PropulsionPower sql.NullInt32
+	Status          string
+	CreatedBy       uuid.NullUUID
+}
+
+type ShipType struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
+}
+
 type Succession struct {
 	ID      uuid.UUID
 	NewCert uuid.UUID
@@ -76,4 +129,10 @@ type User struct {
 	EmailConsentTimestamp sql.NullTime
 	EmailConsentVersion   sql.NullString
 	EmailConsentSource    sql.NullString
+}
+
+type VoyageType struct {
+	ID          uuid.UUID
+	Name        string
+	Description sql.NullString
 }

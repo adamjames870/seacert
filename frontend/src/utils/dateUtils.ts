@@ -35,3 +35,27 @@ export const calculateExpiryDate = (issuedDate: string, validityMonths: number |
 
   return expiryDate.toISOString().split('T')[0];
 };
+
+export const calculateDaysInYear = (startDate: string, endDate: string, year: number): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Create year boundaries in UTC to match 'YYYY-MM-DD' parsing
+  const yearStart = new Date(`${year}-01-01`);
+  const yearEnd = new Date(`${year}-12-31`);
+  
+  // Determine the overlap range
+  const overlapStart = start > yearStart ? start : yearStart;
+  const overlapEnd = end < yearEnd ? end : yearEnd;
+  
+  // If no overlap
+  if (overlapStart > overlapEnd) {
+    return 0;
+  }
+  
+  // Calculate difference in days (inclusive)
+  const diffTime = Math.abs(overlapEnd.getTime() - overlapStart.getTime());
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  
+  return diffDays;
+};

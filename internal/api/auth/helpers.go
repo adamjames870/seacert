@@ -105,3 +105,11 @@ func UserIdFromContext(ctx context.Context) (uuid.UUID, error) {
 
 	return uuidId, nil
 }
+
+func IsAdmin(ctx context.Context) bool {
+	user, ok := UserFromContext(ctx)
+	if !ok {
+		return false
+	}
+	return user.Role == "admin"
+}
