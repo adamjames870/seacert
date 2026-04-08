@@ -51,6 +51,10 @@ import DownloadIcon from '@mui/icons-material/Download';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { 
+  Plus, 
+  ShieldCheck
+} from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 import { formatDate } from '../utils/dateUtils';
@@ -423,86 +427,139 @@ const Certificates = () => {
 
   return (
     <Container sx={{ position: 'relative', minHeight: '60vh' }}>
-      <Box sx={{ 
-        mt: 4, 
-        opacity: !loading && !error && certificates.length === 0 ? 0.3 : 1,
-        transition: 'opacity 0.3s'
-      }}>
-        <Stack 
-          direction={{ xs: 'column', md: 'row' }} 
-          spacing={2} 
-          justifyContent="space-between" 
-          alignItems={{ xs: 'stretch', md: 'center' }} 
-          sx={{ mb: 3 }}
-        >
-          <Typography variant="h4" component="h1">
-            Certificates
-          </Typography>
-          
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={2} 
-            alignItems={{ xs: 'stretch', sm: 'center' }}
-          >
-            <TextField
-              size="small"
-              placeholder="Search certificates..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ minWidth: { xs: '100%', sm: 250 } }}
-            />
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<DescriptionIcon />}
-              onClick={() => setReportDialogOpen(true)}
-              sx={{ whiteSpace: 'nowrap' }}
-            >
-              Report
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
+      {!loading && !error && certificates.length === 0 ? (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '60vh',
+          textAlign: 'center'
+        }}>
+          <Paper sx={{ 
+            p: 8, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            borderRadius: 4,
+            bgcolor: 'background.paper',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: 'divider',
+            maxWidth: 600,
+            width: '100%'
+          }}>
+            <Box sx={{ 
+              mb: 3, 
+              p: 3, 
+              borderRadius: '50%', 
+              bgcolor: 'primary.light', 
+              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <ShieldCheck size={64} />
+            </Box>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+              No Certificates
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
+              You haven't added any certificates yet. Start adding your maritime qualifications to keep track of their validity.
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large"
+              startIcon={<Plus size={24} />}
               component={RouterLink}
               to="/add-certificate"
-              sx={{ whiteSpace: 'nowrap' }}
+              sx={{ px: 4, py: 1.5, borderRadius: 2, fontSize: '1.1rem', fontWeight: 700 }}
             >
-              Add Certificate
+              Add First Certificate
             </Button>
+          </Paper>
+        </Box>
+      ) : (
+        <>
+          <Box sx={{ 
+            mt: 4,
+            transition: 'opacity 0.3s'
+          }}>
+            <Stack 
+              direction={{ xs: 'column', md: 'row' }} 
+              spacing={2} 
+              justifyContent="space-between" 
+              alignItems={{ xs: 'stretch', md: 'center' }} 
+              sx={{ mb: 3 }}
+            >
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+                Certificates
+              </Typography>
+              
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }} 
+                spacing={2} 
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+              >
+                <TextField
+                  size="small"
+                  placeholder="Search certificates..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ minWidth: { xs: '100%', sm: 250 } }}
+                />
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<DescriptionIcon />}
+                  onClick={() => setReportDialogOpen(true)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Report
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddIcon />}
+                  component={RouterLink}
+                  to="/add-certificate"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Add Certificate
+                </Button>
 
-            {!loading && !error && certificates.length > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FormControl size="small" sx={{ minWidth: 120, flexGrow: { xs: 1, sm: 0 } }}>
-                  <InputLabel id="sort-by-label">Sort By</InputLabel>
-                  <Select
-                    labelId="sort-by-label"
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={(e) => setSortBy(e.target.value as SortField)}
-                  >
-                    <MenuItem value="cert-type-name">Name</MenuItem>
-                    <MenuItem value="issuer-name">Issuer</MenuItem>
-                    <MenuItem value="issued-date">Issue Date</MenuItem>
-                    <MenuItem value="expiry-date">Expiry Date</MenuItem>
-                  </Select>
-                </FormControl>
-                <Tooltip title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}>
-                  <IconButton onClick={toggleSortOrder} color="primary" size="small">
-                    {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            )}
-          </Stack>
-        </Stack>
+                {!loading && !error && certificates.length > 0 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <FormControl size="small" sx={{ minWidth: 120, flexGrow: { xs: 1, sm: 0 } }}>
+                      <InputLabel id="sort-by-label">Sort By</InputLabel>
+                      <Select
+                        labelId="sort-by-label"
+                        value={sortBy}
+                        label="Sort By"
+                        onChange={(e) => setSortBy(e.target.value as SortField)}
+                      >
+                        <MenuItem value="cert-type-name">Name</MenuItem>
+                        <MenuItem value="issuer-name">Issuer</MenuItem>
+                        <MenuItem value="issued-date">Issue Date</MenuItem>
+                        <MenuItem value="expiry-date">Expiry Date</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <Tooltip title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}>
+                      <IconButton onClick={toggleSortOrder} color="primary" size="small">
+                        {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                )}
+              </Stack>
+            </Stack>
 
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -1324,53 +1381,7 @@ const Certificates = () => {
         </DialogActions>
       </Dialog>
       <ReportPreviewDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} />
-
-      {!loading && !error && certificates.length === 0 && (
-        <Box 
-          sx={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center', 
-            justifyContent: 'center',
-            textAlign: 'center',
-            gap: 3,
-            zIndex: 10,
-            width: '100%',
-            maxWidth: 500,
-            p: 4,
-            pointerEvents: 'auto'
-          }}
-        >
-          <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Your certificate list is empty
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            startIcon={<AddIcon />}
-            component={RouterLink}
-            to="/add-certificate"
-            sx={{ 
-              px: 6, 
-              py: 2, 
-              fontSize: '1.2rem',
-              borderRadius: 4,
-              boxShadow: 6,
-              '&:hover': {
-                boxShadow: 10,
-                transform: 'translateY(-2px)'
-              },
-              transition: 'all 0.2s'
-            }}
-          >
-            Add First Certificate
-          </Button>
-        </Box>
+        </>
       )}
     </Container>
   );

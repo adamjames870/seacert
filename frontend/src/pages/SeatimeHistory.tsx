@@ -166,11 +166,18 @@ const SeatimeHistory = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 4,
+        opacity: loading || error ? 0.3 : 1,
+        transition: 'opacity 0.3s'
+      }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
           Seatime History
         </Typography>
-        {!isEmpty && (
+        {!isEmpty && !loading && !error && (
           <Button 
             variant="contained" 
             startIcon={<Plus size={20} />}
@@ -188,7 +195,7 @@ const SeatimeHistory = () => {
         </Alert>
       )}
 
-      {isEmpty ? (
+      {isEmpty && !loading && !error ? (
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'column', 
@@ -311,7 +318,7 @@ const SeatimeHistory = () => {
                       </Stack>
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: { md: 'flex-end' }, justifyContent: 'center' }}>
+                    <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', md: 'flex-end' }, justifyContent: 'center' }}>
                       <IconButton 
                         size="small" 
                         color="primary"
