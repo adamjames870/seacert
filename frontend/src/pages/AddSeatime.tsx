@@ -12,6 +12,7 @@ import {
   Select, 
   MenuItem, 
   FormControlLabel, 
+  Checkbox,
   Switch, 
   IconButton, 
   Divider, 
@@ -112,7 +113,7 @@ const AddSeatime = () => {
   const [totalDays, setTotalDays] = useState<number>(0);
   const [company, setCompany] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [isWatchkeeping, setIsWatchkeeping] = useState(true);
+  const [isWatchkeeping, setIsWatchkeeping] = useState(false);
   const [periods, setPeriods] = useState<SpecializedPeriod[]>([]);
   const [showShipForm, setShowShipForm] = useState(false);
 
@@ -176,9 +177,10 @@ const AddSeatime = () => {
       if (!response.ok) throw new Error('Failed to fetch ships');
 
       const data = await response.json();
-      setShips(data);
+      setShips(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching ships:', err);
+      setShips([]);
     }
   };
 
@@ -342,16 +344,17 @@ const AddSeatime = () => {
             <Grid container spacing={2}>
               <Grid size={12}>
                 <Autocomplete
-                  options={ships}
-                  getOptionLabel={(option) => `${option.name} (${option['imo-number']})`}
+                  options={ships || []}
+                  getOptionLabel={(option) => option ? `${option.name} (${option['imo-number']})` : ''}
                   value={selectedShip}
                   onChange={handleShipSelect}
+                  noOptionsText="No ships found. Add new ship details below."
                   fullWidth
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Select Existing Ship or Search IMO"
-                      placeholder="Start typing ship name or IMO..."
+                      placeholder={ships.length === 0 ? "No existing ships found - add new details below" : "Start typing ship name or IMO..."}
                       variant="outlined"
                       fullWidth
                       InputProps={{
@@ -367,6 +370,7 @@ const AddSeatime = () => {
                     />
                   )}
                   renderOption={(props, option) => {
+                    if (!option) return null;
                     const { key, ...optionProps } = props as any;
                     return (
                       <li key={key} {...optionProps}>
@@ -386,8 +390,10 @@ const AddSeatime = () => {
                   }}
                   filterOptions={(options, params) => {
                     const filtered = options.filter(o => 
-                      o.name.toLowerCase().includes(params.inputValue.toLowerCase()) ||
-                      o['imo-number'].toLowerCase().includes(params.inputValue.toLowerCase())
+                      o && (
+                        o.name.toLowerCase().includes(params.inputValue.toLowerCase()) ||
+                        o['imo-number'].toLowerCase().includes(params.inputValue.toLowerCase())
+                      )
                     );
                     return filtered;
                   }}
@@ -523,7 +529,7 @@ const AddSeatime = () => {
               <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
                 <FormControlLabel
                   control={
-                    <Switch 
+                    <Checkbox 
                       checked={isWatchkeeping} 
                       onChange={(e) => setIsWatchkeeping(e.target.checked)} 
                     />
@@ -609,7 +615,14 @@ const AddSeatime = () => {
 
           {/* Specialized Periods */}
           <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between', 
+              alignItems: { xs: 'flex-start', sm: 'center' }, 
+              gap: { xs: 2, sm: 0 },
+              mb: 3 
+            }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Clock size={24} className="text-primary" />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>Specialized Service Periods</Typography>
@@ -619,6 +632,7 @@ const AddSeatime = () => {
                 onClick={handleAddPeriod}
                 variant="outlined"
                 size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Add Period
               </Button>

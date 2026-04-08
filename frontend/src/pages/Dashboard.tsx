@@ -10,6 +10,8 @@ import {
   Alert,
   Divider,
   Stack,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   ShieldCheck,
@@ -22,7 +24,7 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate, calculateDaysInYear } from '../utils/dateUtils';
 
 interface Certificate {
   id: string;
@@ -130,12 +132,10 @@ const Dashboard = () => {
     const lastYear = currentYear - 1;
 
     const seadaysThisYear = seatime
-      .filter(r => new Date(r['end-date']).getFullYear() === currentYear)
-      .reduce((sum, r) => sum + r['total-days'], 0);
+      .reduce((sum, r) => sum + calculateDaysInYear(r['start-date'], r['end-date'], currentYear), 0);
 
     const seadaysLastYear = seatime
-      .filter(r => new Date(r['end-date']).getFullYear() === lastYear)
-      .reduce((sum, r) => sum + r['total-days'], 0);
+      .reduce((sum, r) => sum + calculateDaysInYear(r['start-date'], r['end-date'], lastYear), 0);
 
     const unapprovedShips = ships.filter(s => s.status === 'provisional').length;
     const unapprovedCertTypes = certTypes.filter(ct => ct.status === 'provisional').length;
@@ -177,18 +177,7 @@ const Dashboard = () => {
           <Typography variant="h4" component="h1" sx={{ fontWeight: 800, color: 'primary.main' }}>
             Dashboard
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Welcome back to your maritime career summary.
-          </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
-           <Button variant="outlined" startIcon={<Plus size={18} />} component={RouterLink} to="/add-certificate" size="small">
-             Add Cert
-           </Button>
-           <Button variant="outlined" startIcon={<Plus size={18} />} component={RouterLink} to="/add-seatime" size="small">
-             Add Seatime
-           </Button>
-        </Stack>
       </Box>
 
       <Grid container spacing={4} justifyContent="center" alignItems="stretch" sx={{ px: { xs: 2, md: 0 } }}>
@@ -196,11 +185,50 @@ const Dashboard = () => {
         <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex' }}>
           <Paper sx={{ p: 4, width: '100%', minWidth: 0, borderRadius: 4, boxShadow: '0 4px 25px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1.5 }}>
-                <Box sx={{ p: 1, bgcolor: 'primary.light', borderRadius: 2, color: 'primary.main', display: 'flex' }}>
-                  <ShieldCheck size={26} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                <Box 
+                  component={RouterLink} 
+                  to="/certificates" 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1.5, 
+                    textDecoration: 'none', 
+                    color: 'inherit',
+                    '&:hover': {
+                      opacity: 0.8,
+                      '& .header-icon-box': {
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                      }
+                    },
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <Box className="header-icon-box" sx={{ p: 1, bgcolor: 'primary.light', borderRadius: 2, color: 'primary.main', display: 'flex', transition: 'all 0.2s' }}>
+                    <ShieldCheck size={26} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>Certificates</Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>Certificates</Typography>
+                <Tooltip title="Add Certificate">
+                  <IconButton 
+                    component={RouterLink} 
+                    to="/add-certificate"
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'background.paper', 
+                      color: 'primary.main',
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                      }
+                    }}
+                  >
+                    <Plus size={20} />
+                  </IconButton>
+                </Tooltip>
               </Box>
               
               {stats.totalCerts > 0 ? (
@@ -264,11 +292,50 @@ const Dashboard = () => {
         <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex' }}>
           <Paper sx={{ p: 4, width: '100%', minWidth: 0, borderRadius: 4, boxShadow: '0 4px 25px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1.5 }}>
-                <Box sx={{ p: 1, bgcolor: 'secondary.light', borderRadius: 2, color: 'secondary.main', display: 'flex' }}>
-                  <Ship size={26} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                <Box 
+                  component={RouterLink} 
+                  to="/seatime" 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1.5, 
+                    textDecoration: 'none', 
+                    color: 'inherit',
+                    '&:hover': {
+                      opacity: 0.8,
+                      '& .header-icon-box-seatime': {
+                        bgcolor: 'secondary.main',
+                        color: 'secondary.contrastText',
+                      }
+                    },
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <Box className="header-icon-box-seatime" sx={{ p: 1, bgcolor: 'secondary.light', borderRadius: 2, color: 'secondary.main', display: 'flex', transition: 'all 0.2s' }}>
+                    <Ship size={26} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>Seatime</Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>Seatime</Typography>
+                <Tooltip title="Add Seatime Period">
+                  <IconButton 
+                    component={RouterLink} 
+                    to="/add-seatime"
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'background.paper', 
+                      color: 'secondary.main',
+                      border: '1px solid',
+                      borderColor: 'secondary.main',
+                      '&:hover': {
+                        bgcolor: 'secondary.main',
+                        color: 'secondary.contrastText',
+                      }
+                    }}
+                  >
+                    <Plus size={20} />
+                  </IconButton>
+                </Tooltip>
               </Box>
 
               {stats.numPeriods > 0 ? (

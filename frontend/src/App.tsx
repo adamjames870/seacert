@@ -240,6 +240,9 @@ function App() {
             <MenuItem onClick={handleClose} component={RouterLink} to="/">
               Dashboard
             </MenuItem>
+
+            <Divider />
+
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
               Certificates
             </MenuItem>
@@ -256,7 +259,7 @@ function App() {
               Seatime History
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
-              Record Seatime Period
+              Add Seatime Period
             </MenuItem>
             
             {isAdmin && [
@@ -278,9 +281,6 @@ function App() {
               </Box>,
               <MenuItem key="ships" onClick={handleClose} component={RouterLink} to="/ships" sx={{ pl: 4 }}>
                 Ships
-              </MenuItem>,
-              <MenuItem key="add-ship" onClick={handleClose} component={RouterLink} to="/add-ship" sx={{ pl: 4 }}>
-                Add Ship
               </MenuItem>,
               <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups" sx={{ pl: 4 }}>
                 Seatime Lookups

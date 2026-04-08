@@ -12,6 +12,7 @@ import {
   Select, 
   MenuItem, 
   FormControlLabel, 
+  Checkbox,
   Switch, 
   IconButton, 
   Stack,
@@ -96,7 +97,7 @@ const UpdateSeatime = () => {
   const [totalDays, setTotalDays] = useState<number>(0);
   const [company, setCompany] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [isWatchkeeping, setIsWatchkeeping] = useState(true);
+  const [isWatchkeeping, setIsWatchkeeping] = useState(false);
   const [periods, setPeriods] = useState<SpecializedPeriod[]>([]);
 
   useEffect(() => {
@@ -141,8 +142,11 @@ const UpdateSeatime = () => {
       });
       let fetchedShips: ShipRecord[] = [];
       if (shipsDataResponse.ok) {
-        fetchedShips = await shipsDataResponse.json();
+        const shipsData = await shipsDataResponse.json();
+        fetchedShips = Array.isArray(shipsData) ? shipsData : [];
         setShips(fetchedShips);
+      } else {
+        setShips([]);
       }
 
       // Fetch Record - Note: Backend might provide specific endpoint or use list
@@ -233,9 +237,10 @@ const UpdateSeatime = () => {
     setPeriods(newPeriods);
   };
 
-  const getShipTypeDescription = (ship: ShipRecord) => {
+  const getShipTypeDescription = (ship: ShipRecord | null) => {
+    if (!ship) return 'Unknown Ship';
     const type = shipTypes.find(t => t.id === ship['ship-type-id']);
-    return type?.description || ship['ship-type-name'] || 'Unknown Type';
+    return type ? type.description : (ship['ship-type-name'] || 'Unknown Type');
   };
 
   const handlePeriodChange = (index: number, field: keyof SpecializedPeriod, value: any) => {
@@ -355,10 +360,11 @@ const UpdateSeatime = () => {
             <Grid container spacing={2}>
               <Grid size={12}>
                 <Autocomplete
-                  options={ships}
-                  getOptionLabel={(option) => `${option.name} (${option['imo-number']})`}
+                  options={ships || []}
+                  getOptionLabel={(option) => option ? `${option.name} (${option['imo-number']})` : ''}
                   value={selectedShip}
                   onChange={(_, newValue) => setSelectedShip(newValue)}
+                  noOptionsText="No ships found."
                   fullWidth
                   renderInput={(params) => (
                     <TextField
@@ -380,6 +386,7 @@ const UpdateSeatime = () => {
                     />
                   )}
                   renderOption={(props, option) => {
+                    if (!option) return null;
                     const { key, ...optionProps } = props as any;
                     return (
                       <li key={key} {...optionProps}>
@@ -437,7 +444,7 @@ const UpdateSeatime = () => {
               <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
                 <FormControlLabel
                   control={
-                    <Switch 
+                    <Checkbox 
                       checked={isWatchkeeping} 
                       onChange={(e) => setIsWatchkeeping(e.target.checked)} 
                     />
@@ -523,7 +530,14 @@ const UpdateSeatime = () => {
 
           {/* Specialized Periods */}
           <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between', 
+              alignItems: { xs: 'flex-start', sm: 'center' }, 
+              gap: { xs: 2, sm: 0 },
+              mb: 3 
+            }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Clock size={24} className="text-primary" />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>Specialized Service Periods</Typography>
@@ -533,6 +547,7 @@ const UpdateSeatime = () => {
                 onClick={handleAddPeriod}
                 variant="outlined"
                 size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Add Period
               </Button>
