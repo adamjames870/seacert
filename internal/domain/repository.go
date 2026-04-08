@@ -74,6 +74,7 @@ type Repository interface {
 	DeleteSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) error
 	GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error)
 	GetSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) ([]sqlc.GetSeatimePeriodsRow, error)
+	GetOverlappingSeatime(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error)
 	DeleteSeatime(ctx context.Context, arg sqlc.DeleteSeatimeParams) error
 
 	ResetAll(ctx context.Context) error

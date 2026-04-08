@@ -153,3 +153,13 @@ RETURNING *;
 
 -- name: DeleteSeatimePeriods :exec
 DELETE FROM seatime_periods WHERE seatime_id = $1;
+
+-- name: GetOverlappingSeatime :many
+SELECT * FROM seatime
+WHERE user_id = $1
+AND (
+    (start_date <= sqlc.arg(new_start_date) AND end_date >= sqlc.arg(new_start_date)) -- existing covers new start
+    OR (start_date <= sqlc.arg(new_end_date) AND end_date >= sqlc.arg(new_end_date)) -- existing covers new end
+    OR (start_date >= sqlc.arg(new_start_date) AND end_date <= sqlc.arg(new_end_date)) -- new covers existing
+)
+AND (sqlc.narg(current_id)::UUID IS NULL OR id != sqlc.narg(current_id));
