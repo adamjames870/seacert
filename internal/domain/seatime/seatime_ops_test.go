@@ -2,6 +2,7 @@
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -189,6 +190,15 @@ func (m *mockRepo) GetSeatimePeriods(ctx context.Context, seatimeID uuid.UUID) (
 	return nil, nil
 }
 
+func (m *mockRepo) GetOverlappingSeatime(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error) {
+	if mockGetOverlappingSeatime != nil {
+		return mockGetOverlappingSeatime(ctx, arg)
+	}
+	return nil, nil
+}
+
+var mockGetOverlappingSeatime func(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error)
+
 func (m *mockRepo) GetSeatimeByUserId(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error) {
 	if mockGetSeatimeByUserId != nil {
 		return mockGetSeatimeByUserId(ctx, userID)
@@ -314,6 +324,27 @@ func TestCreateSeatimeValidation(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Overlapping voyage dates",
+			params: dto.ParamsAddSeatime{
+				StartDate:     "2024-01-05",
+				EndDate:       "2024-01-15",
+				VoyageTypeId:  voyageTypeId,
+				StartLocation: "London",
+				EndLocation:   "New York",
+				TotalDays:     11,
+				Company:       "Global Ships",
+				Capacity:      "Master",
+				Ship: &dto.ParamsAddShip{
+					Name:       "Ocean Voyager",
+					ShipTypeId: shipTypeId,
+					ImoNumber:  "IMO1234567",
+					Gt:         50000,
+					Flag:       "UK",
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Valid params with existing ship ID",
 			params: dto.ParamsAddSeatime{
 				StartDate:     "2024-01-01",
@@ -361,9 +392,23 @@ func TestCreateSeatimeValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Special mock setup for overlap test
+			if tt.name == "Overlapping voyage dates" {
+				mockGetOverlappingSeatime = func(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error) {
+					return []sqlc.Seatime{{ID: uuid.New()}}, nil
+				}
+			} else {
+				mockGetOverlappingSeatime = func(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error) {
+					return nil, nil
+				}
+			}
+
 			res, err := CreateSeatime(context.Background(), repo, tt.params, userId, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateSeatime() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.name == "Overlapping voyage dates" && !errors.Is(err, domain.ErrOverlap) {
+				t.Errorf("CreateSeatime() error = %v, want domain.ErrOverlap", err)
 			}
 			if err == nil && !tt.wantErr {
 				if tt.params.Ship != nil {
@@ -497,10 +542,38 @@ func TestUpdateSeatimeValidation(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Overlapping voyage dates",
+			params: dto.ParamsUpdateSeatime{
+				Id:             seatimeId,
+				ShipId:         &shipId,
+				VoyageTypeId:   voyageTypeId,
+				StartDate:      "2024-01-05",
+				EndDate:        "2024-01-15",
+				StartLocation:  "London",
+				EndLocation:    "New York",
+				TotalDays:      11,
+				Company:        "Updated Co",
+				Capacity:       "Chief Mate",
+				IsWatchkeeping: true,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Special mock setup for overlap test
+			if tt.name == "Overlapping voyage dates" {
+				mockGetOverlappingSeatime = func(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error) {
+					return []sqlc.Seatime{{ID: uuid.New()}}, nil
+				}
+			} else {
+				mockGetOverlappingSeatime = func(ctx context.Context, arg sqlc.GetOverlappingSeatimeParams) ([]sqlc.Seatime, error) {
+					return nil, nil
+				}
+			}
+
 			if !tt.wantErr {
 				mockGetSeatimeByUserId = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetSeatimeByUserIdRow, error) {
 					id, _ := uuid.Parse(tt.params.Id)
@@ -524,6 +597,9 @@ func TestUpdateSeatimeValidation(t *testing.T) {
 			_, err := UpdateSeatime(context.Background(), repo, tt.params, userId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateSeatime() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.name == "Overlapping voyage dates" && !errors.Is(err, domain.ErrOverlap) {
+				t.Errorf("UpdateSeatime() error = %v, want domain.ErrOverlap", err)
 			}
 		})
 	}

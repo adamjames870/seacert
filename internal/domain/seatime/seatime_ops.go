@@ -37,6 +37,20 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 		return result, fmt.Errorf("start date must be before end date")
 	}
 
+	// Check for overlapping periods for this user
+	overlaps, err := repo.GetOverlappingSeatime(ctx, sqlc.GetOverlappingSeatimeParams{
+		UserID:       userId,
+		NewStartDate: startDate,
+		NewEndDate:   endDate,
+		CurrentID:    uuid.NullUUID{Valid: false},
+	})
+	if err != nil {
+		return result, fmt.Errorf("failed to check for overlaps: %w", err)
+	}
+	if len(overlaps) > 0 {
+		return result, domain.ErrOverlap
+	}
+
 	// Calculate and validate days if provided
 	calculatedDays := CalculateDays(startDate, endDate)
 	if params.TotalDays > 0 && params.TotalDays != calculatedDays {
@@ -308,6 +322,20 @@ func UpdateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 
 	if startDate.After(endDate) {
 		return result, fmt.Errorf("start date must be before end date")
+	}
+
+	// Check for overlapping periods for this user
+	overlaps, err := repo.GetOverlappingSeatime(ctx, sqlc.GetOverlappingSeatimeParams{
+		UserID:       userId,
+		NewStartDate: startDate,
+		NewEndDate:   endDate,
+		CurrentID:    uuid.NullUUID{UUID: seatimeId, Valid: true},
+	})
+	if err != nil {
+		return result, fmt.Errorf("failed to check for overlaps: %w", err)
+	}
+	if len(overlaps) > 0 {
+		return result, domain.ErrOverlap
 	}
 
 	var shipId uuid.UUID

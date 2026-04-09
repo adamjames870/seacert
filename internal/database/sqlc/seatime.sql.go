@@ -279,6 +279,67 @@ func (q *Queries) DeleteVoyageType(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getOverlappingSeatime = `-- name: GetOverlappingSeatime :many
+SELECT id, user_id, ship_id, voyage_type_id, created_at, updated_at, start_date, start_location, end_date, end_location, total_days, company, capacity, is_watchkeeping FROM seatime
+WHERE user_id = $1
+AND (
+    (start_date <= $2 AND end_date >= $2) -- existing covers new start
+    OR (start_date <= $3 AND end_date >= $3) -- existing covers new end
+    OR (start_date >= $2 AND end_date <= $3) -- new covers existing
+)
+AND ($4::UUID IS NULL OR id != $4)
+`
+
+type GetOverlappingSeatimeParams struct {
+	UserID       uuid.UUID
+	NewStartDate time.Time
+	NewEndDate   time.Time
+	CurrentID    uuid.NullUUID
+}
+
+func (q *Queries) GetOverlappingSeatime(ctx context.Context, arg GetOverlappingSeatimeParams) ([]Seatime, error) {
+	rows, err := q.db.QueryContext(ctx, getOverlappingSeatime,
+		arg.UserID,
+		arg.NewStartDate,
+		arg.NewEndDate,
+		arg.CurrentID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Seatime
+	for rows.Next() {
+		var i Seatime
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ShipID,
+			&i.VoyageTypeID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.StartDate,
+			&i.StartLocation,
+			&i.EndDate,
+			&i.EndLocation,
+			&i.TotalDays,
+			&i.Company,
+			&i.Capacity,
+			&i.IsWatchkeeping,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSeatimeByUserId = `-- name: GetSeatimeByUserId :many
 SELECT 
     s.id, s.user_id, s.ship_id, s.voyage_type_id, s.created_at, s.updated_at, s.start_date, s.start_location, s.end_date, s.end_location, s.total_days, s.company, s.capacity, s.is_watchkeeping, 

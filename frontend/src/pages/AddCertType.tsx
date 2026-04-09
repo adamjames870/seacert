@@ -105,8 +105,8 @@ const AddCertType = () => {
       const responseData = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const errorMessage = responseData.message || 
-                           responseData.error || 
+        const errorMessage = responseData.error || 
+                           responseData.message || 
                            (responseData.errors && typeof responseData.errors === 'object' ? JSON.stringify(responseData.errors) : null) ||
                            'Failed to add certificate type';
         throw new Error(errorMessage);
@@ -143,12 +143,6 @@ const AddCertType = () => {
             Once submitted, it will be available for you to use immediately. 
             An administrator will review it for global approval.
           </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Grid container spacing={3}>
@@ -218,6 +212,14 @@ const AddCertType = () => {
                   </ToggleButtonGroup>
                 </Grid>
               )}
+
+              <Grid size={{ xs: 12 }}>
+                {error && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                  </Alert>
+                )}
+              </Grid>
 
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 

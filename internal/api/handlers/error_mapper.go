@@ -20,5 +20,8 @@ func MapDomainError(err error) (int, string) {
 	if errors.Is(err, domain.ErrInvalidInput) {
 		return http.StatusBadRequest, "Invalid input"
 	}
+	if errors.Is(err, domain.ErrOverlap) {
+		return http.StatusConflict, "Seatime period overlaps with an existing record"
+	}
 	return http.StatusInternalServerError, "Internal server error"
 }

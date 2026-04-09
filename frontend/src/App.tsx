@@ -43,6 +43,8 @@ import Ships from './pages/Ships'
 import ShipForm from './pages/ShipForm'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
 import EmailConsentModal from './components/EmailConsentModal'
@@ -382,6 +384,8 @@ function App() {
         <Route path="/" element={session ? <Dashboard /> : <Home />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/add-issuer" element={<AddIssuer />} />

@@ -286,8 +286,15 @@ const AddSeatime = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Failed to record seatime');
+        let errorMessage = 'Failed to record seatime';
+        try {
+          const errData = await response.json();
+          errorMessage = errData.error || errData.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text or default message
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       navigate('/seatime');
@@ -324,12 +331,6 @@ const AddSeatime = () => {
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         Fill in the details of your seatime period to update your seatime records.
       </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
 
       <form onSubmit={handleSubmit}>
         <Stack spacing={4}>
@@ -712,6 +713,12 @@ const AddSeatime = () => {
               </Stack>
             )}
           </Paper>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
             <Button

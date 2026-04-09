@@ -207,6 +207,20 @@ const EditAccount = () => {
                 />
               </Grid>
 
+              <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Security
+                </Typography>
+                <Button 
+                  variant="text" 
+                  color="primary" 
+                  onClick={() => navigate('/forgot-password')}
+                  sx={{ p: 0, textTransform: 'none', fontWeight: 600 }}
+                >
+                  Change Password
+                </Button>
+              </Grid>
+
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button 
                   variant="outlined" 
