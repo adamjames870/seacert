@@ -7,39 +7,33 @@ import {
   Button, 
   Paper, 
   Link,
-  InputAdornment,
-  IconButton,
   Alert
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-const Login = () => {
+const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
       
-      // On success, redirect to dashboard
-      navigate('/');
+      setMessage('Password reset link has been sent to your email.');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+      setError(err.message || 'An error occurred. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -66,15 +60,21 @@ const Login = () => {
           }}
         >
           <Typography variant="h5" component="h1" gutterBottom align="center" sx={{ fontWeight: 600 }}>
-            Login
+            Reset Password
           </Typography>
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            Enter your credentials to access your account
+            Enter your email address and we'll send you a link to reset your password.
           </Typography>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
+            </Alert>
+          )}
+
+          {message && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {message}
             </Alert>
           )}
 
@@ -92,33 +92,6 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               variant="outlined"
             />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              variant="outlined"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={() => setShowPassword(!showPassword)}
-                      onMouseDown={(e) => e.preventDefault()}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
             <Button
               type="submit"
               fullWidth
@@ -127,14 +100,11 @@ const Login = () => {
               disabled={loading}
               sx={{ mt: 3, mb: 2, py: 1.2, fontWeight: 600 }}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Sending...' : 'Send Reset Link'}
             </Button>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-              <Link component={RouterLink} to="/forgot-password" variant="body2" sx={{ textDecoration: 'none' }}>
-                Forgot Password?
-              </Link>
-              <Link component={RouterLink} to="/signup" variant="body2" sx={{ textDecoration: 'none' }}>
-                Don't have an account? Sign Up
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Link component={RouterLink} to="/login" variant="body2" sx={{ textDecoration: 'none' }}>
+                Back to Login
               </Link>
             </Box>
           </Box>
@@ -144,4 +114,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;
