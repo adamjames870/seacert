@@ -48,7 +48,7 @@ func CreateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 		return result, fmt.Errorf("failed to check for overlaps: %w", err)
 	}
 	if len(overlaps) > 0 {
-		return result, fmt.Errorf("seatime period overlaps with an existing record")
+		return result, domain.ErrOverlap
 	}
 
 	// Calculate and validate days if provided
@@ -335,7 +335,7 @@ func UpdateSeatime(ctx context.Context, repo domain.Repository, params dto.Param
 		return result, fmt.Errorf("failed to check for overlaps: %w", err)
 	}
 	if len(overlaps) > 0 {
-		return result, fmt.Errorf("seatime period overlaps with an existing record")
+		return result, domain.ErrOverlap
 	}
 
 	var shipId uuid.UUID

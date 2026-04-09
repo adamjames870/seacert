@@ -251,8 +251,8 @@ const AddCertificate = () => {
       console.log('Add response:', responseData);
 
       if (!response.ok) {
-        const errorMessage = responseData.message || 
-                           responseData.error || 
+        const errorMessage = responseData.error || 
+                           responseData.message || 
                            (responseData.errors && typeof responseData.errors === 'object' ? JSON.stringify(responseData.errors) : null) ||
                            'Failed to add certificate';
         throw new Error(errorMessage);
@@ -288,17 +288,6 @@ const AddCertificate = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               This will {formData.supersedeReason} the existing certificate.
             </Typography>
-          )}
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-              {isPdfSizeError && (
-                <Box component="span" sx={{ display: 'block', mt: 1 }}>
-                  Try using <Link href="https://www.ilovepdf.com/compress_pdf" target="_blank" rel="noopener">iLovePDF</Link> to reduce your file size.
-                </Box>
-              )}
-            </Alert>
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -593,6 +582,19 @@ const AddCertificate = () => {
                     Max size: 3MB. Allowed formats: PDF, JPG.
                   </Typography>
                 </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                {error && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                    {isPdfSizeError && (
+                      <Box component="span" sx={{ display: 'block', mt: 1 }}>
+                        Try using <Link href="https://www.ilovepdf.com/compress_pdf" target="_blank" rel="noopener">iLovePDF</Link> to reduce your file size.
+                      </Box>
+                    )}
+                  </Alert>
+                )}
               </Grid>
 
               <Grid size={{ xs: 12 }} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>

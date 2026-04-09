@@ -8,5 +8,6 @@ var (
 	ErrForbidden      = errors.New("forbidden")
 	ErrAlreadyExists  = errors.New("resource already exists")
 	ErrInvalidInput   = errors.New("invalid input")
+	ErrOverlap        = errors.New("seatime period overlaps with an existing record")
 	ErrInternalServer = errors.New("internal server error")
 )

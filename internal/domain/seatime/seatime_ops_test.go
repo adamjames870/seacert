@@ -2,6 +2,7 @@
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -406,6 +407,9 @@ func TestCreateSeatimeValidation(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateSeatime() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			if tt.name == "Overlapping voyage dates" && !errors.Is(err, domain.ErrOverlap) {
+				t.Errorf("CreateSeatime() error = %v, want domain.ErrOverlap", err)
+			}
 			if err == nil && !tt.wantErr {
 				if tt.params.Ship != nil {
 					if res.Ship.Name != tt.params.Ship.Name {
@@ -593,6 +597,9 @@ func TestUpdateSeatimeValidation(t *testing.T) {
 			_, err := UpdateSeatime(context.Background(), repo, tt.params, userId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateSeatime() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.name == "Overlapping voyage dates" && !errors.Is(err, domain.ErrOverlap) {
+				t.Errorf("UpdateSeatime() error = %v, want domain.ErrOverlap", err)
 			}
 		})
 	}
