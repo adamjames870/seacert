@@ -45,6 +45,8 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import BlogList from './pages/BlogList'
+import BlogPost from './pages/BlogPost'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
 import EmailConsentModal from './components/EmailConsentModal'
@@ -264,6 +266,12 @@ function App() {
               Add Seatime Period
             </MenuItem>
             
+            <Divider />
+
+            <MenuItem onClick={handleClose} component={RouterLink} to="/blog">
+              Blog
+            </MenuItem>
+            
             {isAdmin && [
               <Divider key="divider-admin" />,
               <Box key="admin-certs-header" sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -310,6 +318,16 @@ function App() {
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
+            {!session && (
+              <Button 
+                color="inherit" 
+                component={RouterLink} 
+                to="/blog"
+                sx={{ display: { xs: 'none', md: 'inline-flex' }, mr: 1 }}
+              >
+                Blog
+              </Button>
+            )}
             {session ? (
               <>
                 <Button
@@ -407,6 +425,8 @@ function App() {
         <Route path="/edit-issuer/:id" element={<EditIssuer />} />
         
         <Route path="/edit-account" element={<EditAccount />} />
+        <Route path="/blog" element={<BlogList />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
       </Routes>

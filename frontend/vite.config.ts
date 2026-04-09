@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import mdx from '@mdx-js/rollup'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { loadEnv } from 'vite'
@@ -12,7 +13,10 @@ export default defineConfig(({ mode }) => {
   const apiUrl = env.VITE_API_URL || 'http://localhost:8080';
 
   return {
-    plugins: [react()],
+    plugins: [
+      { enforce: 'pre', ...mdx() },
+      react({ include: /\.(jsx|js|mdx|md|tsx|ts)$/ })
+    ],
     server: {
       proxy: {
         '/api': {
@@ -30,6 +34,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       dedupe: ['react', 'react-dom'],
       alias: {
+        '@': path.resolve(__dirname, './src'),
         'react': path.resolve(__dirname, 'node_modules/react'),
         'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },

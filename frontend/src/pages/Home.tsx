@@ -1,6 +1,6 @@
-﻿import { Typography, Container, Box, Button, Grid, Stack, Card, CardContent, CardMedia } from '@mui/material';
+﻿import { Typography, Container, Box, Button, Grid, Stack, Card, CardContent, CardMedia, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Anchor, ShieldCheck, FileText, AlertCircle, Ship } from 'lucide-react';
+import { Anchor, ShieldCheck, FileText, AlertCircle, Ship, ArrowRight, BookOpen } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -58,9 +58,24 @@ const Home = () => {
       {/* Features Section */}
       <Box component="section" sx={{ bgcolor: 'white', py: 10 }}>
         <Container>
-          <Typography variant="h4" component="h2" align="center" gutterBottom sx={{ fontWeight: 700, mb: 8 }}>
-            Why Use SeaCert?
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 6 }}>
+            <Box>
+              <Typography variant="h4" component="h2" sx={{ fontWeight: 700, mb: 1 }}>
+                Why Use SeaCert?
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                The all-in-one platform for your maritime career.
+              </Typography>
+            </Box>
+            <Button 
+              component={RouterLink} 
+              to="/blog" 
+              endIcon={<ArrowRight size={18} />}
+              sx={{ fontWeight: 600 }}
+            >
+              Read our Blog
+            </Button>
+          </Box>
           <Grid container spacing={4} justifyContent="center">
             {[
               {
@@ -128,6 +143,86 @@ const Home = () => {
                 </Card>
               </Grid>
             ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Blog Teaser Section */}
+      <Box component="section" sx={{ bgcolor: 'rgba(74, 109, 140, 0.03)', py: 10 }}>
+        <Container>
+          <Grid container spacing={6} alignItems="center">
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ position: 'relative' }}>
+                <Box 
+                  sx={{ 
+                    position: 'absolute', 
+                    top: -20, 
+                    left: -20, 
+                    width: 100, 
+                    height: 100, 
+                    bgcolor: 'primary.main', 
+                    opacity: 0.1, 
+                    borderRadius: '50%',
+                    zIndex: 0
+                  }} 
+                />
+                <Typography variant="overline" color="primary" sx={{ fontWeight: 700, letterSpacing: 2 }}>
+                  Maritime Guides
+                </Typography>
+                <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 800, mt: 1 }}>
+                  Stay Informed with Our Blog
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem', lineHeight: 1.8 }}>
+                  Working at sea is complex. Our experts break down STCW regulations, career paths, and technical requirements to help you stay compliant and get ahead.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  size="large" 
+                  component={RouterLink} 
+                  to="/blog"
+                  endIcon={<ArrowRight size={20} />}
+                  sx={{ px: 4, py: 1.5, borderRadius: 2, fontWeight: 700 }}
+                >
+                  Explore All Articles
+                </Button>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Card sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: 6 }}>
+                <CardMedia
+                  component="img"
+                  height="260"
+                  image="https://images.unsplash.com/photo-1524522173746-f628baad3644?auto=format&fit=crop&q=80&w=2070"
+                  alt="STCW Certificates Guide"
+                />
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'primary.main' }}>
+                    <BookOpen size={18} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>FEATURED GUIDE</Typography>
+                  </Box>
+                  <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 700 }}>
+                    STCW Certificates Explained (Simple Guide for Seafarers)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Understand all STCW certificates, requirements, and renewal rules. Track and manage your certificates easily.
+                  </Typography>
+                  <Link 
+                    component={RouterLink} 
+                    to="/blog/stcw-certificates-explained" 
+                    sx={{ 
+                      fontWeight: 700, 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 0.5, 
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' }
+                    }}
+                  >
+                    Read More <ArrowRight size={16} />
+                  </Link>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
         </Container>
       </Box>
