@@ -6,6 +6,7 @@ import (
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
 	"github.com/adamjames870/seacert/internal/storage"
+	"github.com/google/generative-ai-go/genai"
 )
 
 type ApiState struct {
@@ -14,4 +15,5 @@ type ApiState struct {
 	Storage storage.Storage
 	IsDev   bool
 	Logger  *slog.Logger
+	Gemini  *genai.Client
 }

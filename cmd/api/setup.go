@@ -14,7 +14,9 @@ import (
 	"github.com/adamjames870/seacert/internal/logging"
 	"github.com/adamjames870/seacert/internal/repository/postgres"
 	"github.com/adamjames870/seacert/internal/storage"
+	"github.com/google/generative-ai-go/genai"
 	"github.com/joho/godotenv"
+	"google.golang.org/api/option"
 )
 
 func LoadState(state *internal.ApiState) error {
@@ -34,6 +36,10 @@ func LoadState(state *internal.ApiState) error {
 	errStorage := loadStorage(state)
 	if errStorage != nil {
 		return errStorage
+	}
+	errGemini := loadGemini(state)
+	if errGemini != nil {
+		return errGemini
 	}
 	setDevFlag(state)
 	return nil
@@ -65,6 +71,22 @@ func setDevFlag(state *internal.ApiState) {
 	platform := os.Getenv("PLATFORM")
 	log.Printf("platform = %s", platform)
 	state.IsDev = platform == "dev" || platform == "test"
+}
+
+func loadGemini(state *internal.ApiState) error {
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		state.Logger.Warn("GEMINI_API_KEY is not set, certificate extraction will not work")
+		return nil
+	}
+
+	client, err := genai.NewClient(context.Background(), option.WithAPIKey(apiKey))
+	if err != nil {
+		return fmt.Errorf("failed to create Gemini client: %w", err)
+	}
+
+	state.Gemini = client
+	return nil
 }
 
 func loadDb(state *internal.ApiState) error {

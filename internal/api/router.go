@@ -57,6 +57,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("DELETE /api/admin/seatime/period-types/{id}", authMw(adminMw(admin.HandlerAdminDeletePeriodType(state))))
 
 	// ----------- API Handlers ----------------
+	mux.Handle("POST /api/certificates/extract", authMw(api.HandlerApiExtractCert(state)))
 	mux.Handle("POST /api/certificates/upload-url", authMw(api.HandlerApiGetUploadURL(state)))
 	mux.Handle("POST /api/certificates", authMw(api.HandlerApiAddCert(state)))
 	mux.Handle("GET /api/certificates", authMw(api.HandlerApiGetCerts(state)))
