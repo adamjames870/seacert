@@ -57,6 +57,8 @@ type ExtractedCertificate struct {
 	IssuedDate   string  `json:"issued-date"`
 	ExpiryDate   *string `json:"expiry-date,omitempty"`
 	Remarks      *string `json:"remarks,omitempty"`
+	CertTypeId   *string `json:"cert-type-id,omitempty"`
+	IssuerId     *string `json:"issuer-id,omitempty"`
 }
 
 type ParamsUpdateCertificate struct {

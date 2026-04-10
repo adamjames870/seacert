@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/dto"
 	"github.com/google/generative-ai-go/genai"
 )
 
-const extractionPrompt = `Extract certificate details from this image. 
+const basePrompt = `Extract certificate details from this image. 
 Return strictly JSON. 
 If a field is not visible, return null.
 Use the following JSON structure:
@@ -19,12 +21,29 @@ Use the following JSON structure:
   "issuer-name": "string",
   "issued-date": "YYYY-MM-DD",
   "expiry-date": "YYYY-MM-DD",
-  "remarks": "string"
+  "remarks": "string",
+  "cert-type-id": "string",
+  "issuer-id": "string"
 }`
 
-func ExtractCertificateData(ctx context.Context, client *genai.Client, fileBytes []byte, mimeType string) (*dto.ExtractedCertificate, error) {
+func ExtractCertificateData(ctx context.Context, client *genai.Client, fileBytes []byte, mimeType string, certTypes []sqlc.CertificateType, issuers []sqlc.Issuer) (*dto.ExtractedCertificate, error) {
 	if client == nil {
 		return nil, fmt.Errorf("Gemini client is not initialized")
+	}
+
+	var promptBuilder strings.Builder
+	promptBuilder.WriteString(basePrompt)
+	promptBuilder.WriteString("\n\n")
+	promptBuilder.WriteString("Please match the 'issuer-name' and 'cert-type-name' against these known lists. If a match is found, return the ID from the list in 'issuer-id' or 'cert-type-id' respectively.\n")
+
+	promptBuilder.WriteString("\nKnown Certificate Types:\n")
+	for _, ct := range certTypes {
+		promptBuilder.WriteString(fmt.Sprintf("- %s (ID: %s)\n", ct.Name, ct.ID.String()))
+	}
+
+	promptBuilder.WriteString("\nKnown Issuers:\n")
+	for _, i := range issuers {
+		promptBuilder.WriteString(fmt.Sprintf("- %s (ID: %s)\n", i.Name, i.ID.String()))
 	}
 
 	model := client.GenerativeModel("gemini-flash-latest")
@@ -37,7 +56,7 @@ func ExtractCertificateData(ctx context.Context, client *genai.Client, fileBytes
 			MIMEType: mimeType,
 			Data:     fileBytes,
 		},
-		genai.Text(extractionPrompt),
+		genai.Text(promptBuilder.String()),
 	}
 
 	resp, err := model.GenerateContent(ctx, prompt...)

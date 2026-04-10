@@ -38,8 +38,23 @@ func HandlerApiExtractCert(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
+		// Fetch existing cert types and issuers for AI context
+		certTypes, err := state.Repo.GetCertTypes(r.Context())
+		if err != nil {
+			state.Logger.Error("Failed to fetch cert types", "error", err)
+			handlers.RespondWithError(w, r, 500, "Failed to fetch certificate types", err)
+			return
+		}
+
+		issuers, err := state.Repo.GetIssuers(r.Context())
+		if err != nil {
+			state.Logger.Error("Failed to fetch issuers", "error", err)
+			handlers.RespondWithError(w, r, 500, "Failed to fetch issuers", err)
+			return
+		}
+
 		// Call Gemini service
-		extracted, err := certificates.ExtractCertificateData(r.Context(), state.Gemini, fileBytes, mimeType)
+		extracted, err := certificates.ExtractCertificateData(r.Context(), state.Gemini, fileBytes, mimeType, certTypes, issuers)
 		if err != nil {
 			state.Logger.Error("Gemini extraction failed", "error", err)
 			handlers.RespondWithError(w, r, 500, "Failed to extract certificate data", err)

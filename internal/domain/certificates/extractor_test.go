@@ -14,7 +14,9 @@ func TestUnmarshalExtractedCertificate(t *testing.T) {
 		"issuer-name": "UK MCA",
 		"issued-date": "2023-01-01",
 		"expiry-date": "2028-01-01",
-		"remarks": "Valid for all ships"
+		"remarks": "Valid for all ships",
+		"cert-type-id": "cert-uuid-123",
+		"issuer-id": "issuer-uuid-456"
 	}`
 
 	var extracted dto.ExtractedCertificate
@@ -37,6 +39,12 @@ func TestUnmarshalExtractedCertificate(t *testing.T) {
 	}
 	if extracted.ExpiryDate == nil || *extracted.ExpiryDate != "2028-01-01" {
 		t.Errorf("Expected ExpiryDate '2028-01-01', got '%v'", extracted.ExpiryDate)
+	}
+	if extracted.CertTypeId == nil || *extracted.CertTypeId != "cert-uuid-123" {
+		t.Errorf("Expected CertTypeId 'cert-uuid-123', got '%v'", extracted.CertTypeId)
+	}
+	if extracted.IssuerId == nil || *extracted.IssuerId != "issuer-uuid-456" {
+		t.Errorf("Expected IssuerId 'issuer-uuid-456', got '%v'", extracted.IssuerId)
 	}
 }
 
