@@ -12,7 +12,7 @@ import (
 )
 
 const basePrompt = `Extract certificate details from this image. 
-Return strictly JSON. 
+Return strictly a single JSON object (not an array). 
 If a field is not visible, return null.
 Use the following JSON structure:
 {
@@ -75,8 +75,17 @@ func ExtractCertificateData(ctx context.Context, client *genai.Client, fileBytes
 	}
 
 	var extracted dto.ExtractedCertificate
-	if err := json.Unmarshal([]byte(text), &extracted); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal Gemini response: %w. Response: %s", err, string(text))
+	rawText := []byte(text)
+
+	// Attempt to unmarshal as a single object first
+	if err := json.Unmarshal(rawText, &extracted); err != nil {
+		// If that fails, try unmarshaling as an array of objects
+		var list []dto.ExtractedCertificate
+		if errArray := json.Unmarshal(rawText, &list); errArray == nil && len(list) > 0 {
+			extracted = list[0]
+		} else {
+			return nil, fmt.Errorf("failed to unmarshal Gemini response: %w. Response: %s", err, string(text))
+		}
 	}
 
 	return &extracted, nil

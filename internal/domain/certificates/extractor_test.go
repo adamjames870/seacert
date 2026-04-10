@@ -71,3 +71,40 @@ func TestUnmarshalExtractedCertificateWithNulls(t *testing.T) {
 		t.Errorf("Expected Remarks to be nil, got '%v'", *extracted.Remarks)
 	}
 }
+
+func TestUnmarshalExtractedCertificateArray(t *testing.T) {
+	jsonData := `[
+	  {
+		"cert-type-name": "STCW UPDATED PROFICIENCY IN FIRE PREVENTION & FIRE FIGHTING",
+		"cert-number": "MSA-15886",
+		"issuer-name": "Maritime Skills Academy (Dover)",
+		"issued-date": "2025-02-18",
+		"expiry-date": null,
+		"remarks": "STCW Reg. VI/1 (para 1) Sec. A-VI/1 (para 3 and 4.2). Date of Birth: 26-Aug-1983.",
+		"cert-type-id": "2e81e015-99cc-478e-bea8-3597925708b6",
+		"issuer-id": "56727bea-f002-4492-882d-c9084f9229e0"
+	  }
+	]`
+
+	// Since we can't easily call ExtractCertificateData without a real genai client,
+	// we'll test the logic that was added to it here.
+	var extracted dto.ExtractedCertificate
+	rawText := []byte(jsonData)
+
+	// This mimics the logic in ExtractCertificateData
+	if err := json.Unmarshal(rawText, &extracted); err != nil {
+		var list []dto.ExtractedCertificate
+		if errArray := json.Unmarshal(rawText, &list); errArray == nil && len(list) > 0 {
+			extracted = list[0]
+		} else {
+			t.Fatalf("Failed to unmarshal as single object or array: %v", err)
+		}
+	}
+
+	if extracted.CertNumber != "MSA-15886" {
+		t.Errorf("Expected CertNumber 'MSA-15886', got '%s'", extracted.CertNumber)
+	}
+	if extracted.CertTypeId == nil || *extracted.CertTypeId != "2e81e015-99cc-478e-bea8-3597925708b6" {
+		t.Errorf("Expected CertTypeId '2e81e015-99cc-478e-bea8-3597925708b6', got '%v'", extracted.CertTypeId)
+	}
+}
