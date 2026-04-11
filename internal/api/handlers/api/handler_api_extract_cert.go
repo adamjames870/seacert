@@ -54,7 +54,7 @@ func HandlerApiExtractCert(state *internal.ApiState) http.HandlerFunc {
 		}
 
 		// Call Gemini service
-		extracted, err := certificates.ExtractCertificateData(r.Context(), state.Gemini, fileBytes, mimeType, certTypes, issuers)
+		extracted, err := certificates.ExtractCertificateData(r.Context(), state.Logger, state.Repo, state.Gemini, state.GeminiModelName, fileBytes, mimeType, certTypes, issuers)
 		if err != nil {
 			state.Logger.Error("Gemini extraction failed", "error", err)
 			handlers.RespondWithError(w, r, 500, "Failed to extract certificate data", err)

@@ -210,10 +210,10 @@ const Dashboard = () => {
                   </Box>
                   <Typography variant="h6" sx={{ fontWeight: 800 }}>Certificates</Typography>
                 </Box>
-                <Tooltip title="Add Certificate">
+                <Tooltip title="Smart Add Certificate">
                   <IconButton 
                     component={RouterLink} 
-                    to="/add-certificate"
+                    to="/certificate-wizard"
                     size="small"
                     sx={{ 
                       bgcolor: 'background.paper', 

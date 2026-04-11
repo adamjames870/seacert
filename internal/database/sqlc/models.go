@@ -57,6 +57,14 @@ type Issuer struct {
 	Website   sql.NullString
 }
 
+type PromptCach struct {
+	CacheKey        string
+	ModelName       string
+	GeminiCacheName string
+	ExpiresAt       time.Time
+	CreatedAt       time.Time
+}
+
 type Seatime struct {
 	ID             uuid.UUID
 	UserID         uuid.UUID

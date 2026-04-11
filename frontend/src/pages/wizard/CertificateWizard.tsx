@@ -99,6 +99,7 @@ const CertificateWizard = () => {
   });
   const [isCreatingNewCertType, setIsCreatingNewCertType] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { uploadFile, uploading: uploadingFile } = useFileUpload();
@@ -111,6 +112,15 @@ const CertificateWizard = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
+
+      // Get user role
+      const role = session.user?.app_metadata?.role;
+      if (role) {
+        setUserRole(role);
+        if (role === 'admin') {
+          setNewCertType(prev => ({ ...prev, status: 'approved' }));
+        }
+      }
 
       const headers = { 'Authorization': `Bearer ${session.access_token}` };
       const [certTypesRes, issuersRes] = await Promise.all([
@@ -422,22 +432,20 @@ const CertificateWizard = () => {
                       >
                         View Google Privacy Policy
                       </Link>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 2, mt: 3, width: '100%', justifyContent: 'center' }}>
                         <Button 
                           variant="outlined" 
                           size="small" 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setFile(null); 
-                            setPreviewUrl(null); 
-                          }}
+                          onClick={() => navigate('/add-certificate')}
+                          sx={{ flex: 1, maxWidth: 200 }}
                         >
-                          Cancel
+                          Add Manually
                         </Button>
                         <Button 
                           variant="contained" 
                           size="small" 
                           onClick={(e) => { e.stopPropagation(); setPrivacyAgreed(true); }}
+                          sx={{ flex: 1, maxWidth: 200 }}
                         >
                           I Agree
                         </Button>
@@ -448,15 +456,25 @@ const CertificateWizard = () => {
               )}
             </Paper>
 
-            <Button
-              variant="contained"
-              disabled={!file || !privacyAgreed || loading || uploadingFile}
-              onClick={handleExtract}
-              sx={{ mt: 4 }}
-              size="large"
-            >
-              {loading ? <CircularProgress size={24} /> : 'Process Certificate'}
-            </Button>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                disabled={!file || !privacyAgreed || loading || uploadingFile}
+                onClick={handleExtract}
+                size="large"
+                sx={{ flex: 2 }}
+              >
+                {loading ? <CircularProgress size={24} /> : 'Process Certificate'}
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/add-certificate')}
+                size="large"
+                sx={{ flex: 1 }}
+              >
+                Manual Add
+              </Button>
+            </Box>
           </Box>
         );
       case 1: // Cert Type
@@ -483,42 +501,76 @@ const CertificateWizard = () => {
 
             {isCreatingNewCertType ? (
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     required
+                    id="name"
                     label="Name"
+                    name="name"
                     value={newCertType.name}
                     onChange={(e) => setNewCertType({ ...newCertType, name: e.target.value })}
                     autoFocus
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
+                    id="shortName"
                     label="Short Name"
+                    name="shortName"
                     value={newCertType.shortName}
                     onChange={(e) => setNewCertType({ ...newCertType, shortName: e.target.value })}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
+                    id="stcwReference"
                     label="STCW Reference"
+                    name="stcwReference"
                     value={newCertType.stcwReference}
                     onChange={(e) => setNewCertType({ ...newCertType, stcwReference: e.target.value })}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
-                    type="number"
+                    id="normalValidityMonths"
                     label="Normal Validity (Months)"
+                    name="normalValidityMonths"
+                    type="number"
                     value={newCertType.normalValidityMonths}
                     onChange={(e) => setNewCertType({ ...newCertType, normalValidityMonths: e.target.value })}
                     helperText="Leave blank if certificate does not expire"
                   />
                 </Grid>
+
+                {userRole === 'admin' && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body2" color="textSecondary" gutterBottom>
+                      Status
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        variant={newCertType.status === 'provisional' ? 'contained' : 'outlined'}
+                        size="small"
+                        onClick={() => setNewCertType(prev => ({ ...prev, status: 'provisional' }))}
+                        fullWidth
+                      >
+                        Provisional
+                      </Button>
+                      <Button
+                        variant={newCertType.status === 'approved' ? 'contained' : 'outlined'}
+                        size="small"
+                        onClick={() => setNewCertType(prev => ({ ...prev, status: 'approved' }))}
+                        fullWidth
+                      >
+                        Approved
+                      </Button>
+                    </Box>
+                  </Grid>
+                )}
               </Grid>
             ) : (
               <Autocomplete
@@ -555,18 +607,21 @@ const CertificateWizard = () => {
 
             {isCreatingNewIssuer ? (
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
-                    fullWidth
                     required
+                    fullWidth
+                    id="name"
                     label="Issuer Name"
+                    name="name"
                     value={newIssuer.name}
                     onChange={(e) => setNewIssuer({ ...newIssuer, name: e.target.value })}
                     autoFocus
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Autocomplete
+                    id="country-select"
                     options={countries}
                     autoHighlight
                     getOptionLabel={(option) => option.label}
@@ -585,10 +640,12 @@ const CertificateWizard = () => {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
+                    id="website"
                     label="Website"
+                    name="website"
                     placeholder="https://example.com"
                     value={newIssuer.website}
                     onChange={(e) => setNewIssuer({ ...newIssuer, website: e.target.value })}
@@ -609,7 +666,7 @@ const CertificateWizard = () => {
       case 3: // Confirm Details
         return (
           <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Certificate Number"
@@ -617,7 +674,7 @@ const CertificateWizard = () => {
                 onChange={(e) => setCertDetails({ ...certDetails, certNumber: e.target.value })}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 type="date"
@@ -634,21 +691,21 @@ const CertificateWizard = () => {
           <Box sx={{ mt: 2 }}>
             <Typography variant="h6" gutterBottom>Summary</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={4}><Typography variant="body2" color="text.secondary">Number:</Typography></Grid>
-              <Grid item xs={8}><Typography variant="body1">{certDetails.certNumber}</Typography></Grid>
+              <Grid size={{ xs: 4 }}><Typography variant="body2" color="text.secondary">Number:</Typography></Grid>
+              <Grid size={{ xs: 8 }}><Typography variant="body1">{certDetails.certNumber}</Typography></Grid>
               
-              <Grid item xs={4}><Typography variant="body2" color="text.secondary">Issued Date:</Typography></Grid>
-              <Grid item xs={8}><Typography variant="body1">{certDetails.issuedDate}</Typography></Grid>
+              <Grid size={{ xs: 4 }}><Typography variant="body2" color="text.secondary">Issued Date:</Typography></Grid>
+              <Grid size={{ xs: 8 }}><Typography variant="body1">{certDetails.issuedDate}</Typography></Grid>
               
-              <Grid item xs={4}><Typography variant="body2" color="text.secondary">Issuer:</Typography></Grid>
-              <Grid item xs={8}>
+              <Grid size={{ xs: 4 }}><Typography variant="body2" color="text.secondary">Issuer:</Typography></Grid>
+              <Grid size={{ xs: 8 }}>
                 <Typography variant="body1">
                   {isCreatingNewIssuer ? `${newIssuer.name} (New)` : selectedIssuer?.name}
                 </Typography>
               </Grid>
               
-              <Grid item xs={4}><Typography variant="body2" color="text.secondary">Type:</Typography></Grid>
-              <Grid item xs={8}>
+              <Grid size={{ xs: 4 }}><Typography variant="body2" color="text.secondary">Type:</Typography></Grid>
+              <Grid size={{ xs: 8 }}>
                 <Typography variant="body1">
                   {isCreatingNewCertType ? `${newCertType.name} (New)` : selectedCertType?.name}
                 </Typography>

@@ -79,5 +79,10 @@ type Repository interface {
 
 	ResetAll(ctx context.Context) error
 
+	// Prompt Caches
+	GetPromptCache(ctx context.Context, cacheKey string) (sqlc.PromptCach, error)
+	UpsertPromptCache(ctx context.Context, arg sqlc.UpsertPromptCacheParams) error
+	DeleteExpiredPromptCaches(ctx context.Context) error
+
 	WithTx(ctx context.Context, fn func(Repository) error) error
 }

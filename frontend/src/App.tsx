@@ -20,6 +20,17 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import EditIcon from '@mui/icons-material/Edit'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import CardMembershipIcon from '@mui/icons-material/CardMembership'
+import AddCircleIcon from '@mui/icons-material/AddCircle'
+import AssessmentIcon from '@mui/icons-material/Assessment'
+import HistoryIcon from '@mui/icons-material/History'
+import AddLocationIcon from '@mui/icons-material/AddLocation'
+import ArticleIcon from '@mui/icons-material/Article'
+import BusinessIcon from '@mui/icons-material/Business'
+import CategoryIcon from '@mui/icons-material/Category'
+import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat'
+import SearchIcon from '@mui/icons-material/Search'
 import { Anchor, Shield, Ship as ShipIcon } from 'lucide-react'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
@@ -243,37 +254,55 @@ function App() {
             disableScrollLock={true}
           >
             <MenuItem onClick={handleClose} component={RouterLink} to="/">
-              Dashboard
+              <ListItemIcon>
+                <DashboardIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Dashboard</ListItemText>
             </MenuItem>
 
             <Divider />
 
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificates">
-              Certificates
-            </MenuItem>
-            <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
-              Add Certificate
+              <ListItemIcon>
+                <CardMembershipIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Certificates</ListItemText>
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/certificate-wizard">
-              Smart Add (New)
+              <ListItemIcon>
+                <AddCircleIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Add Certificate</ListItemText>
             </MenuItem>
             <MenuItem onClick={handleOpenReport}>
-              Certificate Report
+              <ListItemIcon>
+                <AssessmentIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Certificate Report</ListItemText>
             </MenuItem>
             
             <Divider />
             
             <MenuItem onClick={handleClose} component={RouterLink} to="/seatime">
-              Seatime History
+              <ListItemIcon>
+                <HistoryIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Seatime History</ListItemText>
             </MenuItem>
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-seatime">
-              Add Seatime Period
+              <ListItemIcon>
+                <AddLocationIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Add Seatime Period</ListItemText>
             </MenuItem>
             
             <Divider />
 
             <MenuItem onClick={handleClose} component={RouterLink} to="/blog">
-              Blog
+              <ListItemIcon>
+                <ArticleIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Blog</ListItemText>
             </MenuItem>
             
             {isAdmin && [
@@ -283,10 +312,16 @@ function App() {
                 <Typography variant="overline" sx={{ fontWeight: 700, color: 'text.secondary' }}>Admin: Certificates</Typography>
               </Box>,
               <MenuItem key="issuers" onClick={handleClose} component={RouterLink} to="/issuers" sx={{ pl: 4 }}>
-                Issuers
+                <ListItemIcon>
+                  <BusinessIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Issuers</ListItemText>
               </MenuItem>,
               <MenuItem key="cert-types" onClick={handleClose} component={RouterLink} to="/cert-types" sx={{ pl: 4 }}>
-                Certificate Types
+                <ListItemIcon>
+                  <CategoryIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Certificate Types</ListItemText>
               </MenuItem>,
               
               <Box key="admin-seatime-header" sx={{ px: 2, py: 1, mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -294,10 +329,16 @@ function App() {
                 <Typography variant="overline" sx={{ fontWeight: 700, color: 'text.secondary' }}>Admin: Seatime & Ships</Typography>
               </Box>,
               <MenuItem key="ships" onClick={handleClose} component={RouterLink} to="/ships" sx={{ pl: 4 }}>
-                Ships
+                <ListItemIcon>
+                  <DirectionsBoatIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Ships</ListItemText>
               </MenuItem>,
               <MenuItem key="seatime-lookups" onClick={handleClose} component={RouterLink} to="/admin/seatime-lookups" sx={{ pl: 4 }}>
-                Seatime Lookups
+                <ListItemIcon>
+                  <SearchIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Seatime Lookups</ListItemText>
               </MenuItem>
             ]}
           </Menu>

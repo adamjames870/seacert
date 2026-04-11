@@ -3,7 +3,6 @@
 import (
 	"context"
 	"database/sql"
-	"embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -11,18 +10,16 @@ import (
 	"time"
 
 	"github.com/adamjames870/seacert/internal"
+	"github.com/adamjames870/seacert/internal/database/migrations"
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/logging"
 	"github.com/adamjames870/seacert/internal/repository/postgres"
 	"github.com/adamjames870/seacert/internal/storage"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/joho/godotenv"
-        "github.com/pressly/goose/v3"
+	"github.com/pressly/goose/v3"
 	"google.golang.org/api/option"
 )
-
-//go:embed migrations/*.sql
-var embedMigrations embed.FS
 
 func LoadState(state *internal.ApiState) error {
 
@@ -85,6 +82,13 @@ func loadGemini(state *internal.ApiState) error {
 		return nil
 	}
 
+	modelName := os.Getenv("GEMINI_MODEL_NAME")
+	if modelName == "" {
+		modelName = "gemini-2.0-flash" // Default fallback
+		state.Logger.Warn("GEMINI_MODEL_NAME is not set, using default", "default", modelName)
+	}
+	state.GeminiModelName = modelName
+
 	client, err := genai.NewClient(context.Background(), option.WithAPIKey(apiKey))
 	if err != nil {
 		return fmt.Errorf("failed to create Gemini client: %w", err)
@@ -128,7 +132,7 @@ func loadDb(state *internal.ApiState) error {
 func runMigrations(state *internal.ApiState, db *sql.DB) error {
 	state.Logger.Info("Running database migrations...")
 
-	goose.SetBaseFS(embedMigrations)
+	goose.SetBaseFS(migrations.FS)
 	goose.SetLogger(slog.NewLogLogger(state.Logger.Handler(), slog.LevelInfo))
 
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -136,7 +140,7 @@ func runMigrations(state *internal.ApiState, db *sql.DB) error {
 	}
 
 	// Apply migrations
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.Up(db, "."); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 

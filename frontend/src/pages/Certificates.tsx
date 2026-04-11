@@ -45,6 +45,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -525,9 +526,9 @@ const Certificates = () => {
                   Report
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   color="primary"
-                  startIcon={<AutorenewIcon />}
+                  startIcon={<AutoAwesomeIcon />}
                   component={RouterLink}
                   to="/certificate-wizard"
                   sx={{ whiteSpace: 'nowrap' }}
@@ -535,7 +536,7 @@ const Certificates = () => {
                   Smart Add
                 </Button>
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   color="primary"
                   startIcon={<AddIcon />}
                   component={RouterLink}

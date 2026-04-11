@@ -10,10 +10,11 @@ import (
 )
 
 type ApiState struct {
-	Queries *sqlc.Queries
-	Repo    domain.Repository
-	Storage storage.Storage
-	IsDev   bool
-	Logger  *slog.Logger
-	Gemini  *genai.Client
+	Queries         *sqlc.Queries
+	Repo            domain.Repository
+	Storage         storage.Storage
+	IsDev           bool
+	Logger          *slog.Logger
+	Gemini          *genai.Client
+	GeminiModelName string
 }
