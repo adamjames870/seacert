@@ -171,7 +171,7 @@ const CertTypes = () => {
           name: type.name,
           'short-name': type['short-name'] || null,
           'stcw-reference': type['stcw-reference'] || null,
-          'normal-validity-months': type['normal-validity-months'] || null,
+          'normal-validity-months': type['normal-validity-months'] || 0,
           status: 'approved'
         }),
       });

@@ -46,7 +46,8 @@ func ExtractCertificateData(ctx context.Context, client *genai.Client, fileBytes
 		promptBuilder.WriteString(fmt.Sprintf("- %s (ID: %s)\n", i.Name, i.ID.String()))
 	}
 
-	model := client.GenerativeModel("gemini-flash-latest")
+	// model := client.GenerativeModel("gemini-flash-latest")
+	model := client.GenerativeModel("gemini-2.5-flash-lite")
 
 	// Set the response MIME type to application/json to ensure structured output
 	model.ResponseMIMEType = "application/json"

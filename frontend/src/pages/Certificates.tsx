@@ -525,6 +525,16 @@ const Certificates = () => {
                   Report
                 </Button>
                 <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<AutorenewIcon />}
+                  component={RouterLink}
+                  to="/certificate-wizard"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Smart Add
+                </Button>
+                <Button
                   variant="contained"
                   color="primary"
                   startIcon={<AddIcon />}

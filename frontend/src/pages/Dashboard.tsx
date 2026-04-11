@@ -255,17 +255,32 @@ const Dashboard = () => {
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                     You haven't added any certificates yet.
                   </Typography>
-                  <Button 
-                    variant="contained" 
-                    color="primary"
-                    startIcon={<Plus size={20} />} 
-                    component={RouterLink} 
-                    to="/add-certificate"
-                    size="large"
-                    sx={{ borderRadius: 2, px: 4 }}
-                  >
-                    Add First Certificate
-                  </Button>
+                  <Stack spacing={2} sx={{ alignItems: 'center' }}>
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      startIcon={<Plus size={20} />} 
+                      component={RouterLink} 
+                      to="/certificate-wizard"
+                      size="large"
+                      sx={{ borderRadius: 2, px: 4, width: '100%', maxWidth: 300 }}
+                    >
+                      Use Smart Add
+                    </Button>
+                    <Typography variant="caption" color="text.secondary">
+                      Upload an image or PDF and we'll extract the data for you!
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      color="primary"
+                      startIcon={<Plus size={20} />} 
+                      component={RouterLink} 
+                      to="/add-certificate"
+                      sx={{ borderRadius: 2, px: 4, width: '100%', maxWidth: 300 }}
+                    >
+                      Add Manually
+                    </Button>
+                  </Stack>
                 </Box>
               )}
             </Box>

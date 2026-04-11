@@ -47,6 +47,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import BlogList from './pages/BlogList'
 import BlogPost from './pages/BlogPost'
+import CertificateWizard from './pages/wizard/CertificateWizard'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
 import EmailConsentModal from './components/EmailConsentModal'
@@ -253,6 +254,9 @@ function App() {
             <MenuItem onClick={handleClose} component={RouterLink} to="/add-certificate">
               Add Certificate
             </MenuItem>
+            <MenuItem onClick={handleClose} component={RouterLink} to="/certificate-wizard">
+              Smart Add (New)
+            </MenuItem>
             <MenuItem onClick={handleOpenReport}>
               Certificate Report
             </MenuItem>
@@ -406,6 +410,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
+        <Route path="/certificate-wizard" element={session ? <CertificateWizard /> : <Navigate to="/login" replace />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
 
