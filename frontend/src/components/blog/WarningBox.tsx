@@ -1,6 +1,6 @@
 ﻿import { Paper, Box, Typography } from '@mui/material';
 import { AlertCircle } from 'lucide-react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface WarningBoxProps {
   children: ReactNode;

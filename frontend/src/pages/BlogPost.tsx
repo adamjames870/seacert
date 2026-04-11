@@ -1,5 +1,5 @@
 ﻿import { useParams, Navigate, Link as RouterLink } from 'react-router-dom';
-import { useEffect, useState, Suspense, lazy } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Container, Box, Typography, Breadcrumbs, Link, CircularProgress, Divider } from '@mui/material';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 

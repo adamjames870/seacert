@@ -1,4 +1,4 @@
-﻿import { Box, Typography, Button, Paper } from '@mui/material';
+﻿import { Typography, Button, Paper } from '@mui/material';
 
 interface CTAProps {
   title: string;
