@@ -17,6 +17,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/johnfercher/maroto/v2 v2.3.1
 	github.com/lestrrat-go/jwx/v2 v2.1.6
+	github.com/pressly/goose/v3 v3.27.0
 	github.com/supabase-community/supabase-go v0.0.4
 	google.golang.org/api v0.275.0
 )
@@ -68,10 +69,12 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/pdfcpu/pdfcpu v0.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/segmentio/asm v1.2.1 // indirect
+	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/supabase-community/functions-go v0.0.0-20220927045802-22373e6cb51d // indirect
 	github.com/supabase-community/gotrue-go v1.2.0 // indirect
 	github.com/supabase-community/postgrest-go v0.0.11 // indirect
@@ -83,6 +86,7 @@ require (
 	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/net v0.52.0 // indirect

@@ -3,6 +3,7 @@
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -16,8 +17,12 @@ import (
 	"github.com/adamjames870/seacert/internal/storage"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/joho/godotenv"
+        "github.com/pressly/goose/v3"
 	"google.golang.org/api/option"
 )
+
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
 
 func LoadState(state *internal.ApiState) error {
 
@@ -109,8 +114,32 @@ func loadDb(state *internal.ApiState) error {
 		return fmt.Errorf("error pinging database: %w", err)
 	}
 
+	// Run Migrations
+	if err := runMigrations(state, db); err != nil {
+		return fmt.Errorf("migration error: %w", err)
+	}
+
 	state.Queries = sqlc.New(db)
 	state.Repo = postgres.NewRepository(db)
 
+	return nil
+}
+
+func runMigrations(state *internal.ApiState, db *sql.DB) error {
+	state.Logger.Info("Running database migrations...")
+
+	goose.SetBaseFS(embedMigrations)
+	goose.SetLogger(slog.NewLogLogger(state.Logger.Handler(), slog.LevelInfo))
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("failed to set goose dialect: %w", err)
+	}
+
+	// Apply migrations
+	if err := goose.Up(db, "migrations"); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	state.Logger.Info("Database migrations completed successfully")
 	return nil
 }
