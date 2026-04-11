@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/adamjames870/seacert/internal/api/auth"
@@ -70,7 +71,14 @@ func Logging(next http.Handler) http.Handler {
 		)
 
 		if len(body) > 0 {
-			logger.Debug("HTTP request body", "body", string(body))
+			contentType := r.Header.Get("Content-Type")
+			if strings.Contains(contentType, "multipart/form-data") {
+				logger.Debug("HTTP request body", "type", "multipart/form-data", "content_length", r.ContentLength)
+			} else if strings.Contains(contentType, "application/pdf") || strings.HasPrefix(contentType, "image/") {
+				logger.Debug("HTTP request body", "type", contentType, "content_length", r.ContentLength)
+			} else {
+				logger.Debug("HTTP request body", "body", string(body))
+			}
 		}
 	})
 }

@@ -50,6 +50,17 @@ type ParamsAddCertificate struct {
 	SupersedeReason *string `json:"supersede-reason,omitempty"`
 }
 
+type ExtractedCertificate struct {
+	CertTypeName string  `json:"cert-type-name"`
+	CertNumber   string  `json:"cert-number"`
+	IssuerName   string  `json:"issuer-name"`
+	IssuedDate   string  `json:"issued-date"`
+	ExpiryDate   *string `json:"expiry-date,omitempty"`
+	Remarks      *string `json:"remarks,omitempty"`
+	CertTypeId   *string `json:"cert-type-id,omitempty"`
+	IssuerId     *string `json:"issuer-id,omitempty"`
+}
+
 type ParamsUpdateCertificate struct {
 	UserId          string          `json:"user-id"`
 	Id              string          `json:"id" validate:"required"`

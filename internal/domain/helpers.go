@@ -57,6 +57,13 @@ func ToNullInt32OrNil(v int32) sql.NullInt32 {
 	return sql.NullInt32{Int32: v, Valid: true}
 }
 
+func ToNullInt32OrNilFromPointer(v *int32) sql.NullInt32 {
+	if v == nil || *v == 0 {
+		return sql.NullInt32{Valid: false}
+	}
+	return sql.NullInt32{Int32: *v, Valid: true}
+}
+
 func ToNullUUIDFromStringPointer(id *string) uuid.NullUUID {
 	if id == nil || *id == "" {
 		return uuid.NullUUID{Valid: false}

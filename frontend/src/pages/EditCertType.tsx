@@ -110,7 +110,7 @@ const EditCertType = () => {
         name: formData.name,
         'short-name': formData.shortName || null,
         'stcw-reference': formData.stcwReference || null,
-        'normal-validity-months': formData.normalValidityMonths ? parseInt(formData.normalValidityMonths) : null,
+        'normal-validity-months': formData.normalValidityMonths ? parseInt(formData.normalValidityMonths) : 0,
         status: formData.status
       };
 

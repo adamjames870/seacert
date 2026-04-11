@@ -73,7 +73,7 @@ func CreateCertType(ctx context.Context, repo domain.Repository, params dto.Para
 		Name:                 params.Name,
 		ShortName:            params.ShortName,
 		StcwReference:        domain.ToNullStringFromPointer(params.StcwReference),
-		NormalValidityMonths: domain.ToNullInt32OrNil(params.NormalValidityMonths),
+		NormalValidityMonths: domain.ToNullInt32OrNilFromPointer(params.NormalValidityMonths),
 		Status:               status,
 		CreatedBy: uuid.NullUUID{
 			UUID:  creatorId,

@@ -31,6 +31,7 @@ func (r *repository) ResetAll(ctx context.Context) error {
 		_ = r.Queries.ResetCertTypes(ctx)
 		_ = r.Queries.ResetIssuers(ctx)
 		_ = r.Queries.ResetUsers(ctx)
+		_ = r.Queries.DeleteExpiredPromptCaches(ctx)
 		return nil
 	})
 }
