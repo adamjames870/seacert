@@ -19,6 +19,7 @@ import {
   Chip,
   CircularProgress
 } from '@mui/material';
+import { usePostHog } from 'posthog-js/react';
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -46,6 +47,7 @@ interface Issuer {
 }
 
 const AddCertificate = () => {
+  const posthog = usePostHog();
   const [certTypes, setCertTypes] = useState<CertType[]>([]);
   const [issuers, setIssuers] = useState<Issuer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +90,12 @@ const AddCertificate = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!formData.supersedes) {
+      posthog.capture('certificate manual add started');
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -257,6 +265,11 @@ const AddCertificate = () => {
                            'Failed to add certificate';
         throw new Error(errorMessage);
       }
+
+      posthog.capture('certificate created', { 
+        method: 'manual',
+        is_update: !!formData.supersedes
+      });
 
       // setShowSuccess(true);
       navigate('/certificates');

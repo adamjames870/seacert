@@ -19,6 +19,7 @@ import {
   DialogTitle,
   Link
 } from '@mui/material';
+import { usePostHog } from 'posthog-js/react';
 import { useNavigate } from 'react-router-dom';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
@@ -61,6 +62,7 @@ const steps = [
 ];
 
 const CertificateWizard = () => {
+  const posthog = usePostHog();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +143,7 @@ const CertificateWizard = () => {
   };
 
   const handleFileUpload = async (selectedFile: File) => {
+    posthog.capture('certificate smart-add started');
     setFile(selectedFile);
     setPreviewUrl(URL.createObjectURL(selectedFile));
     setError(null);
@@ -227,6 +230,13 @@ const CertificateWizard = () => {
   };
 
   const handleNext = () => {
+    if (activeStep === 3) {
+      if (!certDetails.issuedDate) {
+        setError('Issued date is required');
+        return;
+      }
+    }
+    setError(null);
     setActiveStep((prev) => prev + 1);
   };
 
@@ -235,6 +245,10 @@ const CertificateWizard = () => {
   };
 
   const handleSubmit = async () => {
+    if (!certDetails.issuedDate) {
+      setError('Issued date is required');
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -303,6 +317,7 @@ const CertificateWizard = () => {
 
       if (!response.ok) throw new Error('Failed to save certificate');
 
+      posthog.capture('certificate created', { method: 'smart-add' });
       navigate('/certificates', { state: { showSuccess: true } });
     } catch (err: any) {
       setError(err.message || 'An error occurred during submission');
@@ -676,6 +691,7 @@ const CertificateWizard = () => {
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
+                required
                 type="date"
                 label="Issued Date"
                 InputLabelProps={{ shrink: true }}
