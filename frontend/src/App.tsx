@@ -16,6 +16,7 @@ import {
   Container,
   Link
 } from '@mui/material'
+import { usePostHog } from 'posthog-js/react'
 import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
@@ -59,6 +60,7 @@ import ResetPassword from './pages/ResetPassword'
 import BlogList from './pages/BlogList'
 import BlogPost from './pages/BlogPost'
 import CertificateWizard from './pages/wizard/CertificateWizard'
+import FirstCertificate from './pages/onboarding/FirstCertificate'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
 import CookieConsent from './components/CookieConsent'
 import EmailConsentModal from './components/EmailConsentModal'
@@ -80,6 +82,7 @@ interface UserData {
 }
 
 function App() {
+  const posthog = usePostHog()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
@@ -122,8 +125,24 @@ function App() {
             if (Array.isArray(data)) {
               const user = data.find(u => u.id === session.user.id)
               setUserData(user || null)
+              if (user) {
+                posthog.identify(user.id, {
+                  email: user.email,
+                  forename: user.forename,
+                  surname: user.surname,
+                  nationality: user.nationality,
+                  role: user.role
+                });
+              }
             } else {
               setUserData(data)
+              posthog.identify(data.id, {
+                email: data.email,
+                forename: data.forename,
+                surname: data.surname,
+                nationality: data.nationality,
+                role: data.role
+              });
             }
           }
         } catch (error) {
@@ -167,6 +186,7 @@ function App() {
     } catch (err) {
       console.error('Unexpected error during logout:', err)
     } finally {
+      posthog.reset();
       // Clear all local state regardless of server response
       setSession(null)
       setUserData(null)
@@ -452,6 +472,7 @@ function App() {
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/certificate-wizard" element={session ? <CertificateWizard /> : <Navigate to="/login" replace />} />
+        <Route path="/onboarding/first-certificate" element={session ? <FirstCertificate /> : <Navigate to="/login" replace />} />
         <Route path="/add-issuer" element={<AddIssuer />} />
         <Route path="/update-certificate/:id" element={<UpdateCertificate />} />
 

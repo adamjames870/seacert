@@ -21,6 +21,7 @@ import {
   Autocomplete,
   Chip
 } from '@mui/material';
+import { usePostHog } from 'posthog-js/react';
 import { 
   Trash2, 
   Plus, 
@@ -79,6 +80,7 @@ interface ShipType {
 }
 
 const AddSeatime = () => {
+  const posthog = usePostHog();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -296,6 +298,8 @@ const AddSeatime = () => {
         }
         throw new Error(errorMessage);
       }
+
+      posthog.capture('seatime created');
 
       navigate('/seatime');
     } catch (err: any) {

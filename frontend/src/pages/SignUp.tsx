@@ -12,11 +12,13 @@ import {
   Checkbox,
   Snackbar
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { supabase } from '../supabaseClient';
 
 const SignUp = () => {
+  const posthog = usePostHog();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,6 +26,7 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [emailConsent, setEmailConsent] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +46,13 @@ const SignUp = () => {
       });
 
       if (error) throw error;
+
+      if (data.user) {
+        posthog.identify(data.user.id, {
+          email: email
+        });
+        posthog.capture('signup completed');
+      }
 
       if (data.session?.access_token) {
         // Record consent
@@ -64,6 +74,18 @@ const SignUp = () => {
       setEmail('');
       setPassword('');
       setConfirmPassword('');
+
+      // Redirect to onboarding if we have a session (means they are logged in automatically)
+      // If no session, they probably need to confirm email first.
+      if (data.session) {
+        navigate('/onboarding/first-certificate', { replace: true });
+      } else {
+        // If no session, redirect to login with a message that they should check email
+        // or just stay here and show the success message.
+        // Given the requirement "If that is not possible, direct them to login, then to onboarding"
+        // we should probably redirect to login with a state that indicates they just signed up.
+        navigate('/login', { state: { signupSuccess: true } });
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred during sign up');
     } finally {

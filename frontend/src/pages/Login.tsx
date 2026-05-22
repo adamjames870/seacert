@@ -11,17 +11,21 @@ import {
   IconButton,
   Alert
 } from '@mui/material';
+import { usePostHog } from 'posthog-js/react';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 const Login = () => {
+  const posthog = usePostHog();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const signupSuccess = location.state?.signupSuccess;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,15 +33,32 @@ const Login = () => {
     setError(null);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      // On success, redirect to dashboard
-      navigate('/');
+      if (data.user) {
+        posthog.identify(data.user.id, {
+          email: email
+        });
+        posthog.capture('login completed');
+      }
+
+      // Check if we should go to onboarding (new user)
+      // We can check if they have any certificates
+      const { data: certs } = await supabase
+        .from('certificates')
+        .select('id')
+        .limit(1);
+
+      if (!certs || certs.length === 0) {
+        navigate('/onboarding/first-certificate', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
     } finally {
@@ -75,6 +96,12 @@ const Login = () => {
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
+            </Alert>
+          )}
+
+          {signupSuccess && !error && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              Registration successful! Please check your email to confirm your account, then login here.
             </Alert>
           )}
 

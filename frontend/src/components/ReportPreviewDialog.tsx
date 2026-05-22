@@ -11,6 +11,7 @@ import {
   IconButton,
   Alert
 } from '@mui/material';
+import { usePostHog } from 'posthog-js/react';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import { API_BASE_URL } from '../config';
@@ -22,6 +23,7 @@ interface ReportPreviewDialogProps {
 }
 
 const ReportPreviewDialog: React.FC<ReportPreviewDialogProps> = ({ open, onClose }) => {
+  const posthog = usePostHog();
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ const ReportPreviewDialog: React.FC<ReportPreviewDialogProps> = ({ open, onClose
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
+      posthog.capture('report generated');
     } catch (err: any) {
       console.error('Error fetching report:', err);
       setError(err.message || 'An error occurred while generating the report.');
@@ -72,6 +75,7 @@ const ReportPreviewDialog: React.FC<ReportPreviewDialogProps> = ({ open, onClose
 
   const handleDownload = () => {
     if (pdfUrl) {
+      posthog.capture('report downloaded');
       const link = document.createElement('a');
       link.href = pdfUrl;
       link.download = 'seacert-report.pdf';
