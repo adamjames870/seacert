@@ -9,7 +9,7 @@ import (
 	"github.com/adamjames870/seacert/internal/email"
 )
 
-func HandlerAdminTestEmail(state *internal.ApiState) http.HandlerFunc {
+func HandlerAdminWelcomeEmail(state *internal.ApiState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if !state.IsDev {

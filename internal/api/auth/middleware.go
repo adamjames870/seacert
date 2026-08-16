@@ -3,6 +3,7 @@
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -75,6 +76,7 @@ func NewAuthMiddleware(authInfo Info, userStore UserProvider) (func(http.Handler
 
 			_, errUserExists := userStore.EnsureUserExists(r.Context(), uuidId, user.Email)
 			if errUserExists != nil {
+				slog.Error("Authentication middleware: failed to ensure user exists", "error", errUserExists, "user_id", user.Id)
 				http.Error(w, ErrInternalServer.Error(), http.StatusInternalServerError)
 				return
 			}

@@ -44,7 +44,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("POST /admin/dummies", authMw(adminMw(admin.HandlerAdminDummies(state))))
 	mux.Handle("PUT /admin/users", authMw(admin.HandlerAdminUpdateUser(state)))
 	mux.Handle("GET /admin/users", authMw(admin.HandlerAdminGetUser(state)))
-	mux.Handle("POST /admin/test-email", authMw(admin.HandlerAdminTestEmail(state)))
+	mux.Handle("POST /admin/welcome-email", authMw(admin.HandlerAdminWelcomeEmail(state)))
 	mux.Handle("POST /admin/cert-types/resolve", authMw(adminMw(admin.HandlerAdminResolveCertType(state))))
 	mux.Handle("POST /api/admin/ships/resolve", authMw(adminMw(admin.HandlerAdminResolveShip(state))))
 	mux.Handle("POST /api/admin/ships/approve/{id}", authMw(adminMw(admin.HandlerAdminApproveShip(state))))
