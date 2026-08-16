@@ -1,4 +1,4 @@
-﻿package templates
+﻿package email_templates
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ func GetNoCertsEmail(
 
 	tmpl, err := template.ParseFiles(
 		baseTemplate,
-		"internal/email/templates/no_certs.html",
+		"internal/email/email_templates/no_certs.html",
 	)
 	if err != nil {
 		return Email{}, err

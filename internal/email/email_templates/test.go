@@ -1,4 +1,4 @@
-﻿package templates
+﻿package email_templates
 
 import (
 	"bytes"
@@ -28,7 +28,7 @@ func GetTestEmail(data TestEmailData, recipient []string) (Email, error) {
 		TestEmailData: data,
 	}
 
-	tmpl, err := template.ParseFiles(baseTemplate, "internal/email/templates/test.html")
+	tmpl, err := template.ParseFiles(baseTemplate, "internal/email/email_templates/test.html")
 	if err != nil {
 		return Email{}, err
 	}

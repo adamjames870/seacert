@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/adamjames870/seacert/internal/email/templates"
+	"github.com/adamjames870/seacert/internal/email/email_templates"
 	"github.com/resend/resend-go/v2"
 )
 
 const senderEmail = "SeaCert <notifications@seacert.app>"
 
-func sendEmail(email templates.Email, w http.ResponseWriter, r *http.Request) {
+func sendEmail(email email_templates.Email, w http.ResponseWriter, r *http.Request) {
 
 	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 

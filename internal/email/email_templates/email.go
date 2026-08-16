@@ -1,6 +1,6 @@
-﻿package templates
+﻿package email_templates
 
-const baseTemplate = "internal/email/templates/base.html"
+const baseTemplate = "internal/email/email_templates/base.html"
 
 type BaseEmailData struct {
 	Title string
