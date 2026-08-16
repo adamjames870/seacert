@@ -1,8 +1,6 @@
 ﻿package email
 
 import (
-	"encoding/json"
-	"net/http"
 	"os"
 
 	"github.com/adamjames870/seacert/internal/email/email_templates"
@@ -11,7 +9,7 @@ import (
 
 const senderEmail = "SeaCert <notifications@seacert.app>"
 
-func sendEmail(email email_templates.Email, w http.ResponseWriter, r *http.Request) {
+func Send(email email_templates.Email) (sentId string, err error) {
 
 	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 
@@ -25,13 +23,9 @@ func sendEmail(email email_templates.Email, w http.ResponseWriter, r *http.Reque
 
 	sent, err := client.Emails.Send(params)
 	if err != nil {
-		http.Error(w, "Failed to send email: "+err.Error(), http.StatusInternalServerError)
-		return
+		return "", err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"id": sent.Id,
-	})
+	return sent.Id, nil
 
 }

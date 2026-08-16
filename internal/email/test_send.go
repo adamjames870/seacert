@@ -1,18 +1,11 @@
 ﻿package email
 
 import (
-	"net/http"
-
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/email/email_templates"
 )
 
-type EmailRequest struct {
-	To   string `json:"to"`
-	Name string `json:"name"`
-}
-
-func TestEmail(state *internal.ApiState, request EmailRequest, w http.ResponseWriter, r *http.Request) {
+func TestEmail(state *internal.ApiState, request Request) (sentId string, err error) {
 
 	data := email_templates.CertificateExpiryEmailData{
 		FirstName: request.Name,
@@ -61,13 +54,17 @@ func TestEmail(state *internal.ApiState, request EmailRequest, w http.ResponseWr
 		},
 	}
 
-	mail, err := email_templates.GetCertificateExpiryEmail(data, []string{request.To})
+	mail, errTmplt := email_templates.GetCertificateExpiryEmail(data, []string{request.To})
 
-	if err != nil {
-		http.Error(w, "Failed to get email template: "+err.Error(), http.StatusInternalServerError)
-		return
+	if errTmplt != nil {
+		return "", errTmplt
 	}
 
-	sendEmail(mail, w, r)
+	id, errSend := Send(mail)
+	if errSend != nil {
+		return "", errSend
+	}
+
+	return id, nil
 
 }

@@ -23,11 +23,17 @@ func HandlerAdminTestEmail(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		req := email.EmailRequest{
+		req := email.Request{
 			To:   authUser.Email,
 			Name: authUser.Forename,
 		}
 
-		email.TestEmail(state, req, w, r)
+		sendId, err := email.Welcome(state, req)
+		if err != nil {
+			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error sending email", err)
+			return
+		}
+
+		handlers.RespondWithJSON(w, http.StatusOK, sendId)
 	}
 }
