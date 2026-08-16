@@ -1,0 +1,154 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>{{.Title}}</title>
+</head>
+
+<body style="
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background-color: #f3f4f6;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1f2937;
+    -webkit-text-size-adjust: 100%;
+">
+
+<!-- Outer background -->
+<table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="width: 100%; background-color: #f3f4f6;"
+>
+    <tr>
+        <td align="center" style="padding: 32px 16px;">
+
+            <!-- Email container -->
+            <table
+                    role="presentation"
+                    width="100%"
+                    cellspacing="0"
+                    cellpadding="0"
+                    border="0"
+                    style="
+                    width: 100%;
+                    max-width: 600px;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    border: 1px solid #e5e7eb;
+                "
+            >
+
+                <!-- Header -->
+                <tr>
+                    <td
+                            style="
+                            padding: 24px 32px;
+                            background-color: #0f172a;
+                            color: #ffffff;
+                        "
+                    >
+                        <div
+                                style="
+                                margin: 0;
+                                font-size: 26px;
+                                line-height: 32px;
+                                font-weight: 700;
+                                letter-spacing: -0.5px;
+                            "
+                        >
+                            SeaCert
+                        </div>
+
+                        <div
+                                style="
+                                margin-top: 4px;
+                                font-size: 13px;
+                                line-height: 18px;
+                                color: #cbd5e1;
+                            "
+                        >
+                            Maritime certification management
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Main content -->
+                <tr>
+                    <td
+                            style="
+                            padding: 36px 32px;
+                            font-size: 16px;
+                            line-height: 24px;
+                        "
+                    >
+
+                        {{template "content" .}}
+
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td
+                            style="
+                            padding: 24px 32px;
+                            background-color: #f8fafc;
+                            border-top: 1px solid #e5e7eb;
+                            font-size: 12px;
+                            line-height: 18px;
+                            color: #64748b;
+                        "
+                    >
+                        <p style="margin: 0 0 8px 0;">
+                            This email was sent by SeaCert.
+                        </p>
+
+                        <p style="margin: 0;">
+                            Keep your maritime certificates organised,
+                            accessible and up to date.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+            <!-- /Email container -->
+
+            <!-- Outside footer -->
+            <table
+                    role="presentation"
+                    width="100%"
+                    cellspacing="0"
+                    cellpadding="0"
+                    border="0"
+                    style="width: 100%; max-width: 600px;"
+            >
+                <tr>
+                    <td
+                            align="center"
+                            style="
+                            padding: 20px 16px 0 16px;
+                            font-size: 11px;
+                            line-height: 16px;
+                            color: #9ca3af;
+                        "
+                    >
+                        © {{.Year}} SeaCert
+                    </td>
+                </tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
