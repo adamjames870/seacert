@@ -1,0 +1,76 @@
+﻿{{define "content"}}
+
+<h1
+        style="
+        margin: 0 0 20px 0;
+        font-size: 24px;
+        line-height: 32px;
+        font-weight: 700;
+        color: #111827;
+    "
+>
+    Get started with SeaCert
+</h1>
+
+<p style="margin: 0 0 16px 0;">
+    Hello {{.FirstName}},
+</p>
+
+<p style="margin: 0 0 16px 0;">
+    We noticed that you haven't added any certificates to SeaCert yet.
+</p>
+
+<p style="margin: 0 0 16px 0;">
+    Adding your certificates allows SeaCert to keep your certification
+    records organised and help you stay ahead of upcoming expiry dates.
+</p>
+
+<p style="margin: 0 0 24px 0;">
+    It only takes a few moments to add your first certificate.
+</p>
+
+<table
+        role="presentation"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="margin: 0 0 24px 0;"
+>
+    <tr>
+        <td
+                style="
+                background-color: #2563eb;
+                border-radius: 6px;
+            "
+        >
+            <a
+                    href="{{.AppURL}}"
+                    style="
+                    display: inline-block;
+                    padding: 12px 20px;
+                    font-size: 15px;
+                    line-height: 20px;
+                    font-weight: 600;
+                    color: #ffffff;
+                    text-decoration: none;
+                "
+            >
+                Add your first certificate
+            </a>
+        </td>
+    </tr>
+</table>
+
+<p
+        style="
+        margin: 0;
+        font-size: 14px;
+        line-height: 22px;
+        color: #64748b;
+    "
+>
+    Once your certificates are added, SeaCert can help you keep track
+    of what you hold and when each certificate needs attention.
+</p>
+
+{{end}}

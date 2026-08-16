@@ -6,25 +6,29 @@ import (
 	"html/template"
 )
 
-const baseTemplate = "internal/email/templates/base.html"
+import stdTime "time"
 
 type TestEmailData struct {
-	Title     string
-	Year      int
 	FirstName string
 	AppURL    string
 }
 
-type Email struct {
-	Subject   string
-	HtmlBody  string
-	TextBody  string
-	Recipient []string
+type testEmailData struct {
+	BaseEmailData
+	TestEmailData
 }
 
 func GetTestEmail(data TestEmailData, recipient []string) (Email, error) {
 
-	tmpl, err := template.ParseFiles(baseTemplate, "internal/email/templates/test_email.html")
+	emailData := testEmailData{
+		BaseEmailData: BaseEmailData{
+			Title: "SeaCert Test Email",
+			Year:  stdTime.Now().Year(),
+		},
+		TestEmailData: data,
+	}
+
+	tmpl, err := template.ParseFiles(baseTemplate, "internal/email/templates/test.html")
 	if err != nil {
 		return Email{}, err
 	}
@@ -52,13 +56,13 @@ Open SeaCert:
 
 © %d SeaCert
 `,
-		data.FirstName,
-		data.AppURL,
-		data.Year,
+		emailData.FirstName,
+		emailData.AppURL,
+		emailData.Year,
 	)
 
 	return Email{
-		Subject:   data.Title,
+		Subject:   emailData.Title,
 		HtmlBody:  htmlBody,
 		TextBody:  textBody,
 		Recipient: recipient,

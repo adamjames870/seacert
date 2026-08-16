@@ -23,8 +23,9 @@ func HandlerAdminTestEmail(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		req := email.TestEmailRequest{
-			To: authUser.Email,
+		req := email.EmailRequest{
+			To:   authUser.Email,
+			Name: authUser.Forename,
 		}
 
 		email.TestEmail(state, req, w, r)

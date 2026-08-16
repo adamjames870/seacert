@@ -7,20 +7,19 @@ import (
 	"github.com/adamjames870/seacert/internal/email/templates"
 )
 
-type TestEmailRequest struct {
-	To string `json:"to"`
+type EmailRequest struct {
+	To   string `json:"to"`
+	Name string `json:"name"`
 }
 
-func TestEmail(state *internal.ApiState, request TestEmailRequest, w http.ResponseWriter, r *http.Request) {
+func TestEmail(state *internal.ApiState, request EmailRequest, w http.ResponseWriter, r *http.Request) {
 
-	data := templates.TestEmailData{
-		Title:     "SeaCert Test Email",
-		Year:      2026,
-		FirstName: "Adam",
+	data := templates.NoCertsEmailData{
+		FirstName: request.Name,
 		AppURL:    "https://www.seacert.app",
 	}
 
-	email, err := templates.GetTestEmail(data, []string{request.To})
+	email, err := templates.GetNoCertsEmail(data, []string{request.To})
 	if err != nil {
 		http.Error(w, "Failed to get email template: "+err.Error(), http.StatusInternalServerError)
 		return
