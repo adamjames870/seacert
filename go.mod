@@ -18,6 +18,7 @@ require (
 	github.com/johnfercher/maroto/v2 v2.3.1
 	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/pressly/goose/v3 v3.27.0
+	github.com/resend/resend-go/v2 v2.28.0
 	github.com/supabase-community/supabase-go v0.0.4
 	google.golang.org/api v0.275.0
 )

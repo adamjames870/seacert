@@ -413,6 +413,9 @@ github.com/pressly/goose/v3/internal/sqlparser
 github.com/pressly/goose/v3/lock
 github.com/pressly/goose/v3/lock/internal/store
 github.com/pressly/goose/v3/lock/internal/table
+# github.com/resend/resend-go/v2 v2.28.0
+## explicit; go 1.23
+github.com/resend/resend-go/v2
 # github.com/rivo/uniseg v0.4.4
 ## explicit; go 1.18
 github.com/rivo/uniseg
