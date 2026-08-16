@@ -16,7 +16,7 @@ type TestEmailData struct {
 }
 
 type Email struct {
-	Title     string
+	Subject   string
 	HtmlBody  string
 	TextBody  string
 	Recipient []string
@@ -24,7 +24,7 @@ type Email struct {
 
 func GetTestEmail(data TestEmailData, recipient []string) (Email, error) {
 
-	tmpl, err := template.ParseFiles(baseTemplate, "internal/email/templates/test.html")
+	tmpl, err := template.ParseFiles(baseTemplate, "internal/email/templates/test_email.html")
 	if err != nil {
 		return Email{}, err
 	}
@@ -58,7 +58,7 @@ Open SeaCert:
 	)
 
 	return Email{
-		Title:     data.Title,
+		Subject:   data.Title,
 		HtmlBody:  htmlBody,
 		TextBody:  textBody,
 		Recipient: recipient,
