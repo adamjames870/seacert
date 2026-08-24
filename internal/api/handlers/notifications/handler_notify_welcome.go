@@ -23,7 +23,7 @@ func HandlerNotifyWelcomeEmail(state *internal.ApiState) http.HandlerFunc {
 			Name: authUser.Forename,
 		}
 
-		sendId, err := email.Welcome(state, req)
+		sendId, err := email.Welcome(req)
 		if err != nil {
 			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error sending email", err)
 			return

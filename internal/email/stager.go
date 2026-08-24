@@ -1,7 +1,6 @@
 ﻿package email
 
 import (
-	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/email/email_templates"
 )
 
@@ -10,7 +9,7 @@ type Request struct {
 	Name string `json:"name"`
 }
 
-func Welcome(state *internal.ApiState, request Request) (sentId string, err error) {
+func Welcome(request Request) (sentId string, err error) {
 
 	data := email_templates.WelcomeEmailData{
 		FirstName: request.Name,
