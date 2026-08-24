@@ -59,6 +59,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import BlogList from './pages/BlogList'
 import BlogPost from './pages/BlogPost'
+import CertificateDetails from './pages/CertificateDetails'
 import CertificateWizard from './pages/wizard/CertificateWizard'
 import FirstCertificate from './pages/onboarding/FirstCertificate'
 import ReportPreviewDialog from './components/ReportPreviewDialog'
@@ -470,6 +471,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/certificates" element={<Certificates />} />
+        <Route path="/certificates/:id" element={<CertificateDetails />} />
         <Route path="/add-certificate" element={<AddCertificate />} />
         <Route path="/certificate-wizard" element={session ? <CertificateWizard /> : <Navigate to="/login" replace />} />
         <Route path="/onboarding/first-certificate" element={session ? <FirstCertificate /> : <Navigate to="/login" replace />} />
