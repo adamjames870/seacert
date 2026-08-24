@@ -1,4 +1,4 @@
-﻿package admin
+﻿package notifications
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/adamjames870/seacert/internal/email"
 )
 
-func HandlerAdminWelcomeEmail(state *internal.ApiState) http.HandlerFunc {
+func HandlerNotifyTestEmail(state *internal.ApiState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if !state.IsDev {

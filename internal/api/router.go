@@ -8,6 +8,7 @@ import (
 	"github.com/adamjames870/seacert/internal/api/auth"
 	"github.com/adamjames870/seacert/internal/api/handlers/admin"
 	"github.com/adamjames870/seacert/internal/api/handlers/api"
+	"github.com/adamjames870/seacert/internal/api/handlers/notifications"
 	"github.com/adamjames870/seacert/internal/api/middleware"
 )
 
@@ -44,7 +45,6 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("POST /admin/dummies", authMw(adminMw(admin.HandlerAdminDummies(state))))
 	mux.Handle("PUT /admin/users", authMw(admin.HandlerAdminUpdateUser(state)))
 	mux.Handle("GET /admin/users", authMw(admin.HandlerAdminGetUser(state)))
-	mux.Handle("POST /admin/welcome-email", authMw(admin.HandlerAdminWelcomeEmail(state)))
 	mux.Handle("POST /admin/cert-types/resolve", authMw(adminMw(admin.HandlerAdminResolveCertType(state))))
 	mux.Handle("POST /api/admin/ships/resolve", authMw(adminMw(admin.HandlerAdminResolveShip(state))))
 	mux.Handle("POST /api/admin/ships/approve/{id}", authMw(adminMw(admin.HandlerAdminApproveShip(state))))
@@ -57,6 +57,12 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("POST /api/admin/seatime/period-types", authMw(adminMw(admin.HandlerAdminAddPeriodType(state))))
 	mux.Handle("PUT /api/admin/seatime/period-types", authMw(adminMw(admin.HandlerAdminUpdatePeriodType(state))))
 	mux.Handle("DELETE /api/admin/seatime/period-types/{id}", authMw(adminMw(admin.HandlerAdminDeletePeriodType(state))))
+
+	// ----------- Notification Handlers ----------------
+	mux.Handle("POST /notify/test-email", authMw(notifications.HandlerNotifyTestEmail(state)))
+	mux.Handle("POST /notify/welcome-email", authMw(notifications.HandlerNotifyWelcomeEmail(state)))
+	mux.Handle("POST /notify/expiring-email", authMw(adminMw(notifications.HandlerNotifyExpiringEmail(state))))
+	mux.Handle("POST /notify/no-certs-email", authMw(adminMw(notifications.HandlerNotifyNoCertsEmail(state))))
 
 	// ----------- API Handlers ----------------
 	mux.Handle("POST /api/certificates/extract", authMw(api.HandlerApiExtractCert(state)))

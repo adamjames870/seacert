@@ -27,7 +27,7 @@ const FirstCertificate = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`${API_BASE_URL}/admin/welcome-email`, {
+      const response = await fetch(`${API_BASE_URL}/notify/welcome-email`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
