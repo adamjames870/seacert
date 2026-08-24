@@ -1,0 +1,28 @@
+-- name: CreateNotification :one
+INSERT INTO notifications (id, user_id, notification_type, notification_key, payload, scheduled_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: GetPendingNotifications :many
+SELECT *
+FROM notifications
+WHERE status = 'pending' AND scheduled_at <= NOW()
+ORDER BY scheduled_at ASC, created_at ASC;
+
+-- name: MarkNotificationProcessing :one
+UPDATE notifications
+SET status = 'processing', updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: MarkNotificationCompleted :one
+UPDATE notifications
+SET status = 'completed', processed_at = NOW(), updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: MarkNotificationFailed :one
+UPDATE notifications
+SET status = 'failed', processed_at = NOW(), updated_at = NOW()
+WHERE id = $1
+RETURNING *;

@@ -84,5 +84,18 @@ type Repository interface {
 	UpsertPromptCache(ctx context.Context, arg sqlc.UpsertPromptCacheParams) error
 	DeleteExpiredPromptCaches(ctx context.Context) error
 
+	// Notifications
+	CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
+	GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error)
+	MarkNotificationProcessing(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	MarkNotificationCompleted(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	MarkNotificationFailed(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+
+	// Email Deliveries
+	CreateEmailDelivery(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
+	MarkEmailDeliverySent(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error)
+	MarkEmailDeliveryFailed(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error)
+	GetEmailDeliveriesForNotification(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
+
 	WithTx(ctx context.Context, fn func(Repository) error) error
 }

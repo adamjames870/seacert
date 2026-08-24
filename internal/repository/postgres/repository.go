@@ -7,6 +7,7 @@ import (
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
+	"github.com/google/uuid"
 )
 
 type repository struct {
@@ -34,6 +35,42 @@ func (r *repository) ResetAll(ctx context.Context) error {
 		_ = r.Queries.DeleteExpiredPromptCaches(ctx)
 		return nil
 	})
+}
+
+func (r *repository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+	return r.Queries.CreateNotification(ctx, arg)
+}
+
+func (r *repository) GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error) {
+	return r.Queries.GetPendingNotifications(ctx)
+}
+
+func (r *repository) MarkNotificationProcessing(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+	return r.Queries.MarkNotificationProcessing(ctx, id)
+}
+
+func (r *repository) MarkNotificationCompleted(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+	return r.Queries.MarkNotificationCompleted(ctx, id)
+}
+
+func (r *repository) MarkNotificationFailed(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+	return r.Queries.MarkNotificationFailed(ctx, id)
+}
+
+func (r *repository) CreateEmailDelivery(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+	return r.Queries.CreateEmailDelivery(ctx, arg)
+}
+
+func (r *repository) MarkEmailDeliverySent(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+	return r.Queries.MarkEmailDeliverySent(ctx, arg)
+}
+
+func (r *repository) MarkEmailDeliveryFailed(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error) {
+	return r.Queries.MarkEmailDeliveryFailed(ctx, arg)
+}
+
+func (r *repository) GetEmailDeliveriesForNotification(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+	return r.Queries.GetEmailDeliveriesForNotification(ctx, notificationID)
 }
 
 func (r *repository) WithTx(ctx context.Context, fn func(domain.Repository) error) error {

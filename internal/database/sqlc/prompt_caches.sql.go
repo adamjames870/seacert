@@ -21,7 +21,8 @@ func (q *Queries) DeleteExpiredPromptCaches(ctx context.Context) error {
 }
 
 const getPromptCache = `-- name: GetPromptCache :one
-SELECT cache_key, model_name, gemini_cache_name, expires_at, created_at FROM prompt_caches
+SELECT cache_key, model_name, gemini_cache_name, expires_at, created_at
+FROM prompt_caches
 WHERE cache_key = $1 AND expires_at > NOW()
 LIMIT 1
 `

@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,6 +49,19 @@ type CertificateTypeSuccession struct {
 	ReplaceReason       SuccessionReason
 }
 
+type EmailDelivery struct {
+	ID                uuid.UUID
+	NotificationID    uuid.UUID
+	Recipient         string
+	Provider          string
+	ProviderMessageID sql.NullString
+	Status            string
+	Attempt           int32
+	ErrorMessage      sql.NullString
+	SentAt            sql.NullTime
+	CreatedAt         time.Time
+}
+
 type Issuer struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
@@ -55,6 +69,19 @@ type Issuer struct {
 	Name      string
 	Country   sql.NullString
 	Website   sql.NullString
+}
+
+type Notification struct {
+	ID               uuid.UUID
+	UserID           uuid.NullUUID
+	NotificationType string
+	NotificationKey  string
+	Status           string
+	Payload          json.RawMessage
+	ScheduledAt      time.Time
+	ProcessedAt      sql.NullTime
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type PromptCach struct {
