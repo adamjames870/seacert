@@ -21,3 +21,9 @@ DELETE from issuers;
 
 -- name: ResetUsers :exec
 DELETE from users;
+
+-- name: ResetNotifications :exec
+DELETE from notifications;
+
+-- name: ResetEmailDeliveries :exec
+DELETE from email_deliveries;

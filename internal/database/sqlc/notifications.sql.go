@@ -94,6 +94,46 @@ func (q *Queries) GetPendingNotifications(ctx context.Context) ([]Notification, 
 	return items, nil
 }
 
+const getUsersEligibleForNoCertificates7Day = `-- name: GetUsersEligibleForNoCertificates7Day :many
+SELECT u.id
+FROM users u
+WHERE u.created_at <= NOW() - INTERVAL '7 days'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM certificates c
+      WHERE c.user_id = u.id
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM notifications n
+      WHERE n.user_id = u.id
+        AND n.notification_type = 'no_certificates_7d'
+  )
+`
+
+func (q *Queries) GetUsersEligibleForNoCertificates7Day(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersEligibleForNoCertificates7Day)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markNotificationCompleted = `-- name: MarkNotificationCompleted :one
 UPDATE notifications
 SET status = 'completed', processed_at = NOW(), updated_at = NOW()

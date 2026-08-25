@@ -21,9 +21,9 @@ INSERT INTO certificate_types (
     created_at,
     updated_at
 ) VALUES
-(gen_random_uuid(), 'Certificate of Competency - Deck - Chief Mate Unlimited', 'CoC-CM', 'A-II / 2', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Certificate of Competency - Deck - OOW Unlimited', 'CoC-OOW', 'A-II / 1', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Certificate of Competency - Deck - Master Unlimited', 'CoC-MS', 'A-II / 2', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000001', 'Certificate of Competency - Deck - Chief Mate Unlimited', 'CoC-CM', 'A-II / 2', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000002', 'Certificate of Competency - Deck - OOW Unlimited', 'CoC-OOW', 'A-II / 1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000003', 'Certificate of Competency - Deck - Master Unlimited', 'CoC-MS', 'A-II / 2', 60, 'approved', NOW(), NOW()),
 
 (gen_random_uuid(), 'Seafarer Medical - UK - ENG1', 'ENG1', 'A-I / 9', 24, 'approved', NOW(), NOW()),
 (gen_random_uuid(), 'Seafarer Medical', 'MED', 'A-I / 9', 24, 'approved', NOW(), NOW()),
@@ -70,6 +70,26 @@ func (q *Queries) CreateDummyCertTypes(ctx context.Context) error {
 	return err
 }
 
+const createDummyCertificates = `-- name: CreateDummyCertificates :exec
+
+INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date)
+VALUES (
+        '10000000-0000-0000-0000-000000000001',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000003',
+        '10000000-0000-0000-0000-000000000001',
+        '123456789',
+        '10000000-0000-0000-0000-000000000001',
+        NOW()
+       )
+`
+
+func (q *Queries) CreateDummyCertificates(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, createDummyCertificates)
+	return err
+}
+
 const createDummyIssuers = `-- name: CreateDummyIssuers :exec
 
 
@@ -81,7 +101,7 @@ INSERT INTO issuers (
     created_at,
     updated_at
 ) VALUES
-      (gen_random_uuid(), 'Maritime & Coastguard Agency (MCA)', 'GB', 'https://www.gov.uk/government/organisations/maritime-and-coastguard-agency', NOW(), NOW()),
+      ('10000000-0000-0000-0000-000000000001', 'Maritime & Coastguard Agency (MCA)', 'GB', 'https://www.gov.uk/government/organisations/maritime-and-coastguard-agency', NOW(), NOW()),
       (gen_random_uuid(), 'Warsash Maritime Academy (WMA)', 'GB', 'https://maritime.solent.ac.uk/', NOW(), NOW()),
       (gen_random_uuid(), 'Maritime Skills Academy (MSA)', 'GB', 'https://www.maritimeskillsacademy.com/', NOW(), NOW()),
       (gen_random_uuid(), 'Stream Marine Training (SMT)', 'GB', 'https://streammarinetraining.com/', NOW(), NOW()),
@@ -93,5 +113,114 @@ INSERT INTO issuers (
 // one-time setup (safe to run repeatedly)
 func (q *Queries) CreateDummyIssuers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, createDummyIssuers)
+	return err
+}
+
+const createDummyNotifications = `-- name: CreateDummyNotifications :exec
+
+INSERT INTO notifications (
+    id,
+    user_id,
+    notification_type,
+    notification_key,
+    status,
+    payload,
+    scheduled_at,
+    created_at,
+    updated_at
+)
+VALUES (
+           gen_random_uuid(),
+           '10000000-0000-0000-0000-000000000004',
+           'no_certificates_7d',
+           'no-certificates:10000000-0000-0000-0000-000000000004:7d',
+           'completed',
+           '{}'::jsonb,
+           NOW() - INTERVAL '1 day',
+           NOW() - INTERVAL '1 day',
+           NOW()
+       )
+`
+
+func (q *Queries) CreateDummyNotifications(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, createDummyNotifications)
+	return err
+}
+
+const createDummyUsers = `-- name: CreateDummyUsers :exec
+
+
+INSERT INTO users (
+    id,
+    created_at,
+    updated_at,
+    forename,
+    surname,
+    email,
+    nationality,
+    email_consent
+)
+VALUES
+    (
+        '10000000-0000-0000-0000-000000000001',
+        NOW() - INTERVAL '10 days',
+        NOW(),
+        'Test',
+        'Eligible',
+        'test.eligible@example.com',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000002',
+        NOW() - INTERVAL '3 days',
+        NOW(),
+        'Test',
+        'TooYoung',
+        'test.tooyoung@example.com',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000003',
+        NOW() - INTERVAL '10 days',
+        NOW(),
+        'Test',
+        'HasCertificate',
+        'test.hascert@example.com',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000004',
+        NOW() - INTERVAL '10 days',
+        NOW(),
+        'Test',
+        'AlreadyNotified',
+        'test.notified@example.com',
+        'GB',
+        TRUE
+    )
+`
+
+// Notification test users
+//
+// A: >7 days old, no certificates
+//
+//	EXPECTED: eligible for no_certificates_7d
+//
+// B: <7 days old, no certificates
+//
+//	EXPECTED: not eligible
+//
+// C: >7 days old, will be given a certificate
+//
+//	EXPECTED: not eligible
+//
+// D: >7 days old, no certificates, but already has a 7d notification
+//
+//	EXPECTED: not eligible
+func (q *Queries) CreateDummyUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, createDummyUsers)
 	return err
 }

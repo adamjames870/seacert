@@ -34,6 +34,33 @@ func HandlerAdminDummies(state *internal.ApiState) http.HandlerFunc {
 
 		state.Logger.Info("Created dummy cert types")
 
+		errUsers := state.Queries.CreateDummyUsers(r.Context())
+		if errUsers != nil {
+			http.Error(w, "Failed to create dummy users", http.StatusInternalServerError)
+			state.Logger.Info("Failed to create dummy users", "error", errUsers)
+			return
+		}
+
+		state.Logger.Info("Created dummy users")
+
+		errCerts := state.Queries.CreateDummyCertificates(r.Context())
+		if errCerts != nil {
+			http.Error(w, "Failed to create dummy certs", http.StatusInternalServerError)
+			state.Logger.Info("Failed to create dummy certs", "error", errCerts)
+			return
+		}
+
+		state.Logger.Info("Created dummy certs")
+
+		errNotifications := state.Queries.CreateDummyNotifications(r.Context())
+		if errNotifications != nil {
+			http.Error(w, "Failed to create dummy notifications", http.StatusInternalServerError)
+			state.Logger.Info("Failed to create dummy notifications", "error", errNotifications)
+			return
+		}
+
+		state.Logger.Info("Created dummy notifications")
+
 	}
 
 }

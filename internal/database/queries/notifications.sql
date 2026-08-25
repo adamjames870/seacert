@@ -26,3 +26,19 @@ UPDATE notifications
 SET status = 'failed', processed_at = NOW(), updated_at = NOW()
 WHERE id = $1
 RETURNING *;
+
+-- name: GetUsersEligibleForNoCertificates7Day :many
+SELECT u.id
+FROM users u
+WHERE u.created_at <= NOW() - INTERVAL '7 days'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM certificates c
+      WHERE c.user_id = u.id
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM notifications n
+      WHERE n.user_id = u.id
+        AND n.notification_type = 'no_certificates_7d'
+  );

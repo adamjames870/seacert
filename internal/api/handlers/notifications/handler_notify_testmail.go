@@ -4,9 +4,8 @@ import (
 	"net/http"
 
 	"github.com/adamjames870/seacert/internal"
-	"github.com/adamjames870/seacert/internal/api/auth"
 	"github.com/adamjames870/seacert/internal/api/handlers"
-	"github.com/adamjames870/seacert/internal/email"
+	"github.com/adamjames870/seacert/internal/notifications"
 )
 
 func HandlerNotifyTestEmail(state *internal.ApiState) http.HandlerFunc {
@@ -17,23 +16,26 @@ func HandlerNotifyTestEmail(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		authUser, ok := auth.UserFromContext(r.Context())
-		if !ok {
-			handlers.RespondWithError(w, r, 401, "Unauthorized", nil)
-			return
-		}
+		generator := notifications.NewGenerator(state.Repo)
 
-		req := email.Request{
-			To:   authUser.Email,
-			Name: authUser.Forename,
-		}
-
-		sendId, err := email.Welcome(req)
+		count, err := generator.GenerateNoCertificates7Day(r.Context())
 		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error sending email", err)
+			handlers.RespondWithError(
+				w,
+				r,
+				http.StatusInternalServerError,
+				"Error generating notifications",
+				err,
+			)
 			return
 		}
 
-		handlers.RespondWithJSON(w, http.StatusOK, sendId)
+		handlers.RespondWithJSON(
+			w,
+			http.StatusOK,
+			map[string]any{
+				"generated": count,
+			},
+		)
 	}
 }

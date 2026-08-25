@@ -27,12 +27,30 @@ func (q *Queries) ResetCerts(ctx context.Context) error {
 	return err
 }
 
+const resetEmailDeliveries = `-- name: ResetEmailDeliveries :exec
+DELETE from email_deliveries
+`
+
+func (q *Queries) ResetEmailDeliveries(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetEmailDeliveries)
+	return err
+}
+
 const resetIssuers = `-- name: ResetIssuers :exec
 DELETE from issuers
 `
 
 func (q *Queries) ResetIssuers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetIssuers)
+	return err
+}
+
+const resetNotifications = `-- name: ResetNotifications :exec
+DELETE from notifications
+`
+
+func (q *Queries) ResetNotifications(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetNotifications)
 	return err
 }
 

@@ -24,6 +24,8 @@ func NewRepository(db *sql.DB) domain.Repository {
 
 func (r *repository) ResetAll(ctx context.Context) error {
 	return r.WithTx(ctx, func(txRepo domain.Repository) error {
+		_ = r.Queries.ResetEmailDeliveries(ctx)
+		_ = r.Queries.ResetNotifications(ctx)
 		_ = r.Queries.ResetSeatimePeriods(ctx)
 		_ = r.Queries.ResetSeatime(ctx)
 		_ = r.Queries.ResetShips(ctx)
@@ -39,6 +41,10 @@ func (r *repository) ResetAll(ctx context.Context) error {
 
 func (r *repository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
 	return r.Queries.CreateNotification(ctx, arg)
+}
+
+func (r *repository) GetUsersEligibleForNoCertificates7Day(ctx context.Context) ([]uuid.UUID, error) {
+	return r.Queries.GetUsersEligibleForNoCertificates7Day(ctx)
 }
 
 func (r *repository) GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error) {
