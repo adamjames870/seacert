@@ -2,21 +2,29 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
+	"github.com/adamjames870/seacert/internal/email"
 	"github.com/adamjames870/seacert/internal/email/email_templates"
 	"github.com/google/uuid"
 )
 
+type SenderFunc func(email email_templates.Email) (string, error)
+
 type Processor struct {
-	repo domain.Repository
+	repo   domain.Repository
+	sender SenderFunc
 }
 
 func NewProcessor(repo domain.Repository) *Processor {
-	return &Processor{repo: repo}
+	return &Processor{
+		repo:   repo,
+		sender: email.Send,
+	}
 }
 
 func (p *Processor) BuildEmail(
@@ -84,4 +92,47 @@ func (p *Processor) CreateDelivery(
 	}
 
 	return delivery, email, nil
+}
+
+func (p *Processor) SendDelivery(
+	ctx context.Context,
+	notification sqlc.Notification,
+) (sqlc.EmailDelivery, error) {
+	delivery, builtEmail, err := p.CreateDelivery(ctx, notification)
+	if err != nil {
+		return sqlc.EmailDelivery{}, fmt.Errorf("failed to create delivery: %w", err)
+	}
+
+	sender := p.sender
+	if sender == nil {
+		sender = email.Send
+	}
+
+	providerMessageID, sendErr := sender(builtEmail)
+	if sendErr != nil {
+		failedDelivery, markErr := p.repo.MarkEmailDeliveryFailed(ctx, sqlc.MarkEmailDeliveryFailedParams{
+			ID: delivery.ID,
+			ErrorMessage: sql.NullString{
+				String: sendErr.Error(),
+				Valid:  true,
+			},
+		})
+		if markErr != nil {
+			return delivery, fmt.Errorf("failed to send email: %w; additionally failed to mark delivery as failed: %v", sendErr, markErr)
+		}
+		return failedDelivery, fmt.Errorf("failed to send email: %w", sendErr)
+	}
+
+	sentDelivery, markErr := p.repo.MarkEmailDeliverySent(ctx, sqlc.MarkEmailDeliverySentParams{
+		ID: delivery.ID,
+		ProviderMessageID: sql.NullString{
+			String: providerMessageID,
+			Valid:  providerMessageID != "",
+		},
+	})
+	if markErr != nil {
+		return delivery, fmt.Errorf("email sent successfully with provider ID %q, but failed to record sent delivery state: %w", providerMessageID, markErr)
+	}
+
+	return sentDelivery, nil
 }

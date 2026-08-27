@@ -8,16 +8,9 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/api/handlers/notifications/handler_notify_testmail.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/handlers/notifications/handler_notify_testmail.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/api/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/database/queries/dummy_records.sql" beforeDir="false" afterPath="$PROJECT_DIR$/internal/database/queries/dummy_records.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/database/sqlc/dummy_records.sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/database/sqlc/dummy_records.sql.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/email/email_templates/certificate_expiry_summary.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/email/email_templates/certificate_expiry_summary.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/email/email_templates/email.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/email/email_templates/email.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/email/email_templates/no_certs.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/email/email_templates/no_certs.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/email/email_templates/test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/email/email_templates/test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/email/email_templates/welcome.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/email/email_templates/welcome.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/notifications/generator.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/generator.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/notifications/generator_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/generator_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/notifications/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/notifications/processor.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/processor.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/notifications/processor_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/processor_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,23 +43,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000071680479325" />
-      <entry key="MS500" value="1.103199829733066" />
-      <entry key="S2" value="2.0216052571534533" />
-      <entry key="S5" value="2.8945854423604356" />
-      <entry key="S10" value="3.3721595872519035" />
-      <entry key="S30" value="3.971127466440619" />
-      <entry key="S60" value="6.180819077374892" />
-      <entry key="M2" value="12.10578234083614" />
-      <entry key="M5" value="21.730399694110694" />
-      <entry key="M10" value="27.05129554324508" />
-      <entry key="M15" value="29.164318279460385" />
-      <entry key="M30" value="31.474301761996117" />
-      <entry key="H1" value="32.708945426973514" />
-      <entry key="H2" value="33.34730478008543" />
-      <entry key="H4" value="33.74427950029875" />
-      <entry key="D1" value="68.1034883685346" />
-      <entry key="W1" value="132.122052865607" />
+      <entry key="MS100" value="1.0040721319215633" />
+      <entry key="MS500" value="1.3456315514300394" />
+      <entry key="S2" value="2.322731515594553" />
+      <entry key="S5" value="3.0997693259373382" />
+      <entry key="S10" value="3.4980533661506263" />
+      <entry key="S30" value="3.8195004729998105" />
+      <entry key="S60" value="3.909107833362323" />
+      <entry key="M2" value="4.116675696812349" />
+      <entry key="M5" value="7.861808259411446" />
+      <entry key="M10" value="15.422000516370009" />
+      <entry key="M15" value="20.416980522023362" />
+      <entry key="M30" value="27.61576235688682" />
+      <entry key="H1" value="32.33311021372249" />
+      <entry key="H2" value="35.036706899810994" />
+      <entry key="H4" value="36.55426258328823" />
+      <entry key="D1" value="71.6972602189933" />
+      <entry key="W1" value="136.00918850837132" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -77,34 +70,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="8.451409106607066E-154" />
-      <entry key="M10" value="6.2891180117684034E-77" />
-      <entry key="M15" value="2.67830659335724E-51" />
-      <entry key="M30" value="1.1508633612203238E-25" />
-      <entry key="H1" value="7.574254906536499E-13" />
-      <entry key="H2" value="1.9452843949675973E-6" />
-      <entry key="H4" value="0.003118405786325473" />
-      <entry key="D1" value="1.4614734343257842" />
-      <entry key="W1" value="4.194290964586346" />
+      <entry key="M5" value="1.509208261342855E-154" />
+      <entry key="M10" value="2.6576621328024714E-77" />
+      <entry key="M15" value="1.508227910532917E-51" />
+      <entry key="M30" value="8.636287780832027E-26" />
+      <entry key="H1" value="6.561325568010174E-13" />
+      <entry key="H2" value="1.810543394361016E-6" />
+      <entry key="H4" value="0.0030084690314049443" />
+      <entry key="D1" value="1.4527573400972087" />
+      <entry key="W1" value="4.1907083158059" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.888849052432801" />
-      <entry key="MS500" value="1.0774786079841352" />
-      <entry key="S2" value="2.0094067279994823" />
-      <entry key="S5" value="2.887466049779541" />
-      <entry key="S10" value="3.3679828917557764" />
-      <entry key="S30" value="3.9694740924665948" />
-      <entry key="S60" value="6.179487000342607" />
-      <entry key="M2" value="12.104421870025357" />
-      <entry key="M5" value="21.72939747478876" />
-      <entry key="M10" value="27.050666865938055" />
-      <entry key="M15" value="29.16386529762385" />
-      <entry key="M30" value="31.474056735371384" />
-      <entry key="H1" value="32.70881795505847" />
-      <entry key="H2" value="33.34724170564036" />
-      <entry key="H4" value="33.74736400805935" />
-      <entry key="D1" value="69.5648719799875" />
-      <entry key="W1" value="136.31630838362167" />
+      <entry key="MS100" value="0.8467453298651662" />
+      <entry key="MS500" value="1.0057781691822711" />
+      <entry key="S2" value="1.926376697532204" />
+      <entry key="S5" value="2.865646938595893" />
+      <entry key="S10" value="3.3635668335049544" />
+      <entry key="S30" value="3.7701933665844125" />
+      <entry key="S60" value="3.8838512860056866" />
+      <entry key="M2" value="4.103875086428919" />
+      <entry key="M5" value="7.856478938309701" />
+      <entry key="M10" value="15.419153396520956" />
+      <entry key="M15" value="20.41500306917541" />
+      <entry key="M30" value="27.61471660164214" />
+      <entry key="H1" value="32.332568672585815" />
+      <entry key="H2" value="35.0364325922444" />
+      <entry key="H4" value="36.55713053739307" />
+      <entry key="D1" value="73.1499103017347" />
+      <entry key="W1" value="140.1998588406775" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{

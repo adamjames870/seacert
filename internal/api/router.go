@@ -60,6 +60,8 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 
 	// ----------- Notification Handlers ----------------
 	mux.Handle("POST /notify/test-generate", authMw(adminMw(notifications.HandlerNotifyTestGenerate(state))))
+	mux.Handle("POST /notify/test-send", authMw(adminMw(notifications.HandlerNotifyTestSend(state))))
+
 	mux.Handle("POST /notify/welcome-email", authMw(notifications.HandlerNotifyWelcomeEmail(state)))
 	mux.Handle("POST /notify/expiring-email", authMw(adminMw(notifications.HandlerNotifyExpiringEmail(state))))
 	mux.Handle("POST /notify/no-certs-email", authMw(adminMw(notifications.HandlerNotifyNoCertsEmail(state))))

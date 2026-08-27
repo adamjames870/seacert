@@ -15,6 +15,8 @@ type mockRepository struct {
 	GetUserByIDFunc                           func(ctx context.Context, id uuid.UUID) (sqlc.User, error)
 	CreateEmailDeliveryFunc                   func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
 	GetEmailDeliveriesForNotificationFunc     func(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
+	MarkEmailDeliverySentFunc                 func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error)
+	MarkEmailDeliveryFailedFunc               func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error)
 }
 
 func (m *mockRepository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
@@ -226,9 +228,15 @@ func (m *mockRepository) CreateEmailDelivery(ctx context.Context, arg sqlc.Creat
 	panic("not implemented")
 }
 func (m *mockRepository) MarkEmailDeliverySent(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+	if m.MarkEmailDeliverySentFunc != nil {
+		return m.MarkEmailDeliverySentFunc(ctx, arg)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) MarkEmailDeliveryFailed(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error) {
+	if m.MarkEmailDeliveryFailedFunc != nil {
+		return m.MarkEmailDeliveryFailedFunc(ctx, arg)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) GetEmailDeliveriesForNotification(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error) {
