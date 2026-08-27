@@ -25,34 +25,34 @@ INSERT INTO certificate_types (
 ('10000000-0000-0000-0000-000000000002', 'Certificate of Competency - Deck - OOW Unlimited', 'CoC-OOW', 'A-II / 1', 60, 'approved', NOW(), NOW()),
 ('10000000-0000-0000-0000-000000000003', 'Certificate of Competency - Deck - Master Unlimited', 'CoC-MS', 'A-II / 2', 60, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Seafarer Medical - UK - ENG1', 'ENG1', 'A-I / 9', 24, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Seafarer Medical', 'MED', 'A-I / 9', 24, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000004', 'Seafarer Medical - UK - ENG1', 'ENG1', 'A-I / 9', 24, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000005', 'Seafarer Medical', 'MED', 'A-I / 9', 24, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'GMDSS General Operator', 'GMDSS', 'A-IV / 2', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000006', 'GMDSS General Operator', 'GMDSS', 'A-IV / 2', 60, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Basic Training STCW', 'BT', 'A-VI / 1', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Personal Survival Techniques', 'PST', 'A-VI / 1-1', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Fire Fighting & Prevention', 'FFP', 'A-VI / 1-2', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Elementary First Aid', 'EFA', 'A-VI / 1-3', NULL, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Personal Safety & Social Responsibility', 'PSSR', 'A-VI / 1-4', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000007', 'Basic Training STCW', 'BT', 'A-VI / 1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000008', 'Personal Survival Techniques', 'PST', 'A-VI / 1-1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000009', 'Fire Fighting & Prevention', 'FFP', 'A-VI / 1-2', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000010', 'Elementary First Aid', 'EFA', 'A-VI / 1-3', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000011', 'Personal Safety & Social Responsibility', 'PSSR', 'A-VI / 1-4', NULL, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Advanced Firefighting Update', 'AFF-U', 'A-VI / 3', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000012', 'Advanced Firefighting Update', 'AFF-U', 'A-VI / 3', 60, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Tanker Firefighting', 'TFF', 'A-V / 1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000013', 'Tanker Firefighting', 'TFF', 'A-V / 1', 60, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Proficiency in Survival Craft and Rescue Boats (Except Fast Rescue Boats)', 'PSCRB', 'A-VI / 2-1', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Proficiency in Survival Craft and Rescue Boats (Except Fast Rescue Boats) Update', 'PSCRB-U', 'A-VI / 2-1', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Proficiency in Fast Rescue Boats Update', 'FRC-U', 'A-VI / 2-1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000014', 'Proficiency in Survival Craft and Rescue Boats (Except Fast Rescue Boats)', 'PSCRB', 'A-VI / 2-1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000015', 'Proficiency in Survival Craft and Rescue Boats (Except Fast Rescue Boats) Update', 'PSCRB-U', 'A-VI / 2-1', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000016', 'Proficiency in Fast Rescue Boats Update', 'FRC-U', 'A-VI / 2-1', 60, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Proficiency in Medical First Aid', 'MFA', 'A-VI / 4-1', NULL, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Proficiency in Medical Care', 'PMC', 'A-VI / 4-2', NULL, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Proficiency in Medical Care Update', 'PMC-U', 'A-VI / 4-2', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000017', 'Proficiency in Medical First Aid', 'MFA', 'A-VI / 4-1', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000018', 'Proficiency in Medical Care', 'PMC', 'A-VI / 4-2', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000019', 'Proficiency in Medical Care Update', 'PMC-U', 'A-VI / 4-2', NULL, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Proficiency in Security Awareness', 'PSA', 'A-VI / 6-1', NULL, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Proficiency in Designated Security Duties', 'DSD', 'A-VI / 6-2', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000020', 'Proficiency in Security Awareness', 'PSA', 'A-VI / 6-1', NULL, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000021', 'Proficiency in Designated Security Duties', 'DSD', 'A-VI / 6-2', NULL, 'approved', NOW(), NOW()),
 
-(gen_random_uuid(), 'Proficiency in Medical Care Onboard', 'MCOB', 'A-VI / 4-2', 60, 'approved', NOW(), NOW()),
-(gen_random_uuid(), 'Proficiency in Medical Care Onboard Update', 'MCOBU', 'A-VI / 4-2', 60, 'approved', NOW(), NOW())
+('10000000-0000-0000-0000-000000000022', 'Proficiency in Medical Care Onboard', 'MCOB', 'A-VI / 4-2', 60, 'approved', NOW(), NOW()),
+('10000000-0000-0000-0000-000000000023', 'Proficiency in Medical Care Onboard Update', 'MCOBU', 'A-VI / 4-2', 60, 'approved', NOW(), NOW())
 `
 
 // CoC
@@ -102,12 +102,12 @@ INSERT INTO issuers (
     updated_at
 ) VALUES
       ('10000000-0000-0000-0000-000000000001', 'Maritime & Coastguard Agency (MCA)', 'GB', 'https://www.gov.uk/government/organisations/maritime-and-coastguard-agency', NOW(), NOW()),
-      (gen_random_uuid(), 'Warsash Maritime Academy (WMA)', 'GB', 'https://maritime.solent.ac.uk/', NOW(), NOW()),
-      (gen_random_uuid(), 'Maritime Skills Academy (MSA)', 'GB', 'https://www.maritimeskillsacademy.com/', NOW(), NOW()),
-      (gen_random_uuid(), 'Stream Marine Training (SMT)', 'GB', 'https://streammarinetraining.com/', NOW(), NOW()),
-      (gen_random_uuid(), 'Medical Support Offshore (MSOS)', 'GB', 'https://www.msos.org.uk/', NOW(), NOW()),
-      (gen_random_uuid(), 'Fire-Aid Academy', 'GB', 'https://fireaid.com/', NOW(), NOW()),
-      (gen_random_uuid(), 'Marina', 'PH', NULL, NOW(), NOW())
+      ('10000000-0000-0000-0000-000000000002', 'Warsash Maritime Academy (WMA)', 'GB', 'https://maritime.solent.ac.uk/', NOW(), NOW()),
+      ('10000000-0000-0000-0000-000000000003', 'Maritime Skills Academy (MSA)', 'GB', 'https://www.maritimeskillsacademy.com/', NOW(), NOW()),
+      ('10000000-0000-0000-0000-000000000004', 'Stream Marine Training (SMT)', 'GB', 'https://streammarinetraining.com/', NOW(), NOW()),
+      ('10000000-0000-0000-0000-000000000005', 'Medical Support Offshore (MSOS)', 'GB', 'https://www.msos.org.uk/', NOW(), NOW()),
+      ('10000000-0000-0000-0000-000000000006', 'Fire-Aid Academy', 'GB', 'https://fireaid.com/', NOW(), NOW()),
+      ('10000000-0000-0000-0000-000000000007', 'Marina', 'PH', NULL, NOW(), NOW())
 `
 
 // one-time setup (safe to run repeatedly)
@@ -167,7 +167,7 @@ VALUES
         NOW(),
         'Test',
         'Eligible',
-        'test.eligible@example.com',
+        'hello@seacert.app',
         'GB',
         TRUE
     ),
@@ -177,7 +177,7 @@ VALUES
         NOW(),
         'Test',
         'TooYoung',
-        'test.tooyoung@example.com',
+        'hello1@seacert.app',
         'GB',
         TRUE
     ),
@@ -187,7 +187,7 @@ VALUES
         NOW(),
         'Test',
         'HasCertificate',
-        'test.hascert@example.com',
+        'hello2@seacert.app',
         'GB',
         TRUE
     ),
@@ -197,7 +197,7 @@ VALUES
         NOW(),
         'Test',
         'AlreadyNotified',
-        'test.notified@example.com',
+        'hello3@seacert.app',
         'GB',
         TRUE
     )

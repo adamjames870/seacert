@@ -1,4 +1,9 @@
-﻿package email_templates
+package email_templates
+
+import "embed"
+
+//go:embed *.html
+var templateFS embed.FS
 
 const baseTemplate = "internal/email/email_templates/base.html"
 

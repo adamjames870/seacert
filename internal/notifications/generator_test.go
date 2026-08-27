@@ -1,4 +1,4 @@
-﻿package notifications
+package notifications
 
 import (
 	"context"
@@ -12,6 +12,9 @@ import (
 type mockRepository struct {
 	CreateNotificationFunc                    func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
 	GetUsersEligibleForNoCertificates7DayFunc func(ctx context.Context) ([]uuid.UUID, error)
+	GetUserByIDFunc                           func(ctx context.Context, id uuid.UUID) (sqlc.User, error)
+	CreateEmailDeliveryFunc                   func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
+	GetEmailDeliveriesForNotificationFunc     func(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
 }
 
 func (m *mockRepository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
@@ -96,6 +99,9 @@ func (m *mockRepository) UpdateIssuer(ctx context.Context, arg sqlc.UpdateIssuer
 	panic("not implemented")
 }
 func (m *mockRepository) GetUserByID(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+	if m.GetUserByIDFunc != nil {
+		return m.GetUserByIDFunc(ctx, id)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (sqlc.User, error) {
@@ -214,6 +220,9 @@ func (m *mockRepository) DeleteExpiredPromptCaches(ctx context.Context) error {
 	panic("not implemented")
 }
 func (m *mockRepository) CreateEmailDelivery(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+	if m.CreateEmailDeliveryFunc != nil {
+		return m.CreateEmailDeliveryFunc(ctx, arg)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) MarkEmailDeliverySent(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
@@ -223,6 +232,9 @@ func (m *mockRepository) MarkEmailDeliveryFailed(ctx context.Context, arg sqlc.M
 	panic("not implemented")
 }
 func (m *mockRepository) GetEmailDeliveriesForNotification(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+	if m.GetEmailDeliveriesForNotificationFunc != nil {
+		return m.GetEmailDeliveriesForNotificationFunc(ctx, notificationID)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) WithTx(ctx context.Context, fn func(domain.Repository) error) error {

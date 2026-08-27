@@ -1,4 +1,4 @@
-﻿package email_templates
+package email_templates
 
 import (
 	"bytes"
@@ -41,9 +41,10 @@ func GetCertificateExpiryEmail(
 		},
 	}
 
-	tmpl, err := template.ParseFiles(
-		baseTemplate,
-		"internal/email/email_templates/certificate_expiry_summary.html",
+	tmpl, err := template.ParseFS(
+		templateFS,
+		"base.html",
+		"certificate_expiry_summary.html",
 	)
 	if err != nil {
 		return Email{}, err

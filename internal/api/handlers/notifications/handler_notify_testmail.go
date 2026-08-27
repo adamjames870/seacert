@@ -8,7 +8,7 @@ import (
 	"github.com/adamjames870/seacert/internal/notifications"
 )
 
-func HandlerNotifyTestEmail(state *internal.ApiState) http.HandlerFunc {
+func HandlerNotifyTestGenerate(state *internal.ApiState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if !state.IsDev {
