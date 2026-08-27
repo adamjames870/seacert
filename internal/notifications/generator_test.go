@@ -17,6 +17,9 @@ type mockRepository struct {
 	GetEmailDeliveriesForNotificationFunc     func(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
 	MarkEmailDeliverySentFunc                 func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error)
 	MarkEmailDeliveryFailedFunc               func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error)
+	MarkNotificationProcessingFunc            func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	MarkNotificationCompletedFunc             func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	MarkNotificationFailedFunc                func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
 }
 
 func (m *mockRepository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
@@ -32,12 +35,21 @@ func (m *mockRepository) GetPendingNotifications(ctx context.Context) ([]sqlc.No
 	panic("not implemented")
 }
 func (m *mockRepository) MarkNotificationProcessing(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+	if m.MarkNotificationProcessingFunc != nil {
+		return m.MarkNotificationProcessingFunc(ctx, id)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) MarkNotificationCompleted(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+	if m.MarkNotificationCompletedFunc != nil {
+		return m.MarkNotificationCompletedFunc(ctx, id)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) MarkNotificationFailed(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+	if m.MarkNotificationFailedFunc != nil {
+		return m.MarkNotificationFailedFunc(ctx, id)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) GetCerts(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertsRow, error) {

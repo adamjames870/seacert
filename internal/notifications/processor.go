@@ -136,3 +136,33 @@ func (p *Processor) SendDelivery(
 
 	return sentDelivery, nil
 }
+
+func (p *Processor) ProcessNotification(
+	ctx context.Context,
+	notification sqlc.Notification,
+) error {
+	if notification.NotificationType != string(TypeNoCertificates7Day) {
+		return fmt.Errorf("unsupported notification type: %s", notification.NotificationType)
+	}
+
+	processingNotification, err := p.repo.MarkNotificationProcessing(ctx, notification.ID)
+	if err != nil {
+		return fmt.Errorf("failed to mark notification as processing: %w", err)
+	}
+
+	_, sendErr := p.SendDelivery(ctx, processingNotification)
+	if sendErr != nil {
+		_, markErr := p.repo.MarkNotificationFailed(ctx, notification.ID)
+		if markErr != nil {
+			return fmt.Errorf("failed to send notification: %w; additionally failed to mark notification as failed: %v", sendErr, markErr)
+		}
+		return sendErr
+	}
+
+	_, err = p.repo.MarkNotificationCompleted(ctx, notification.ID)
+	if err != nil {
+		return fmt.Errorf("email sent successfully, but failed to record notification completion state: %w", err)
+	}
+
+	return nil
+}

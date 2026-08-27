@@ -1,4 +1,4 @@
-﻿package notifications
+package notifications
 
 import (
 	"net/http"
@@ -81,7 +81,7 @@ func HandlerNotifyTestSend(state *internal.ApiState) http.HandlerFunc {
 
 		processor := notifications.NewProcessor(state.Repo)
 
-		delivery, err := processor.SendDelivery(
+		err = processor.ProcessNotification(
 			r.Context(),
 			notification,
 		)
@@ -90,7 +90,7 @@ func HandlerNotifyTestSend(state *internal.ApiState) http.HandlerFunc {
 				w,
 				r,
 				http.StatusInternalServerError,
-				"Error sending notification email",
+				"Error processing notification",
 				err,
 			)
 			return
@@ -100,14 +100,8 @@ func HandlerNotifyTestSend(state *internal.ApiState) http.HandlerFunc {
 			w,
 			http.StatusOK,
 			map[string]any{
-				"delivery_id":         delivery.ID,
-				"notification_id":     delivery.NotificationID,
-				"recipient":           delivery.Recipient,
-				"provider":            delivery.Provider,
-				"provider_message_id": delivery.ProviderMessageID,
-				"status":              delivery.Status,
-				"attempt":             delivery.Attempt,
-				"sent_at":             delivery.SentAt,
+				"message":         "Notification processed successfully",
+				"notification_id": notification.ID,
 			},
 		)
 	}

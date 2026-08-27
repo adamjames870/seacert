@@ -53,6 +53,40 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 	return i, err
 }
 
+const getNotificationsStatusSummary = `-- name: GetNotificationsStatusSummary :many
+SELECT status, COUNT(*) AS count
+FROM notifications
+GROUP BY status
+`
+
+type GetNotificationsStatusSummaryRow struct {
+	Status string
+	Count  int64
+}
+
+func (q *Queries) GetNotificationsStatusSummary(ctx context.Context) ([]GetNotificationsStatusSummaryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNotificationsStatusSummary)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetNotificationsStatusSummaryRow
+	for rows.Next() {
+		var i GetNotificationsStatusSummaryRow
+		if err := rows.Scan(&i.Status, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPendingNotifications = `-- name: GetPendingNotifications :many
 SELECT id, user_id, notification_type, notification_key, status, payload, scheduled_at, processed_at, created_at, updated_at
 FROM notifications

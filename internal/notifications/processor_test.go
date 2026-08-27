@@ -760,3 +760,594 @@ func TestProcessor_SendDelivery_SendFailure_MarkFailedError(t *testing.T) {
 		t.Errorf("expected wrapped sendErr, got %v", err)
 	}
 }
+
+func TestProcessor_ProcessNotification_Success(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	notificationID := uuid.New()
+	deliveryID := uuid.New()
+
+	var markProcessingCalled bool
+	var markCompletedCalled bool
+	var markFailedCalled bool
+	var senderCalled bool
+
+	mockRepo := &mockRepository{
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       userID,
+				Email:    "captain@example.com",
+				Forename: sql.NullString{String: "Ahab", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             deliveryID,
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:                arg.ID,
+				NotificationID:    notificationID,
+				Recipient:         "captain@example.com",
+				Provider:          ProviderResend,
+				ProviderMessageID: arg.ProviderMessageID,
+				Status:            "sent",
+				Attempt:           1,
+			}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			if id != notificationID {
+				t.Fatalf("expected notificationID %s, got %s", notificationID, id)
+			}
+			markProcessingCalled = true
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "processing",
+			}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			if id != notificationID {
+				t.Fatalf("expected notificationID %s, got %s", notificationID, id)
+			}
+			markCompletedCalled = true
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "completed",
+			}, nil
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markFailedCalled = true
+			return sqlc.Notification{}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		senderCalled = true
+		return "msg_resend_999", nil
+	}
+
+	notification := sqlc.Notification{
+		ID:               notificationID,
+		UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+		NotificationType: string(TypeNoCertificates7Day),
+		Status:           "pending",
+	}
+
+	err := processor.ProcessNotification(ctx, notification)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if !markProcessingCalled {
+		t.Errorf("expected MarkNotificationProcessing to be called")
+	}
+
+	if !senderCalled {
+		t.Errorf("expected sender to be called")
+	}
+
+	if !markCompletedCalled {
+		t.Errorf("expected MarkNotificationCompleted to be called")
+	}
+
+	if markFailedCalled {
+		t.Errorf("MarkNotificationFailed should not be called on success")
+	}
+}
+
+func TestProcessor_ProcessNotification_OrderOfTransitions(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	notificationID := uuid.New()
+	deliveryID := uuid.New()
+
+	var eventOrder []string
+
+	mockRepo := &mockRepository{
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       userID,
+				Email:    "captain@example.com",
+				Forename: sql.NullString{String: "Ahab", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             deliveryID,
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:     arg.ID,
+				Status: "sent",
+			}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			eventOrder = append(eventOrder, "mark_processing")
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "processing",
+			}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			eventOrder = append(eventOrder, "mark_completed")
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "completed",
+			}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		eventOrder = append(eventOrder, "send_email")
+		return "msg_id_123", nil
+	}
+
+	notification := sqlc.Notification{
+		ID:               notificationID,
+		UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+		NotificationType: string(TypeNoCertificates7Day),
+		Status:           "pending",
+	}
+
+	err := processor.ProcessNotification(ctx, notification)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	expectedOrder := []string{"mark_processing", "send_email", "mark_completed"}
+	if len(eventOrder) != len(expectedOrder) {
+		t.Fatalf("expected event order %v, got %v", expectedOrder, eventOrder)
+	}
+	for i, ev := range expectedOrder {
+		if eventOrder[i] != ev {
+			t.Errorf("at step %d: expected %s, got %s", i, ev, eventOrder[i])
+		}
+	}
+}
+
+func TestProcessor_ProcessNotification_SendFailure_MarksFailed(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	notificationID := uuid.New()
+	deliveryID := uuid.New()
+
+	var markProcessingCalled bool
+	var markFailedCalled bool
+	var markCompletedCalled bool
+	var markFailedID uuid.UUID
+
+	resendErr := errors.New("resend down")
+
+	mockRepo := &mockRepository{
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       userID,
+				Email:    "captain@example.com",
+				Forename: sql.NullString{String: "Ahab", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             deliveryID,
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliveryFailedFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:           arg.ID,
+				Status:       "failed",
+				ErrorMessage: arg.ErrorMessage,
+			}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markProcessingCalled = true
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "processing",
+			}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markCompletedCalled = true
+			return sqlc.Notification{}, nil
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markFailedCalled = true
+			markFailedID = id
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "failed",
+			}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		return "", resendErr
+	}
+
+	notification := sqlc.Notification{
+		ID:               notificationID,
+		UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+		NotificationType: string(TypeNoCertificates7Day),
+		Status:           "pending",
+	}
+
+	err := processor.ProcessNotification(ctx, notification)
+	if err == nil {
+		t.Fatal("expected error from ProcessNotification on send failure, got nil")
+	}
+
+	if !errors.Is(err, resendErr) {
+		t.Errorf("expected wrapped resendErr, got %v", err)
+	}
+
+	if !markProcessingCalled {
+		t.Errorf("expected MarkNotificationProcessing to be called")
+	}
+
+	if !markFailedCalled {
+		t.Errorf("expected MarkNotificationFailed to be called")
+	}
+
+	if markFailedID != notificationID {
+		t.Errorf("expected MarkNotificationFailed with ID %s, got %s", notificationID, markFailedID)
+	}
+
+	if markCompletedCalled {
+		t.Errorf("MarkNotificationCompleted should not be called when sending fails")
+	}
+}
+
+func TestProcessor_ProcessNotification_UnsupportedType(t *testing.T) {
+	ctx := context.Background()
+
+	var markProcessingCalled bool
+	var markCompletedCalled bool
+	var markFailedCalled bool
+	var senderCalled bool
+
+	mockRepo := &mockRepository{
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markProcessingCalled = true
+			return sqlc.Notification{}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markCompletedCalled = true
+			return sqlc.Notification{}, nil
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markFailedCalled = true
+			return sqlc.Notification{}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		senderCalled = true
+		return "msg", nil
+	}
+
+	testCases := []string{
+		string(TypeNoCertificates1Month),
+		string(TypeCertificateExpirySummary),
+		"unsupported_type",
+		"",
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc, func(t *testing.T) {
+			markProcessingCalled = false
+			markCompletedCalled = false
+			markFailedCalled = false
+			senderCalled = false
+
+			notification := sqlc.Notification{
+				ID:               uuid.New(),
+				UserID:           uuid.NullUUID{UUID: uuid.New(), Valid: true},
+				NotificationType: tc,
+				Status:           "pending",
+			}
+
+			err := processor.ProcessNotification(ctx, notification)
+			if err == nil {
+				t.Fatalf("expected error for unsupported notification type %q, got nil", tc)
+			}
+
+			if markProcessingCalled {
+				t.Errorf("MarkNotificationProcessing should not be called for unsupported type %q", tc)
+			}
+			if senderCalled {
+				t.Errorf("sender should not be called for unsupported type %q", tc)
+			}
+			if markCompletedCalled {
+				t.Errorf("MarkNotificationCompleted should not be called for unsupported type %q", tc)
+			}
+			if markFailedCalled {
+				t.Errorf("MarkNotificationFailed should not be called for unsupported type %q", tc)
+			}
+		})
+	}
+}
+
+func TestProcessor_ProcessNotification_MarkProcessingError(t *testing.T) {
+	ctx := context.Background()
+	notificationID := uuid.New()
+	userID := uuid.New()
+
+	dbErr := errors.New("db error updating to processing")
+	var senderCalled bool
+	var markCompletedCalled bool
+	var markFailedCalled bool
+
+	mockRepo := &mockRepository{
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{}, dbErr
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markCompletedCalled = true
+			return sqlc.Notification{}, nil
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markFailedCalled = true
+			return sqlc.Notification{}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		senderCalled = true
+		return "msg", nil
+	}
+
+	notification := sqlc.Notification{
+		ID:               notificationID,
+		UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+		NotificationType: string(TypeNoCertificates7Day),
+		Status:           "pending",
+	}
+
+	err := processor.ProcessNotification(ctx, notification)
+	if err == nil {
+		t.Fatal("expected error when MarkNotificationProcessing fails, got nil")
+	}
+
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected wrapped dbErr, got %v", err)
+	}
+
+	if senderCalled {
+		t.Errorf("sender should not be called when MarkNotificationProcessing fails")
+	}
+
+	if markCompletedCalled {
+		t.Errorf("MarkNotificationCompleted should not be called")
+	}
+
+	if markFailedCalled {
+		t.Errorf("MarkNotificationFailed should not be called")
+	}
+}
+
+func TestProcessor_ProcessNotification_SendSuccess_MarkCompletedError(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	notificationID := uuid.New()
+	deliveryID := uuid.New()
+
+	dbErr := errors.New("db failed on mark completed")
+	senderCalls := 0
+	var markFailedCalled bool
+
+	mockRepo := &mockRepository{
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       userID,
+				Email:    "sailor@example.com",
+				Forename: sql.NullString{String: "Popeye", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             deliveryID,
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:     arg.ID,
+				Status: "sent",
+			}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "processing",
+			}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{}, dbErr
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			markFailedCalled = true
+			return sqlc.Notification{}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		senderCalls++
+		return "msg_sent_123", nil
+	}
+
+	notification := sqlc.Notification{
+		ID:               notificationID,
+		UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+		NotificationType: string(TypeNoCertificates7Day),
+		Status:           "pending",
+	}
+
+	err := processor.ProcessNotification(ctx, notification)
+	if err == nil {
+		t.Fatal("expected error when MarkNotificationCompleted fails, got nil")
+	}
+
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected wrapped dbErr, got %v", err)
+	}
+
+	if !strings.Contains(err.Error(), "email sent successfully") {
+		t.Errorf("expected error to clearly state email was sent successfully, got %v", err)
+	}
+
+	if senderCalls != 1 {
+		t.Errorf("expected exactly 1 sender call (do not resend), got %d", senderCalls)
+	}
+
+	if markFailedCalled {
+		t.Errorf("MarkNotificationFailed should not be called when send was successful")
+	}
+}
+
+func TestProcessor_ProcessNotification_SendFailure_MarkFailedError(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	notificationID := uuid.New()
+	deliveryID := uuid.New()
+
+	sendErr := errors.New("resend connection timeout")
+	dbErr := errors.New("db disk full")
+
+	mockRepo := &mockRepository{
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       userID,
+				Email:    "sailor@example.com",
+				Forename: sql.NullString{String: "Popeye", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             deliveryID,
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliveryFailedFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:           arg.ID,
+				Status:       "failed",
+				ErrorMessage: arg.ErrorMessage,
+			}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{
+				ID:               notificationID,
+				UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+				NotificationType: string(TypeNoCertificates7Day),
+				Status:           "processing",
+			}, nil
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{}, dbErr
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		return "", sendErr
+	}
+
+	notification := sqlc.Notification{
+		ID:               notificationID,
+		UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+		NotificationType: string(TypeNoCertificates7Day),
+		Status:           "pending",
+	}
+
+	err := processor.ProcessNotification(ctx, notification)
+	if err == nil {
+		t.Fatal("expected error when both sending and MarkNotificationFailed fail, got nil")
+	}
+
+	if !errors.Is(err, sendErr) {
+		t.Errorf("expected wrapped sendErr, got %v", err)
+	}
+
+	if !strings.Contains(err.Error(), dbErr.Error()) {
+		t.Errorf("expected error to preserve MarkNotificationFailed context %q, got %v", dbErr.Error(), err)
+	}
+}

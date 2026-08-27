@@ -9,6 +9,11 @@ FROM notifications
 WHERE status = 'pending' AND scheduled_at <= NOW()
 ORDER BY scheduled_at ASC, created_at ASC;
 
+-- name: GetNotificationsStatusSummary :many
+SELECT status, COUNT(*) AS count
+FROM notifications
+GROUP BY status;
+
 -- name: MarkNotificationProcessing :one
 UPDATE notifications
 SET status = 'processing', updated_at = NOW()

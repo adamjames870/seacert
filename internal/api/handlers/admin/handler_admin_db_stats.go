@@ -56,3 +56,30 @@ func HandlerAdminDbStats(state *internal.ApiState) http.HandlerFunc {
 	}
 
 }
+
+func HandlerAdminNotificationsStatus(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		statuses, errCounts := state.Queries.GetNotificationsStatusSummary(r.Context())
+		if errCounts != nil {
+			handlers.RespondWithError(w, r, 500, "Error counting notifications status", errCounts)
+			return
+		}
+
+		var statusesDto []dto.NotificationsStatusEach
+
+		for _, status := range statuses {
+			statusesDto = append(statusesDto, dto.NotificationsStatusEach{
+				Type:  status.Status,
+				Count: int(status.Count),
+			})
+		}
+
+		rv := dto.NotificationsStatusSummary{
+			Statuses: statusesDto,
+		}
+
+		handlers.RespondWithJSON(w, 200, rv)
+
+	}
+}

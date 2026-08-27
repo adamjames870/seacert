@@ -8,3 +8,12 @@ type DbStats struct {
 	UserId        string `json:"user-id"`
 	UserEmail     string `json:"user-email"`
 }
+
+type NotificationsStatusEach struct {
+	Type  string `json:"status-type"`
+	Count int    `json:"count"`
+}
+
+type NotificationsStatusSummary struct {
+	Statuses []NotificationsStatusEach `json:"statuses"`
+}
