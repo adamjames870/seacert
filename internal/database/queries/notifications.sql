@@ -36,6 +36,7 @@ RETURNING *;
 SELECT u.id
 FROM users u
 WHERE u.created_at <= NOW() - INTERVAL '7 days'
+  AND u.created_at >= NOW() - INTERVAL '21 days'
   AND NOT EXISTS (
       SELECT 1
       FROM certificates c
@@ -46,4 +47,20 @@ WHERE u.created_at <= NOW() - INTERVAL '7 days'
       FROM notifications n
       WHERE n.user_id = u.id
         AND n.notification_type = 'no_certificates_7d'
+  );
+
+-- name: GetUsersEligibleForNoCertificates1Month :many
+SELECT u.id
+FROM users u
+WHERE u.created_at <= NOW() - INTERVAL '1 month'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM certificates c
+      WHERE c.user_id = u.id
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM notifications n
+      WHERE n.user_id = u.id
+        AND n.notification_type = 'no_certificates_1m'
   );

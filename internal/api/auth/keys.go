@@ -1,4 +1,4 @@
-﻿package auth
+package auth
 
 type Info struct {
 	PublicKey        string

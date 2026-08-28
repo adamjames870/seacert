@@ -1,4 +1,4 @@
-﻿package issuers
+package issuers
 
 import (
 	"database/sql"

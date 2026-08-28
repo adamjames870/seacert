@@ -1,4 +1,4 @@
-﻿package certificates
+package certificates
 
 import (
 	"database/sql"

@@ -1,4 +1,4 @@
-﻿package postgres
+package postgres
 
 import (
 	"context"
@@ -45,6 +45,10 @@ func (r *repository) CreateNotification(ctx context.Context, arg sqlc.CreateNoti
 
 func (r *repository) GetUsersEligibleForNoCertificates7Day(ctx context.Context) ([]uuid.UUID, error) {
 	return r.Queries.GetUsersEligibleForNoCertificates7Day(ctx)
+}
+
+func (r *repository) GetUsersEligibleForNoCertificates1Month(ctx context.Context) ([]uuid.UUID, error) {
+	return r.Queries.GetUsersEligibleForNoCertificates1Month(ctx)
 }
 
 func (r *repository) GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error) {

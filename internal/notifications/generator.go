@@ -45,3 +45,30 @@ func (g *Generator) GenerateNoCertificates7Day(ctx context.Context) (int, error)
 
 	return count, nil
 }
+
+func (g *Generator) GenerateNoCertificates1Month(ctx context.Context) (int, error) {
+	eligibleUserIDs, err := g.repo.GetUsersEligibleForNoCertificates1Month(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get eligible users: %w", err)
+	}
+
+	count := 0
+	for _, userID := range eligibleUserIDs {
+		notificationKey := fmt.Sprintf("no-certificates:%s:1m", userID.String())
+
+		_, err := g.repo.CreateNotification(ctx, sqlc.CreateNotificationParams{
+			ID:               uuid.New(),
+			UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+			NotificationType: string(TypeNoCertificates1Month),
+			NotificationKey:  notificationKey,
+			Payload:          json.RawMessage("{}"),
+			ScheduledAt:      time.Now(),
+		})
+		if err != nil {
+			return count, fmt.Errorf("failed to create notification for user %s: %w", userID, err)
+		}
+		count++
+	}
+
+	return count, nil
+}

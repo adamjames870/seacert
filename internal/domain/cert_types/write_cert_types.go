@@ -1,4 +1,4 @@
-﻿package cert_types
+package cert_types
 
 import (
 	"context"

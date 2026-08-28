@@ -32,7 +32,7 @@ func (p *Processor) BuildEmail(
 	ctx context.Context,
 	notification sqlc.Notification,
 ) (email_templates.Email, error) {
-	if notification.NotificationType != string(TypeNoCertificates7Day) {
+	if notification.NotificationType != string(TypeNoCertificates7Day) && notification.NotificationType != string(TypeNoCertificates1Month) {
 		return email_templates.Email{}, fmt.Errorf("unsupported notification type: %s", notification.NotificationType)
 	}
 
@@ -142,7 +142,7 @@ func (p *Processor) ProcessNotification(
 	ctx context.Context,
 	notification sqlc.Notification,
 ) error {
-	if notification.NotificationType != string(TypeNoCertificates7Day) {
+	if notification.NotificationType != string(TypeNoCertificates7Day) && notification.NotificationType != string(TypeNoCertificates1Month) {
 		return fmt.Errorf("unsupported notification type: %s", notification.NotificationType)
 	}
 

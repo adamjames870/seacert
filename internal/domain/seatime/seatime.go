@@ -1,4 +1,4 @@
-﻿package seatime
+package seatime
 
 import (
 	"time"

@@ -1,4 +1,4 @@
-﻿package domain
+package domain
 
 import (
 	"context"
@@ -87,6 +87,7 @@ type Repository interface {
 	// Notifications
 	CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
 	GetUsersEligibleForNoCertificates7Day(ctx context.Context) ([]uuid.UUID, error)
+	GetUsersEligibleForNoCertificates1Month(ctx context.Context) ([]uuid.UUID, error)
 	GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error)
 	MarkNotificationProcessing(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
 	MarkNotificationCompleted(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)

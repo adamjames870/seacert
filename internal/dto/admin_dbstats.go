@@ -1,4 +1,4 @@
-﻿package dto
+package dto
 
 type DbStats struct {
 	CountCert     int    `json:"count-certs"`

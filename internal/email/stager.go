@@ -1,4 +1,4 @@
-﻿package email
+package email
 
 import (
 	"github.com/adamjames870/seacert/internal/email/email_templates"

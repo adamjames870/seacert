@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
@@ -10,17 +11,18 @@ import (
 )
 
 type mockRepository struct {
-	CreateNotificationFunc                    func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
-	GetUsersEligibleForNoCertificates7DayFunc func(ctx context.Context) ([]uuid.UUID, error)
-	GetPendingNotificationsFunc               func(ctx context.Context) ([]sqlc.Notification, error)
-	GetUserByIDFunc                           func(ctx context.Context, id uuid.UUID) (sqlc.User, error)
-	CreateEmailDeliveryFunc                   func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
-	GetEmailDeliveriesForNotificationFunc     func(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
-	MarkEmailDeliverySentFunc                 func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error)
-	MarkEmailDeliveryFailedFunc               func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error)
-	MarkNotificationProcessingFunc            func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
-	MarkNotificationCompletedFunc             func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
-	MarkNotificationFailedFunc                func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	CreateNotificationFunc                      func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
+	GetUsersEligibleForNoCertificates7DayFunc   func(ctx context.Context) ([]uuid.UUID, error)
+	GetUsersEligibleForNoCertificates1MonthFunc func(ctx context.Context) ([]uuid.UUID, error)
+	GetPendingNotificationsFunc                 func(ctx context.Context) ([]sqlc.Notification, error)
+	GetUserByIDFunc                             func(ctx context.Context, id uuid.UUID) (sqlc.User, error)
+	CreateEmailDeliveryFunc                     func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
+	GetEmailDeliveriesForNotificationFunc       func(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
+	MarkEmailDeliverySentFunc                   func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error)
+	MarkEmailDeliveryFailedFunc                 func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error)
+	MarkNotificationProcessingFunc              func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	MarkNotificationCompletedFunc               func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	MarkNotificationFailedFunc                  func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
 }
 
 func (m *mockRepository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
@@ -29,6 +31,13 @@ func (m *mockRepository) CreateNotification(ctx context.Context, arg sqlc.Create
 
 func (m *mockRepository) GetUsersEligibleForNoCertificates7Day(ctx context.Context) ([]uuid.UUID, error) {
 	return m.GetUsersEligibleForNoCertificates7DayFunc(ctx)
+}
+
+func (m *mockRepository) GetUsersEligibleForNoCertificates1Month(ctx context.Context) ([]uuid.UUID, error) {
+	if m.GetUsersEligibleForNoCertificates1MonthFunc != nil {
+		return m.GetUsersEligibleForNoCertificates1MonthFunc(ctx)
+	}
+	panic("not implemented")
 }
 
 // Panic for unimplemented methods
@@ -288,5 +297,146 @@ func TestGenerateNoCertificates7Day(t *testing.T) {
 	}
 	if count != 2 {
 		t.Errorf("expected 2 notifications, got %d", count)
+	}
+}
+
+func TestGenerateNoCertificates1Month(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user1 := uuid.New()
+	user2 := uuid.New()
+	eligibleUsers := []uuid.UUID{user1, user2}
+
+	repo.GetUsersEligibleForNoCertificates1MonthFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return eligibleUsers, nil
+	}
+
+	createdParams := make([]sqlc.CreateNotificationParams, 0)
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		createdParams = append(createdParams, arg)
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateNoCertificates1Month(context.Background())
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 2 {
+		t.Errorf("expected 2 notifications, got %d", count)
+	}
+	if len(createdParams) != 2 {
+		t.Fatalf("expected 2 calls to CreateNotification, got %d", len(createdParams))
+	}
+
+	for i, p := range createdParams {
+		if p.NotificationType != string(TypeNoCertificates1Month) {
+			t.Errorf("expected NotificationType %s, got %s", TypeNoCertificates1Month, p.NotificationType)
+		}
+		expectedKey := "no-certificates:" + eligibleUsers[i].String() + ":1m"
+		if p.NotificationKey != expectedKey {
+			t.Errorf("expected NotificationKey %s, got %s", expectedKey, p.NotificationKey)
+		}
+		if !p.UserID.Valid || p.UserID.UUID != eligibleUsers[i] {
+			t.Errorf("expected UserID %s, got %v", eligibleUsers[i], p.UserID)
+		}
+	}
+}
+
+func TestGenerateNoCertificates1Month_GetEligibleUsersError(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	dbErr := errors.New("db error fetching eligible users")
+	repo.GetUsersEligibleForNoCertificates1MonthFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return nil, dbErr
+	}
+
+	count, err := generator.GenerateNoCertificates1Month(context.Background())
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if count != 0 {
+		t.Errorf("expected count 0, got %d", count)
+	}
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected error wrapping dbErr, got %v", err)
+	}
+}
+
+func TestGenerateNoCertificates1Month_CreateNotificationError(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user1 := uuid.New()
+	user2 := uuid.New()
+	eligibleUsers := []uuid.UUID{user1, user2}
+
+	repo.GetUsersEligibleForNoCertificates1MonthFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return eligibleUsers, nil
+	}
+
+	createErr := errors.New("unique constraint violation or db error")
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		if arg.UserID.UUID == user2 {
+			return sqlc.Notification{}, createErr
+		}
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateNoCertificates1Month(context.Background())
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if count != 1 {
+		t.Errorf("expected count 1, got %d", count)
+	}
+	if !errors.Is(err, createErr) {
+		t.Errorf("expected error wrapping createErr, got %v", err)
+	}
+}
+
+func TestGenerateNoCertificates_SeparateKeysFor7dAnd1m(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+
+	repo.GetUsersEligibleForNoCertificates7DayFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+	repo.GetUsersEligibleForNoCertificates1MonthFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	var created7dKey, created1mKey string
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		if arg.NotificationType == string(TypeNoCertificates7Day) {
+			created7dKey = arg.NotificationKey
+		} else if arg.NotificationType == string(TypeNoCertificates1Month) {
+			created1mKey = arg.NotificationKey
+		}
+		return sqlc.Notification{}, nil
+	}
+
+	count7d, err := generator.GenerateNoCertificates7Day(context.Background())
+	if err != nil || count7d != 1 {
+		t.Fatalf("GenerateNoCertificates7Day failed: %v, count=%d", err, count7d)
+	}
+
+	count1m, err := generator.GenerateNoCertificates1Month(context.Background())
+	if err != nil || count1m != 1 {
+		t.Fatalf("GenerateNoCertificates1Month failed: %v, count=%d", err, count1m)
+	}
+
+	expected7dKey := "no-certificates:" + user.String() + ":7d"
+	expected1mKey := "no-certificates:" + user.String() + ":1m"
+
+	if created7dKey != expected7dKey {
+		t.Errorf("expected 7d key %s, got %s", expected7dKey, created7dKey)
+	}
+	if created1mKey != expected1mKey {
+		t.Errorf("expected 1m key %s, got %s", expected1mKey, created1mKey)
 	}
 }

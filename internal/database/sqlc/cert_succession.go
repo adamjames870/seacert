@@ -1,4 +1,4 @@
-﻿package sqlc
+package sqlc
 
 type SuccessionReason string
 

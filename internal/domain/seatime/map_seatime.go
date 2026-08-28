@@ -1,4 +1,4 @@
-﻿package seatime
+package seatime
 
 import (
 	"github.com/adamjames870/seacert/internal/database/sqlc"

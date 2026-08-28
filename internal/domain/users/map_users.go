@@ -1,4 +1,4 @@
-﻿package users
+package users
 
 import (
 	"database/sql"
