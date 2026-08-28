@@ -114,3 +114,38 @@ WHERE new_cert=$1;
 
 -- name: DeleteCert :exec
 DELETE FROM certificates WHERE id=$1 AND user_id=$2;
+
+-- name: GetCertificatesForExpiryNotification :many
+WITH cert_expiries AS (
+    SELECT
+        certificates.id AS id,
+        certificates.cert_number AS cert_number,
+        certificates.issued_date AS issued_date,
+        certificates.alternative_name AS alternative_name,
+        certificate_types.id AS cert_type_id,
+        certificate_types.name AS cert_type_name,
+        certificate_types.short_name AS cert_type_short_name,
+        (CASE
+            WHEN certificates.manual_expiry IS NOT NULL THEN certificates.manual_expiry
+            WHEN certificate_types.normal_validity_months IS NOT NULL AND certificate_types.normal_validity_months > 0
+                THEN (certificates.issued_date + (certificate_types.normal_validity_months * INTERVAL '1 month') - INTERVAL '1 day')
+            ELSE NULL
+        END)::timestamp AS expiry_date
+    FROM certificates
+    INNER JOIN certificate_types ON certificate_types.id = certificates.cert_type_id
+    WHERE certificates.user_id = $1
+      AND certificates.deleted = FALSE
+)
+SELECT
+    id,
+    cert_number,
+    issued_date,
+    alternative_name,
+    cert_type_id,
+    cert_type_name,
+    cert_type_short_name,
+    expiry_date::timestamp AS expiry_date
+FROM cert_expiries
+WHERE expiry_date IS NOT NULL
+  AND expiry_date <= NOW() + INTERVAL '1 year'
+ORDER BY expiry_date ASC, id ASC;

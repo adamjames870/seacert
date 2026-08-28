@@ -71,6 +71,9 @@ func (m *mockRepository) GetCerts(ctx context.Context, userID uuid.UUID) ([]sqlc
 func (m *mockRepository) GetCertFromId(ctx context.Context, arg sqlc.GetCertFromIdParams) (sqlc.GetCertFromIdRow, error) {
 	panic("not implemented")
 }
+func (m *mockRepository) GetCertificatesForExpiryNotification(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+	panic("not implemented")
+}
 func (m *mockRepository) GetPredecessors(ctx context.Context, newCert uuid.UUID) ([]sqlc.GetPredecessorsRow, error) {
 	panic("not implemented")
 }

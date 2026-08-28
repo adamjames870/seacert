@@ -220,6 +220,85 @@ func (q *Queries) GetCertFromId(ctx context.Context, arg GetCertFromIdParams) (G
 	return i, err
 }
 
+const getCertificatesForExpiryNotification = `-- name: GetCertificatesForExpiryNotification :many
+WITH cert_expiries AS (
+    SELECT
+        certificates.id AS id,
+        certificates.cert_number AS cert_number,
+        certificates.issued_date AS issued_date,
+        certificates.alternative_name AS alternative_name,
+        certificate_types.id AS cert_type_id,
+        certificate_types.name AS cert_type_name,
+        certificate_types.short_name AS cert_type_short_name,
+        (CASE
+            WHEN certificates.manual_expiry IS NOT NULL THEN certificates.manual_expiry
+            WHEN certificate_types.normal_validity_months IS NOT NULL AND certificate_types.normal_validity_months > 0
+                THEN (certificates.issued_date + (certificate_types.normal_validity_months * INTERVAL '1 month') - INTERVAL '1 day')
+            ELSE NULL
+        END)::timestamp AS expiry_date
+    FROM certificates
+    INNER JOIN certificate_types ON certificate_types.id = certificates.cert_type_id
+    WHERE certificates.user_id = $1
+      AND certificates.deleted = FALSE
+)
+SELECT
+    id,
+    cert_number,
+    issued_date,
+    alternative_name,
+    cert_type_id,
+    cert_type_name,
+    cert_type_short_name,
+    expiry_date::timestamp AS expiry_date
+FROM cert_expiries
+WHERE expiry_date IS NOT NULL
+  AND expiry_date <= NOW() + INTERVAL '1 year'
+ORDER BY expiry_date ASC, id ASC
+`
+
+type GetCertificatesForExpiryNotificationRow struct {
+	ID                uuid.UUID
+	CertNumber        string
+	IssuedDate        time.Time
+	AlternativeName   sql.NullString
+	CertTypeID        uuid.UUID
+	CertTypeName      string
+	CertTypeShortName string
+	ExpiryDate        time.Time
+}
+
+func (q *Queries) GetCertificatesForExpiryNotification(ctx context.Context, userID uuid.UUID) ([]GetCertificatesForExpiryNotificationRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCertificatesForExpiryNotification, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCertificatesForExpiryNotificationRow
+	for rows.Next() {
+		var i GetCertificatesForExpiryNotificationRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CertNumber,
+			&i.IssuedDate,
+			&i.AlternativeName,
+			&i.CertTypeID,
+			&i.CertTypeName,
+			&i.CertTypeShortName,
+			&i.ExpiryDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCerts = `-- name: GetCerts :many
 SELECT
     certificates.id AS id,

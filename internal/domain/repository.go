@@ -12,6 +12,7 @@ type Repository interface {
 	// Certificates
 	GetCerts(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertsRow, error)
 	GetCertFromId(ctx context.Context, arg sqlc.GetCertFromIdParams) (sqlc.GetCertFromIdRow, error)
+	GetCertificatesForExpiryNotification(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error)
 	GetPredecessors(ctx context.Context, newCert uuid.UUID) ([]sqlc.GetPredecessorsRow, error)
 	CreateCert(ctx context.Context, arg sqlc.CreateCertParams) (sqlc.Certificate, error)
 	UpdateCertificate(ctx context.Context, arg sqlc.UpdateCertificateParams) (sqlc.Certificate, error)
