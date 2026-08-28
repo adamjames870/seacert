@@ -59,7 +59,8 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	mux.Handle("DELETE /api/admin/seatime/period-types/{id}", authMw(adminMw(admin.HandlerAdminDeletePeriodType(state))))
 
 	// ----------- Notification Handlers ----------------
-	mux.Handle("POST /notify/test-generate", authMw(adminMw(notifications.HandlerNotifyTestGenerate(state))))
+	mux.Handle("POST /notify/test-generate-7day", authMw(adminMw(notifications.HandlerNotifyTestGenerate7Day(state))))
+	mux.Handle("POST /notify/test-generate-1month", authMw(adminMw(notifications.HandlerNotifyTestGenerate1Month(state))))
 	mux.Handle("POST /notify/test-send", authMw(adminMw(notifications.HandlerNotifyTestSend(state))))
 
 	mux.Handle("GET /api/admin/notifications/statuses", authMw(adminMw(admin.HandlerAdminNotificationsStatus(state))))

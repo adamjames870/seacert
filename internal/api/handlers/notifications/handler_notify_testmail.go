@@ -8,7 +8,7 @@ import (
 	"github.com/adamjames870/seacert/internal/notifications"
 )
 
-func HandlerNotifyTestGenerate(state *internal.ApiState) http.HandlerFunc {
+func HandlerNotifyTestGenerate7Day(state *internal.ApiState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if !state.IsDev {
@@ -37,6 +37,39 @@ func HandlerNotifyTestGenerate(state *internal.ApiState) http.HandlerFunc {
 				"generated": count,
 			},
 		)
+	}
+}
+
+func HandlerNotifyTestGenerate1Month(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if !state.IsDev {
+			handlers.RespondWithError(w, r, http.StatusForbidden, "Forbidden", nil)
+			return
+		}
+
+		generator := notifications.NewGenerator(state.Repo)
+
+		count, err := generator.GenerateNoCertificates1Month(r.Context())
+		if err != nil {
+			handlers.RespondWithError(
+				w,
+				r,
+				http.StatusInternalServerError,
+				"Error generating notifications",
+				err,
+			)
+			return
+		}
+
+		handlers.RespondWithJSON(
+			w,
+			http.StatusOK,
+			map[string]any{
+				"generated": count,
+			},
+		)
+
 	}
 }
 

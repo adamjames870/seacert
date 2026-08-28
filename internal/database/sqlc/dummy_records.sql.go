@@ -72,17 +72,118 @@ func (q *Queries) CreateDummyCertTypes(ctx context.Context) error {
 
 const createDummyCertificates = `-- name: CreateDummyCertificates :exec
 
-INSERT INTO certificates (id, created_at, updated_at, user_id, cert_type_id, cert_number, issuer_id, issued_date)
-VALUES (
-        '10000000-0000-0000-0000-000000000001',
+INSERT INTO certificates (
+    id,
+    created_at,
+    updated_at,
+    user_id,
+    cert_type_id,
+    cert_number,
+    issuer_id,
+    issued_date
+)
+VALUES
+
+    -- User 003:
+    -- Existing certificate purely to make this user ineligible
+    -- for the 7-day no-certificates reminder.
+    (
+        '20000000-0000-0000-0000-000000000001',
         NOW(),
         NOW(),
         '10000000-0000-0000-0000-000000000003',
         '10000000-0000-0000-0000-000000000001',
-        '123456789',
+        'TEST-003-001',
         '10000000-0000-0000-0000-000000000001',
         NOW()
-       )
+    ),
+
+    -- User 007:
+    -- Existing certificate purely to make this user ineligible
+    -- for the 1-month no-certificates reminder.
+    (
+        '20000000-0000-0000-0000-000000000002',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000007',
+        '10000000-0000-0000-0000-000000000001',
+        'TEST-007-001',
+        '10000000-0000-0000-0000-000000000001',
+        NOW()
+    ),
+
+    ----------------------------------------------------------------
+    -- User 009: certificate-expiry summary fixtures
+    ----------------------------------------------------------------
+
+    -- ENG1 has 24-month normal validity.
+    -- Issued 25 months ago => nominally expired about 1 month ago.
+    (
+        '20000000-0000-0000-0000-000000000003',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000009',
+        '10000000-0000-0000-0000-000000000004',
+        'EXP-EXPIRED-001',
+        '10000000-0000-0000-0000-000000000001',
+        NOW() - INTERVAL '25 months'
+    ),
+
+    -- ENG1: issued 23 months 15 days ago.
+    -- Nominal expiry is about 15 days from now.
+    -- EXPECTED BUCKET: next month.
+    (
+        '20000000-0000-0000-0000-000000000004',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000009',
+        '10000000-0000-0000-0000-000000000004',
+        'EXP-1MONTH-001',
+        '10000000-0000-0000-0000-000000000001',
+        NOW() - INTERVAL '23 months 15 days'
+    ),
+
+    -- ENG1: issued 20 months ago.
+    -- Nominal expiry is about 4 months from now.
+    -- EXPECTED BUCKET: next 6 months.
+    (
+        '20000000-0000-0000-0000-000000000005',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000009',
+        '10000000-0000-0000-0000-000000000004',
+        'EXP-6MONTH-001',
+        '10000000-0000-0000-0000-000000000001',
+        NOW() - INTERVAL '20 months'
+    ),
+
+    -- ENG1: issued 16 months ago.
+    -- Nominal expiry is about 8 months from now.
+    -- EXPECTED BUCKET: next year.
+    (
+        '20000000-0000-0000-0000-000000000006',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000009',
+        '10000000-0000-0000-0000-000000000004',
+        'EXP-1YEAR-001',
+        '10000000-0000-0000-0000-000000000001',
+        NOW() - INTERVAL '16 months'
+    ),
+
+    -- ENG1: issued recently.
+    -- Nominal expiry is well over a year away.
+    -- EXPECTED: not included in expiry summary.
+    (
+        '20000000-0000-0000-0000-000000000007',
+        NOW(),
+        NOW(),
+        '10000000-0000-0000-0000-000000000009',
+        '10000000-0000-0000-0000-000000000004',
+        'EXP-NOT-DUE-001',
+        '10000000-0000-0000-0000-000000000001',
+        NOW() - INTERVAL '2 months'
+    )
 `
 
 func (q *Queries) CreateDummyCertificates(ctx context.Context) error {
@@ -129,17 +230,62 @@ INSERT INTO notifications (
     created_at,
     updated_at
 )
-VALUES (
-           gen_random_uuid(),
-           '10000000-0000-0000-0000-000000000004',
-           'no_certificates_7d',
-           'no-certificates:10000000-0000-0000-0000-000000000004:7d',
-           'completed',
-           '{}'::jsonb,
-           NOW() - INTERVAL '1 day',
-           NOW() - INTERVAL '1 day',
-           NOW()
-       )
+VALUES
+
+    -- User 004 has already received the 7-day reminder.
+    (
+        gen_random_uuid(),
+        '10000000-0000-0000-0000-000000000004',
+        'no_certificates_7d',
+        'no-certificates:10000000-0000-0000-0000-000000000004:7d',
+        'completed',
+        '{}'::jsonb,
+        NOW() - INTERVAL '1 day',
+        NOW() - INTERVAL '1 day',
+        NOW()
+    ),
+
+    -- User 005 is old enough for the 1-month reminder.
+    -- Seed their 7-day reminder so only the 1-month generator
+    -- should create something new for them.
+    (
+        gen_random_uuid(),
+        '10000000-0000-0000-0000-000000000005',
+        'no_certificates_7d',
+        'no-certificates:10000000-0000-0000-0000-000000000005:7d',
+        'completed',
+        '{}'::jsonb,
+        NOW() - INTERVAL '30 days',
+        NOW() - INTERVAL '30 days',
+        NOW()
+    ),
+
+    -- User 008 has already had the 7-day reminder.
+    (
+        gen_random_uuid(),
+        '10000000-0000-0000-0000-000000000008',
+        'no_certificates_7d',
+        'no-certificates:10000000-0000-0000-0000-000000000008:7d',
+        'completed',
+        '{}'::jsonb,
+        NOW() - INTERVAL '35 days',
+        NOW() - INTERVAL '35 days',
+        NOW()
+    ),
+
+    -- User 008 has also already had the 1-month reminder.
+    -- This tests that the 1-month generator does not duplicate it.
+    (
+        gen_random_uuid(),
+        '10000000-0000-0000-0000-000000000008',
+        'no_certificates_1m',
+        'no-certificates:10000000-0000-0000-0000-000000000008:1m',
+        'completed',
+        '{}'::jsonb,
+        NOW() - INTERVAL '5 days',
+        NOW() - INTERVAL '5 days',
+        NOW()
+    )
 `
 
 func (q *Queries) CreateDummyNotifications(ctx context.Context) error {
@@ -166,7 +312,7 @@ VALUES
         NOW() - INTERVAL '10 days',
         NOW(),
         'Test',
-        'Eligible',
+        'Eligible7Day',
         'hello@seacert.app',
         'GB',
         TRUE
@@ -186,7 +332,7 @@ VALUES
         NOW() - INTERVAL '10 days',
         NOW(),
         'Test',
-        'HasCertificate',
+        'HasCertificate7Day',
         'hello2@seacert.app',
         'GB',
         TRUE
@@ -196,30 +342,113 @@ VALUES
         NOW() - INTERVAL '10 days',
         NOW(),
         'Test',
-        'AlreadyNotified',
+        'AlreadyNotified7Day',
         'hello3@seacert.app',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000005',
+        NOW() - INTERVAL '45 days',
+        NOW(),
+        'Test',
+        'Eligible1Month',
+        'adam.james624@gmail.com',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000006',
+        NOW() - INTERVAL '20 days',
+        NOW(),
+        'Test',
+        'SevenDayOnly',
+        'adamjames624@gmail.com',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000007',
+        NOW() - INTERVAL '45 days',
+        NOW(),
+        'Test',
+        'HasCertificate1Month',
+        'hello6@seacert.app',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000008',
+        NOW() - INTERVAL '45 days',
+        NOW(),
+        'Test',
+        'AlreadyNotifiedBoth',
+        'hello7@seacert.app',
+        'GB',
+        TRUE
+    ),
+    (
+        '10000000-0000-0000-0000-000000000009',
+        NOW() - INTERVAL '2 years',
+        NOW(),
+        'Test',
+        'ExpirySummary',
+        'hello8@seacert.app',
         'GB',
         TRUE
     )
 `
 
-// Notification test users
+// Notification / expiry test users
 //
-// A: >7 days old, no certificates
+// 001: 10 days old, no certificates
 //
-//	EXPECTED: eligible for no_certificates_7d
+//	EXPECTED:
+//	- eligible for no_certificates_7d
+//	- NOT eligible for no_certificates_1m
 //
-// B: <7 days old, no certificates
+// 002: 3 days old, no certificates
 //
-//	EXPECTED: not eligible
+//	EXPECTED:
+//	- eligible for neither reminder
 //
-// C: >7 days old, will be given a certificate
+// 003: 10 days old, has certificate
 //
-//	EXPECTED: not eligible
+//	EXPECTED:
+//	- eligible for neither reminder
 //
-// D: >7 days old, no certificates, but already has a 7d notification
+// 004: 10 days old, no certificates, existing 7d notification
 //
-//	EXPECTED: not eligible
+//	EXPECTED:
+//	- no new 7d notification
+//
+// 005: 45 days old, no certificates, existing 7d notification
+//
+//	EXPECTED:
+//	- no new 7d notification
+//	- eligible for no_certificates_1m
+//
+// 006: 20 days old, no certificates
+//
+//	EXPECTED:
+//	- eligible for no_certificates_7d
+//	- NOT eligible for no_certificates_1m
+//
+// 007: 45 days old, has certificate
+//
+//	EXPECTED:
+//	- eligible for neither reminder
+//
+// 008: 45 days old, no certificates, already has both notifications
+//
+//	EXPECTED:
+//	- no new notification
+//
+// 009: established user with multiple certificates
+//
+//	EXPECTED:
+//	- used later for certificate-expiry summary testing
+//	- no no-certificate reminders
 func (q *Queries) CreateDummyUsers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, createDummyUsers)
 	return err
