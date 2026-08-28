@@ -6,12 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="27a1116a-0280-4dd9-b10d-bd2edf5025a1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/api/handlers/admin/handler_admin_db_stats.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/handlers/admin/handler_admin_db_stats.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/api/handlers/notifications/handler_notify_testmail.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/handlers/notifications/handler_notify_testmail.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/api/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/database/queries/notifications.sql" beforeDir="false" afterPath="$PROJECT_DIR$/internal/database/queries/notifications.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/database/sqlc/notifications.sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/database/sqlc/notifications.sql.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/dto/admin_dbstats.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/dto/admin_dbstats.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/notifications/generator_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/generator_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/notifications/processor.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/processor.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/notifications/processor_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/processor_test.go" afterDir="false" />

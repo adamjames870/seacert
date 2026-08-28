@@ -54,43 +54,15 @@ func HandlerNotifyTestSend(state *internal.ApiState) http.HandlerFunc {
 			return
 		}
 
-		pending, err := state.Repo.GetPendingNotifications(r.Context())
-		if err != nil {
-			handlers.RespondWithError(
-				w,
-				r,
-				http.StatusInternalServerError,
-				"Error getting pending notifications",
-				err,
-			)
-			return
-		}
-
-		if len(pending) == 0 {
-			handlers.RespondWithJSON(
-				w,
-				http.StatusOK,
-				map[string]any{
-					"message": "No pending notifications found",
-				},
-			)
-			return
-		}
-
-		notification := pending[0]
-
 		processor := notifications.NewProcessor(state.Repo)
 
-		err = processor.ProcessNotification(
-			r.Context(),
-			notification,
-		)
+		result, err := processor.ProcessPendingNotifications(r.Context(), 10)
 		if err != nil {
 			handlers.RespondWithError(
 				w,
 				r,
 				http.StatusInternalServerError,
-				"Error processing notification",
+				"Error processing pending notifications",
 				err,
 			)
 			return
@@ -99,10 +71,7 @@ func HandlerNotifyTestSend(state *internal.ApiState) http.HandlerFunc {
 		handlers.RespondWithJSON(
 			w,
 			http.StatusOK,
-			map[string]any{
-				"message":         "Notification processed successfully",
-				"notification_id": notification.ID,
-			},
+			result,
 		)
 	}
 }

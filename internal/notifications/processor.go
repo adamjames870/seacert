@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
@@ -165,4 +166,47 @@ func (p *Processor) ProcessNotification(
 	}
 
 	return nil
+}
+
+type BatchResult struct {
+	Found     int `json:"found"`
+	Completed int `json:"completed"`
+	Failed    int `json:"failed"`
+}
+
+func (p *Processor) ProcessPendingNotifications(
+	ctx context.Context,
+	limit int,
+) (BatchResult, error) {
+	if limit <= 0 {
+		return BatchResult{}, nil
+	}
+
+	pending, err := p.repo.GetPendingNotifications(ctx)
+	if err != nil {
+		return BatchResult{}, fmt.Errorf("failed to get pending notifications: %w", err)
+	}
+
+	if len(pending) > limit {
+		pending = pending[:limit]
+	}
+
+	result := BatchResult{
+		Found: len(pending),
+	}
+
+	for _, notification := range pending {
+		if err := p.ProcessNotification(ctx, notification); err != nil {
+			slog.ErrorContext(ctx, "failed to process notification in batch",
+				"notification_id", notification.ID,
+				"notification_type", notification.NotificationType,
+				"error", err,
+			)
+			result.Failed++
+		} else {
+			result.Completed++
+		}
+	}
+
+	return result, nil
 }

@@ -12,6 +12,7 @@ import (
 type mockRepository struct {
 	CreateNotificationFunc                    func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
 	GetUsersEligibleForNoCertificates7DayFunc func(ctx context.Context) ([]uuid.UUID, error)
+	GetPendingNotificationsFunc               func(ctx context.Context) ([]sqlc.Notification, error)
 	GetUserByIDFunc                           func(ctx context.Context, id uuid.UUID) (sqlc.User, error)
 	CreateEmailDeliveryFunc                   func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
 	GetEmailDeliveriesForNotificationFunc     func(ctx context.Context, notificationID uuid.UUID) ([]sqlc.EmailDelivery, error)
@@ -32,6 +33,9 @@ func (m *mockRepository) GetUsersEligibleForNoCertificates7Day(ctx context.Conte
 
 // Panic for unimplemented methods
 func (m *mockRepository) GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error) {
+	if m.GetPendingNotificationsFunc != nil {
+		return m.GetPendingNotificationsFunc(ctx)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) MarkNotificationProcessing(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {

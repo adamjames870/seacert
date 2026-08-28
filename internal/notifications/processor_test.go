@@ -1351,3 +1351,417 @@ func TestProcessor_ProcessNotification_SendFailure_MarkFailedError(t *testing.T)
 		t.Errorf("expected error to preserve MarkNotificationFailed context %q, got %v", dbErr.Error(), err)
 	}
 }
+
+func TestProcessor_ProcessPendingNotifications_ZeroPending(t *testing.T) {
+	ctx := context.Background()
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			return []sqlc.Notification{}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	result, err := processor.ProcessPendingNotifications(ctx, 10)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if result.Found != 0 || result.Completed != 0 || result.Failed != 0 {
+		t.Errorf("expected all zeros in result, got %+v", result)
+	}
+}
+
+func TestProcessor_ProcessPendingNotifications_OneSuccess(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	notificationID := uuid.New()
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			return []sqlc.Notification{
+				{
+					ID:               notificationID,
+					UserID:           uuid.NullUUID{UUID: userID, Valid: true},
+					NotificationType: string(TypeNoCertificates7Day),
+					Status:           "pending",
+				},
+			}, nil
+		},
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       userID,
+				Email:    "test@example.com",
+				Forename: sql.NullString{String: "Test", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             uuid.New(),
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{ID: arg.ID, Status: "sent"}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{ID: id, Status: "processing", NotificationType: string(TypeNoCertificates7Day), UserID: uuid.NullUUID{UUID: userID, Valid: true}}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{ID: id, Status: "completed", NotificationType: string(TypeNoCertificates7Day), UserID: uuid.NullUUID{UUID: userID, Valid: true}}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		return "msg_123", nil
+	}
+
+	result, err := processor.ProcessPendingNotifications(ctx, 10)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if result.Found != 1 {
+		t.Errorf("expected Found=1, got %d", result.Found)
+	}
+	if result.Completed != 1 {
+		t.Errorf("expected Completed=1, got %d", result.Completed)
+	}
+	if result.Failed != 0 {
+		t.Errorf("expected Failed=0, got %d", result.Failed)
+	}
+}
+
+func TestProcessor_ProcessPendingNotifications_MultipleAllSuccess(t *testing.T) {
+	ctx := context.Background()
+	user1 := uuid.New()
+	user2 := uuid.New()
+	notif1 := uuid.New()
+	notif2 := uuid.New()
+
+	processedIDs := make(map[uuid.UUID]bool)
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			return []sqlc.Notification{
+				{
+					ID:               notif1,
+					UserID:           uuid.NullUUID{UUID: user1, Valid: true},
+					NotificationType: string(TypeNoCertificates7Day),
+					Status:           "pending",
+				},
+				{
+					ID:               notif2,
+					UserID:           uuid.NullUUID{UUID: user2, Valid: true},
+					NotificationType: string(TypeNoCertificates7Day),
+					Status:           "pending",
+				},
+			}, nil
+		},
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       id,
+				Email:    "user@example.com",
+				Forename: sql.NullString{String: "User", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             uuid.New(),
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{ID: arg.ID, Status: "sent"}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{ID: id, Status: "processing", NotificationType: string(TypeNoCertificates7Day), UserID: uuid.NullUUID{UUID: user1, Valid: true}}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			processedIDs[id] = true
+			return sqlc.Notification{ID: id, Status: "completed"}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		return "msg_id", nil
+	}
+
+	result, err := processor.ProcessPendingNotifications(ctx, 10)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if result.Found != 2 {
+		t.Errorf("expected Found=2, got %d", result.Found)
+	}
+	if result.Completed != 2 {
+		t.Errorf("expected Completed=2, got %d", result.Completed)
+	}
+	if result.Failed != 0 {
+		t.Errorf("expected Failed=0, got %d", result.Failed)
+	}
+	if !processedIDs[notif1] || !processedIDs[notif2] {
+		t.Errorf("expected both notifications to be completed, got %v", processedIDs)
+	}
+}
+
+func TestProcessor_ProcessPendingNotifications_PartialFailure(t *testing.T) {
+	ctx := context.Background()
+	user1 := uuid.New()
+	user2 := uuid.New()
+	user3 := uuid.New()
+
+	notif1 := uuid.New()
+	notif2 := uuid.New() // will fail
+	notif3 := uuid.New()
+
+	processedIDs := make(map[uuid.UUID]string)
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			return []sqlc.Notification{
+				{
+					ID:               notif1,
+					UserID:           uuid.NullUUID{UUID: user1, Valid: true},
+					NotificationType: string(TypeNoCertificates7Day),
+					Status:           "pending",
+				},
+				{
+					ID:               notif2,
+					UserID:           uuid.NullUUID{UUID: user2, Valid: true},
+					NotificationType: string(TypeNoCertificates7Day),
+					Status:           "pending",
+				},
+				{
+					ID:               notif3,
+					UserID:           uuid.NullUUID{UUID: user3, Valid: true},
+					NotificationType: string(TypeNoCertificates7Day),
+					Status:           "pending",
+				},
+			}, nil
+		},
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       id,
+				Email:    "user@example.com",
+				Forename: sql.NullString{String: "User", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             uuid.New(),
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{ID: arg.ID, Status: "sent"}, nil
+		},
+		MarkEmailDeliveryFailedFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliveryFailedParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{ID: arg.ID, Status: "failed"}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{ID: id, Status: "processing", NotificationType: string(TypeNoCertificates7Day), UserID: uuid.NullUUID{UUID: user1, Valid: true}}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			processedIDs[id] = "completed"
+			return sqlc.Notification{ID: id, Status: "completed"}, nil
+		},
+		MarkNotificationFailedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			processedIDs[id] = "failed"
+			return sqlc.Notification{ID: id, Status: "failed"}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		// Fail only for notif2
+		if len(email.Recipient) > 0 && email.Recipient[0] == "user@example.com" {
+			// Find which notification from context or simulate fail on second call
+		}
+		return "", nil
+	}
+
+	callCount := 0
+	processor.sender = func(email email_templates.Email) (string, error) {
+		callCount++
+		if callCount == 2 {
+			return "", errors.New("resend transient network error")
+		}
+		return "msg_ok", nil
+	}
+
+	result, err := processor.ProcessPendingNotifications(ctx, 10)
+	if err != nil {
+		t.Fatalf("expected no overall batch error on individual item failure, got %v", err)
+	}
+
+	if result.Found != 3 {
+		t.Errorf("expected Found=3, got %d", result.Found)
+	}
+	if result.Completed != 2 {
+		t.Errorf("expected Completed=2, got %d", result.Completed)
+	}
+	if result.Failed != 1 {
+		t.Errorf("expected Failed=1, got %d", result.Failed)
+	}
+
+	if processedIDs[notif1] != "completed" {
+		t.Errorf("expected notif1 completed, got %s", processedIDs[notif1])
+	}
+	if processedIDs[notif2] != "failed" {
+		t.Errorf("expected notif2 failed, got %s", processedIDs[notif2])
+	}
+	if processedIDs[notif3] != "completed" {
+		t.Errorf("expected notif3 completed (not blocked by notif2), got %s", processedIDs[notif3])
+	}
+}
+
+func TestProcessor_ProcessPendingNotifications_RepoFetchError(t *testing.T) {
+	ctx := context.Background()
+	dbErr := errors.New("db query failed")
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			return nil, dbErr
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	_, err := processor.ProcessPendingNotifications(ctx, 10)
+	if err == nil {
+		t.Fatal("expected error when GetPendingNotifications fails, got nil")
+	}
+
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected wrapped dbErr, got %v", err)
+	}
+}
+
+func TestProcessor_ProcessPendingNotifications_RespectsLimit(t *testing.T) {
+	ctx := context.Background()
+
+	var notifIDs []uuid.UUID
+	var pendingList []sqlc.Notification
+	for i := 0; i < 5; i++ {
+		id := uuid.New()
+		notifIDs = append(notifIDs, id)
+		pendingList = append(pendingList, sqlc.Notification{
+			ID:               id,
+			UserID:           uuid.NullUUID{UUID: uuid.New(), Valid: true},
+			NotificationType: string(TypeNoCertificates7Day),
+			Status:           "pending",
+		})
+	}
+
+	completedIDs := make(map[uuid.UUID]bool)
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			return pendingList, nil
+		},
+		GetUserByIDFunc: func(ctx context.Context, id uuid.UUID) (sqlc.User, error) {
+			return sqlc.User{
+				ID:       id,
+				Email:    "test@example.com",
+				Forename: sql.NullString{String: "Test", Valid: true},
+			}, nil
+		},
+		GetEmailDeliveriesForNotificationFunc: func(ctx context.Context, notifID uuid.UUID) ([]sqlc.EmailDelivery, error) {
+			return []sqlc.EmailDelivery{}, nil
+		},
+		CreateEmailDeliveryFunc: func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{
+				ID:             uuid.New(),
+				NotificationID: arg.NotificationID,
+				Recipient:      arg.Recipient,
+				Provider:       arg.Provider,
+				Status:         "pending",
+				Attempt:        arg.Attempt,
+			}, nil
+		},
+		MarkEmailDeliverySentFunc: func(ctx context.Context, arg sqlc.MarkEmailDeliverySentParams) (sqlc.EmailDelivery, error) {
+			return sqlc.EmailDelivery{ID: arg.ID, Status: "sent"}, nil
+		},
+		MarkNotificationProcessingFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			return sqlc.Notification{ID: id, Status: "processing", NotificationType: string(TypeNoCertificates7Day), UserID: uuid.NullUUID{UUID: uuid.New(), Valid: true}}, nil
+		},
+		MarkNotificationCompletedFunc: func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error) {
+			completedIDs[id] = true
+			return sqlc.Notification{ID: id, Status: "completed"}, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+	processor.sender = func(email email_templates.Email) (string, error) {
+		return "msg", nil
+	}
+
+	result, err := processor.ProcessPendingNotifications(ctx, 2)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if result.Found != 2 {
+		t.Errorf("expected Found=2, got %d", result.Found)
+	}
+	if result.Completed != 2 {
+		t.Errorf("expected Completed=2, got %d", result.Completed)
+	}
+	if result.Failed != 0 {
+		t.Errorf("expected Failed=0, got %d", result.Failed)
+	}
+
+	if len(completedIDs) != 2 {
+		t.Errorf("expected exactly 2 completed notifications, got %d", len(completedIDs))
+	}
+	if !completedIDs[notifIDs[0]] || !completedIDs[notifIDs[1]] {
+		t.Errorf("expected only first two notifications processed, got %v", completedIDs)
+	}
+}
+
+func TestProcessor_ProcessPendingNotifications_NonPositiveLimit(t *testing.T) {
+	ctx := context.Background()
+
+	mockRepo := &mockRepository{
+		GetPendingNotificationsFunc: func(ctx context.Context) ([]sqlc.Notification, error) {
+			t.Fatal("GetPendingNotifications should not be called when limit <= 0")
+			return nil, nil
+		},
+	}
+
+	processor := NewProcessor(mockRepo)
+
+	for _, limit := range []int{0, -1, -100} {
+		result, err := processor.ProcessPendingNotifications(ctx, limit)
+		if err != nil {
+			t.Fatalf("expected no error for limit %d, got %v", limit, err)
+		}
+		if result.Found != 0 || result.Completed != 0 || result.Failed != 0 {
+			t.Errorf("expected zero result for limit %d, got %+v", limit, result)
+		}
+	}
+}
