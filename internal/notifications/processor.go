@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
@@ -14,17 +15,21 @@ import (
 	"github.com/google/uuid"
 )
 
+var ErrNothingToSend = errors.New("notification has nothing to send")
+
 type SenderFunc func(email email_templates.Email) (string, error)
 
 type Processor struct {
 	repo   domain.Repository
 	sender SenderFunc
+	now    func() time.Time
 }
 
 func NewProcessor(repo domain.Repository) *Processor {
 	return &Processor{
 		repo:   repo,
 		sender: email.Send,
+		now:    time.Now,
 	}
 }
 
@@ -32,7 +37,9 @@ func (p *Processor) BuildEmail(
 	ctx context.Context,
 	notification sqlc.Notification,
 ) (email_templates.Email, error) {
-	if notification.NotificationType != string(TypeNoCertificates7Day) && notification.NotificationType != string(TypeNoCertificates1Month) {
+	if notification.NotificationType != string(TypeNoCertificates7Day) &&
+		notification.NotificationType != string(TypeNoCertificates1Month) &&
+		notification.NotificationType != string(TypeCertificateExpirySummary) {
 		return email_templates.Email{}, fmt.Errorf("unsupported notification type: %s", notification.NotificationType)
 	}
 
@@ -45,12 +52,59 @@ func (p *Processor) BuildEmail(
 		return email_templates.Email{}, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	data := email_templates.NoCertsEmailData{
-		FirstName: user.Forename.String,
-		AppURL:    "https://www.seacert.app/certificates",
-	}
+	switch notification.NotificationType {
+	case string(TypeNoCertificates7Day), string(TypeNoCertificates1Month):
+		data := email_templates.NoCertsEmailData{
+			FirstName: user.Forename.String,
+			AppURL:    "https://www.seacert.app/certificates",
+		}
+		return email_templates.GetNoCertsEmail(data, []string{user.Email})
 
-	return email_templates.GetNoCertsEmail(data, []string{user.Email})
+	case string(TypeCertificateExpirySummary):
+		certs, err := p.repo.GetCertificatesForExpiryNotification(ctx, notification.UserID.UUID)
+		if err != nil {
+			return email_templates.Email{}, fmt.Errorf("failed to get certificates for expiry notification: %w", err)
+		}
+
+		now := time.Now()
+		if p.now != nil {
+			now = p.now()
+		}
+
+		groups := GroupCertificatesByExpiry(certs, now)
+		if len(groups.Expired) == 0 &&
+			len(groups.ExpiringOneMonth) == 0 &&
+			len(groups.ExpiringSixMonths) == 0 &&
+			len(groups.ExpiringOneYear) == 0 {
+			return email_templates.Email{}, ErrNothingToSend
+		}
+
+		mapItems := func(rows []sqlc.GetCertificatesForExpiryNotificationRow) []email_templates.ExpiringCertificateItem {
+			items := make([]email_templates.ExpiringCertificateItem, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, email_templates.ExpiringCertificateItem{
+					Name:       r.CertTypeName,
+					ExpiryDate: r.ExpiryDate.Format("02 Jan 2006"),
+					Url:        "https://www.seacert.app/certificates",
+				})
+			}
+			return items
+		}
+
+		data := email_templates.CertificateExpiryEmailData{
+			FirstName:     user.Forename.String,
+			AppURL:        "https://www.seacert.app/certificates",
+			Expired:       mapItems(groups.Expired),
+			NextMonth:     mapItems(groups.ExpiringOneMonth),
+			NextSixMonths: mapItems(groups.ExpiringSixMonths),
+			NextYear:      mapItems(groups.ExpiringOneYear),
+		}
+
+		return email_templates.GetCertificateExpiryEmail(data, []string{user.Email})
+
+	default:
+		return email_templates.Email{}, fmt.Errorf("unsupported notification type: %s", notification.NotificationType)
+	}
 }
 
 func (p *Processor) CreateDelivery(
@@ -142,7 +196,9 @@ func (p *Processor) ProcessNotification(
 	ctx context.Context,
 	notification sqlc.Notification,
 ) error {
-	if notification.NotificationType != string(TypeNoCertificates7Day) && notification.NotificationType != string(TypeNoCertificates1Month) {
+	if notification.NotificationType != string(TypeNoCertificates7Day) &&
+		notification.NotificationType != string(TypeNoCertificates1Month) &&
+		notification.NotificationType != string(TypeCertificateExpirySummary) {
 		return fmt.Errorf("unsupported notification type: %s", notification.NotificationType)
 	}
 
@@ -153,6 +209,13 @@ func (p *Processor) ProcessNotification(
 
 	_, sendErr := p.SendDelivery(ctx, processingNotification)
 	if sendErr != nil {
+		if errors.Is(sendErr, ErrNothingToSend) {
+			_, markErr := p.repo.MarkNotificationCompleted(ctx, notification.ID)
+			if markErr != nil {
+				return fmt.Errorf("nothing to send, but failed to record notification completion state: %w", markErr)
+			}
+			return nil
+		}
 		_, markErr := p.repo.MarkNotificationFailed(ctx, notification.ID)
 		if markErr != nil {
 			return fmt.Errorf("failed to send notification: %w; additionally failed to mark notification as failed: %v", sendErr, markErr)

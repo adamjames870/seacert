@@ -2,8 +2,10 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
 	"github.com/adamjames870/seacert/internal/domain"
@@ -14,6 +16,8 @@ type mockRepository struct {
 	CreateNotificationFunc                      func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error)
 	GetUsersEligibleForNoCertificates7DayFunc   func(ctx context.Context) ([]uuid.UUID, error)
 	GetUsersEligibleForNoCertificates1MonthFunc func(ctx context.Context) ([]uuid.UUID, error)
+	GetCandidateUsersForExpiryNotificationFunc  func(ctx context.Context) ([]uuid.UUID, error)
+	GetNotificationByKeyFunc                    func(ctx context.Context, notificationKey string) (sqlc.Notification, error)
 	GetPendingNotificationsFunc                 func(ctx context.Context) ([]sqlc.Notification, error)
 	GetUserByIDFunc                             func(ctx context.Context, id uuid.UUID) (sqlc.User, error)
 	CreateEmailDeliveryFunc                     func(ctx context.Context, arg sqlc.CreateEmailDeliveryParams) (sqlc.EmailDelivery, error)
@@ -23,6 +27,7 @@ type mockRepository struct {
 	MarkNotificationProcessingFunc              func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
 	MarkNotificationCompletedFunc               func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
 	MarkNotificationFailedFunc                  func(ctx context.Context, id uuid.UUID) (sqlc.Notification, error)
+	GetCertificatesForExpiryNotificationFunc    func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error)
 }
 
 func (m *mockRepository) CreateNotification(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
@@ -38,6 +43,20 @@ func (m *mockRepository) GetUsersEligibleForNoCertificates1Month(ctx context.Con
 		return m.GetUsersEligibleForNoCertificates1MonthFunc(ctx)
 	}
 	panic("not implemented")
+}
+
+func (m *mockRepository) GetCandidateUsersForExpiryNotification(ctx context.Context) ([]uuid.UUID, error) {
+	if m.GetCandidateUsersForExpiryNotificationFunc != nil {
+		return m.GetCandidateUsersForExpiryNotificationFunc(ctx)
+	}
+	panic("not implemented")
+}
+
+func (m *mockRepository) GetNotificationByKey(ctx context.Context, notificationKey string) (sqlc.Notification, error) {
+	if m.GetNotificationByKeyFunc != nil {
+		return m.GetNotificationByKeyFunc(ctx, notificationKey)
+	}
+	return sqlc.Notification{}, sql.ErrNoRows
 }
 
 // Panic for unimplemented methods
@@ -72,6 +91,9 @@ func (m *mockRepository) GetCertFromId(ctx context.Context, arg sqlc.GetCertFrom
 	panic("not implemented")
 }
 func (m *mockRepository) GetCertificatesForExpiryNotification(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+	if m.GetCertificatesForExpiryNotificationFunc != nil {
+		return m.GetCertificatesForExpiryNotificationFunc(ctx, userID)
+	}
 	panic("not implemented")
 }
 func (m *mockRepository) GetPredecessors(ctx context.Context, newCert uuid.UUID) ([]sqlc.GetPredecessorsRow, error) {
@@ -442,4 +464,425 @@ func TestGenerateNoCertificates_SeparateKeysFor7dAnd1m(t *testing.T) {
 	if created1mKey != expected1mKey {
 		t.Errorf("expected 1m key %s, got %s", expected1mKey, created1mKey)
 	}
+}
+
+func TestGenerateCertificateExpirySummary_RelevantCertificates(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	refTime := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{
+			{
+				ID:         uuid.New(),
+				CertNumber: "CERT-1",
+				ExpiryDate: refTime.AddDate(0, 0, 15), // 15 days in future (ExpiringOneMonth)
+			},
+		}, nil
+	}
+
+	var createdParam sqlc.CreateNotificationParams
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		createdParam = arg
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateCertificateExpirySummary(context.Background(), refTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 notification created, got %d", count)
+	}
+
+	if createdParam.NotificationType != string(TypeCertificateExpirySummary) {
+		t.Errorf("expected NotificationType %s, got %s", TypeCertificateExpirySummary, createdParam.NotificationType)
+	}
+	expectedKey := "certificate-expiry-summary:" + user.String() + ":2026-08"
+	if createdParam.NotificationKey != expectedKey {
+		t.Errorf("expected NotificationKey %s, got %s", expectedKey, createdParam.NotificationKey)
+	}
+	if !createdParam.UserID.Valid || createdParam.UserID.UUID != user {
+		t.Errorf("expected UserID %s, got %v", user, createdParam.UserID)
+	}
+	if string(createdParam.Payload) != "{}" {
+		t.Errorf("expected empty payload {}, got %s", string(createdParam.Payload))
+	}
+	if !createdParam.ScheduledAt.Equal(refTime) {
+		t.Errorf("expected ScheduledAt %v, got %v", refTime, createdParam.ScheduledAt)
+	}
+}
+
+func TestGenerateCertificateExpirySummary_NoRelevantCertificates(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	refTime := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{}, nil
+	}
+
+	created := false
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		created = true
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateCertificateExpirySummary(context.Background(), refTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 notifications, got %d", count)
+	}
+	if created {
+		t.Error("expected CreateNotification not to be called")
+	}
+}
+
+func TestGenerateCertificateExpirySummary_OnlyMoreThanOneYear(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	refTime := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{
+			{
+				ID:         uuid.New(),
+				CertNumber: "CERT-FAR-FUTURE",
+				ExpiryDate: refTime.AddDate(2, 0, 0), // 2 years away
+			},
+		}, nil
+	}
+
+	created := false
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		created = true
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateCertificateExpirySummary(context.Background(), refTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 notifications for >1 year certs, got %d", count)
+	}
+	if created {
+		t.Error("expected CreateNotification not to be called for >1 year certs")
+	}
+}
+
+func TestGenerateCertificateExpirySummary_MultipleRelevantCertificatesSingleNotification(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	refTime := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	// User has 8 certificates across all groups
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{
+			{ID: uuid.New(), CertNumber: "EXP-1", ExpiryDate: refTime.AddDate(0, 0, -10)},
+			{ID: uuid.New(), CertNumber: "EXP-2", ExpiryDate: refTime.AddDate(0, 0, -30)},
+			{ID: uuid.New(), CertNumber: "1M-1", ExpiryDate: refTime.AddDate(0, 0, 5)},
+			{ID: uuid.New(), CertNumber: "6M-1", ExpiryDate: refTime.AddDate(0, 2, 0)},
+			{ID: uuid.New(), CertNumber: "6M-2", ExpiryDate: refTime.AddDate(0, 3, 0)},
+			{ID: uuid.New(), CertNumber: "6M-3", ExpiryDate: refTime.AddDate(0, 4, 0)},
+			{ID: uuid.New(), CertNumber: "1Y-1", ExpiryDate: refTime.AddDate(0, 8, 0)},
+			{ID: uuid.New(), CertNumber: "1Y-2", ExpiryDate: refTime.AddDate(0, 10, 0)},
+		}, nil
+	}
+
+	createCalls := 0
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		createCalls++
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateCertificateExpirySummary(context.Background(), refTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 notification created, got %d", count)
+	}
+	if createCalls != 1 {
+		t.Errorf("expected exactly 1 call to CreateNotification for user with 8 certs, got %d", createCalls)
+	}
+}
+
+func TestGenerateCertificateExpirySummary_SameMonthIdempotency(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	storedNotifications := make(map[string]sqlc.Notification)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{
+			{ID: uuid.New(), CertNumber: "CERT-1", ExpiryDate: time.Date(2026, 8, 20, 0, 0, 0, 0, time.UTC)},
+		}, nil
+	}
+
+	repo.GetNotificationByKeyFunc = func(ctx context.Context, notificationKey string) (sqlc.Notification, error) {
+		if notif, exists := storedNotifications[notificationKey]; exists {
+			return notif, nil
+		}
+		return sqlc.Notification{}, sql.ErrNoRows
+	}
+
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		notif := sqlc.Notification{
+			ID:               arg.ID,
+			UserID:           arg.UserID,
+			NotificationType: arg.NotificationType,
+			NotificationKey:  arg.NotificationKey,
+			Status:           "pending",
+			ScheduledAt:      arg.ScheduledAt,
+		}
+		storedNotifications[arg.NotificationKey] = notif
+		return notif, nil
+	}
+
+	// First execution on 2026-08-10
+	date1 := time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC)
+	count1, err := generator.GenerateCertificateExpirySummary(context.Background(), date1)
+	if err != nil || count1 != 1 {
+		t.Fatalf("first run failed: err=%v, count=%d", err, count1)
+	}
+
+	// Second execution on 2026-08-28 (same month)
+	date2 := time.Date(2026, 8, 28, 15, 0, 0, 0, time.UTC)
+	count2, err := generator.GenerateCertificateExpirySummary(context.Background(), date2)
+	if err != nil {
+		t.Fatalf("second run unexpected error: %v", err)
+	}
+	if count2 != 0 {
+		t.Errorf("second run in same month should create 0 notifications, got %d", count2)
+	}
+}
+
+func TestGenerateCertificateExpirySummary_NewCalendarMonth(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	storedNotifications := make(map[string]sqlc.Notification)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{
+			{ID: uuid.New(), CertNumber: "CERT-1", ExpiryDate: time.Date(2026, 9, 15, 0, 0, 0, 0, time.UTC)},
+		}, nil
+	}
+
+	repo.GetNotificationByKeyFunc = func(ctx context.Context, notificationKey string) (sqlc.Notification, error) {
+		if notif, exists := storedNotifications[notificationKey]; exists {
+			return notif, nil
+		}
+		return sqlc.Notification{}, sql.ErrNoRows
+	}
+
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		notif := sqlc.Notification{
+			ID:               arg.ID,
+			UserID:           arg.UserID,
+			NotificationType: arg.NotificationType,
+			NotificationKey:  arg.NotificationKey,
+			Status:           "pending",
+			ScheduledAt:      arg.ScheduledAt,
+		}
+		storedNotifications[arg.NotificationKey] = notif
+		return notif, nil
+	}
+
+	// August run
+	dateAug := time.Date(2026, 8, 28, 0, 0, 0, 0, time.UTC)
+	countAug, err := generator.GenerateCertificateExpirySummary(context.Background(), dateAug)
+	if err != nil || countAug != 1 {
+		t.Fatalf("August run failed: err=%v, count=%d", err, countAug)
+	}
+
+	// September run
+	dateSep := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	countSep, err := generator.GenerateCertificateExpirySummary(context.Background(), dateSep)
+	if err != nil || countSep != 1 {
+		t.Fatalf("September run failed: err=%v, count=%d", err, countSep)
+	}
+
+	if _, ok := storedNotifications["certificate-expiry-summary:"+user.String()+":2026-08"]; !ok {
+		t.Error("expected August notification key stored")
+	}
+	if _, ok := storedNotifications["certificate-expiry-summary:"+user.String()+":2026-09"]; !ok {
+		t.Error("expected September notification key stored")
+	}
+}
+
+func TestGenerateCertificateExpirySummary_ExistingFailedNotification(t *testing.T) {
+	repo := new(mockRepository)
+	generator := NewGenerator(repo)
+
+	user := uuid.New()
+	refTime := time.Date(2026, 8, 28, 0, 0, 0, 0, time.UTC)
+
+	repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+		return []uuid.UUID{user}, nil
+	}
+
+	repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+		return []sqlc.GetCertificatesForExpiryNotificationRow{
+			{ID: uuid.New(), CertNumber: "CERT-1", ExpiryDate: refTime.AddDate(0, 0, 5)},
+		}, nil
+	}
+
+	// Return an existing failed notification for August
+	repo.GetNotificationByKeyFunc = func(ctx context.Context, notificationKey string) (sqlc.Notification, error) {
+		if notificationKey == "certificate-expiry-summary:"+user.String()+":2026-08" {
+			return sqlc.Notification{
+				ID:               uuid.New(),
+				UserID:           uuid.NullUUID{UUID: user, Valid: true},
+				NotificationType: string(TypeCertificateExpirySummary),
+				NotificationKey:  notificationKey,
+				Status:           "failed",
+			}, nil
+		}
+		return sqlc.Notification{}, sql.ErrNoRows
+	}
+
+	created := false
+	repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+		created = true
+		return sqlc.Notification{}, nil
+	}
+
+	count, err := generator.GenerateCertificateExpirySummary(context.Background(), refTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 notifications created when existing notification has status failed, got %d", count)
+	}
+	if created {
+		t.Error("expected CreateNotification not to be called for existing failed notification")
+	}
+}
+
+func TestGenerateCertificateExpirySummary_Errors(t *testing.T) {
+	t.Run("CandidateUsersError", func(t *testing.T) {
+		repo := new(mockRepository)
+		generator := NewGenerator(repo)
+		dbErr := errors.New("candidate users query failure")
+		repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+			return nil, dbErr
+		}
+
+		count, err := generator.GenerateCertificateExpirySummary(context.Background(), time.Now())
+		if err == nil || !errors.Is(err, dbErr) {
+			t.Fatalf("expected error wrapping dbErr, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("expected count 0, got %d", count)
+		}
+	})
+
+	t.Run("GetNotificationByKeyError", func(t *testing.T) {
+		repo := new(mockRepository)
+		generator := NewGenerator(repo)
+		user := uuid.New()
+		dbErr := errors.New("key query failure")
+
+		repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+			return []uuid.UUID{user}, nil
+		}
+		repo.GetNotificationByKeyFunc = func(ctx context.Context, notificationKey string) (sqlc.Notification, error) {
+			return sqlc.Notification{}, dbErr
+		}
+
+		count, err := generator.GenerateCertificateExpirySummary(context.Background(), time.Now())
+		if err == nil || !errors.Is(err, dbErr) {
+			t.Fatalf("expected error wrapping dbErr, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("expected count 0, got %d", count)
+		}
+	})
+
+	t.Run("GetCertificatesError", func(t *testing.T) {
+		repo := new(mockRepository)
+		generator := NewGenerator(repo)
+		user := uuid.New()
+		dbErr := errors.New("certs query failure")
+
+		repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+			return []uuid.UUID{user}, nil
+		}
+		repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+			return nil, dbErr
+		}
+
+		count, err := generator.GenerateCertificateExpirySummary(context.Background(), time.Now())
+		if err == nil || !errors.Is(err, dbErr) {
+			t.Fatalf("expected error wrapping dbErr, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("expected count 0, got %d", count)
+		}
+	})
+
+	t.Run("CreateNotificationError", func(t *testing.T) {
+		repo := new(mockRepository)
+		generator := NewGenerator(repo)
+		user := uuid.New()
+		dbErr := errors.New("create notification failure")
+
+		repo.GetCandidateUsersForExpiryNotificationFunc = func(ctx context.Context) ([]uuid.UUID, error) {
+			return []uuid.UUID{user}, nil
+		}
+		repo.GetCertificatesForExpiryNotificationFunc = func(ctx context.Context, userID uuid.UUID) ([]sqlc.GetCertificatesForExpiryNotificationRow, error) {
+			return []sqlc.GetCertificatesForExpiryNotificationRow{
+				{ID: uuid.New(), CertNumber: "C1", ExpiryDate: time.Now().AddDate(0, 0, 5)},
+			}, nil
+		}
+		repo.CreateNotificationFunc = func(ctx context.Context, arg sqlc.CreateNotificationParams) (sqlc.Notification, error) {
+			return sqlc.Notification{}, dbErr
+		}
+
+		count, err := generator.GenerateCertificateExpirySummary(context.Background(), time.Now())
+		if err == nil || !errors.Is(err, dbErr) {
+			t.Fatalf("expected error wrapping dbErr, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("expected count 0, got %d", count)
+		}
+	})
 }

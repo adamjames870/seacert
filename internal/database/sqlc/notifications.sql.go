@@ -53,6 +53,60 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 	return i, err
 }
 
+const getCandidateUsersForExpiryNotification = `-- name: GetCandidateUsersForExpiryNotification :many
+SELECT DISTINCT user_id
+FROM certificates
+WHERE deleted = FALSE
+ORDER BY user_id ASC
+`
+
+func (q *Queries) GetCandidateUsersForExpiryNotification(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getCandidateUsersForExpiryNotification)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var user_id uuid.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getNotificationByKey = `-- name: GetNotificationByKey :one
+SELECT id, user_id, notification_type, notification_key, status, payload, scheduled_at, processed_at, created_at, updated_at
+FROM notifications
+WHERE notification_key = $1
+`
+
+func (q *Queries) GetNotificationByKey(ctx context.Context, notificationKey string) (Notification, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationByKey, notificationKey)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.NotificationType,
+		&i.NotificationKey,
+		&i.Status,
+		&i.Payload,
+		&i.ScheduledAt,
+		&i.ProcessedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getNotificationsStatusSummary = `-- name: GetNotificationsStatusSummary :many
 SELECT status, COUNT(*) AS count
 FROM notifications

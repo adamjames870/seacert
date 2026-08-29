@@ -51,6 +51,14 @@ func (r *repository) GetUsersEligibleForNoCertificates1Month(ctx context.Context
 	return r.Queries.GetUsersEligibleForNoCertificates1Month(ctx)
 }
 
+func (r *repository) GetCandidateUsersForExpiryNotification(ctx context.Context) ([]uuid.UUID, error) {
+	return r.Queries.GetCandidateUsersForExpiryNotification(ctx)
+}
+
+func (r *repository) GetNotificationByKey(ctx context.Context, notificationKey string) (sqlc.Notification, error) {
+	return r.Queries.GetNotificationByKey(ctx, notificationKey)
+}
+
 func (r *repository) GetPendingNotifications(ctx context.Context) ([]sqlc.Notification, error) {
 	return r.Queries.GetPendingNotifications(ctx)
 }

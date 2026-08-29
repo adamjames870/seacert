@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/adamjames870/seacert/internal"
 	"github.com/adamjames870/seacert/internal/api/handlers"
@@ -51,6 +52,39 @@ func HandlerNotifyTestGenerate1Month(state *internal.ApiState) http.HandlerFunc 
 		generator := notifications.NewGenerator(state.Repo)
 
 		count, err := generator.GenerateNoCertificates1Month(r.Context())
+		if err != nil {
+			handlers.RespondWithError(
+				w,
+				r,
+				http.StatusInternalServerError,
+				"Error generating notifications",
+				err,
+			)
+			return
+		}
+
+		handlers.RespondWithJSON(
+			w,
+			http.StatusOK,
+			map[string]any{
+				"generated": count,
+			},
+		)
+
+	}
+}
+
+func HandlerNotifyTestGenerateExpiring(state *internal.ApiState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if !state.IsDev {
+			handlers.RespondWithError(w, r, http.StatusForbidden, "Forbidden", nil)
+			return
+		}
+
+		generator := notifications.NewGenerator(state.Repo)
+
+		count, err := generator.GenerateCertificateExpirySummary(r.Context(), time.Now())
 		if err != nil {
 			handlers.RespondWithError(
 				w,

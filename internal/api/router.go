@@ -61,6 +61,7 @@ func createEndpoints(mux *http.ServeMux, state *internal.ApiState) error {
 	// ----------- Notification Handlers ----------------
 	mux.Handle("POST /notify/test-generate-7day", authMw(adminMw(notifications.HandlerNotifyTestGenerate7Day(state))))
 	mux.Handle("POST /notify/test-generate-1month", authMw(adminMw(notifications.HandlerNotifyTestGenerate1Month(state))))
+	mux.Handle("POST /notify/test-generate-expiring", authMw(adminMw(notifications.HandlerNotifyTestGenerateExpiring(state))))
 	mux.Handle("POST /notify/test-send", authMw(adminMw(notifications.HandlerNotifyTestSend(state))))
 
 	mux.Handle("GET /api/admin/notifications/statuses", authMw(adminMw(admin.HandlerAdminNotificationsStatus(state))))

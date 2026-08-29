@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/adamjames870/seacert/internal/database/sqlc"
+	"github.com/adamjames870/seacert/internal/notifications"
 	"github.com/adamjames870/seacert/internal/repository/postgres"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -237,5 +238,64 @@ func TestGetCertificatesForExpiryNotification_EdgeCasesInTx(t *testing.T) {
 
 	if !results[0].ExpiryDate.Equal(manualExpiryDate) {
 		t.Errorf("expected expiry date %v, got %v", manualExpiryDate, results[0].ExpiryDate)
+	}
+}
+
+func TestCandidateUsers_And_GenerateExpirySummary_Integration(t *testing.T) {
+	db := getTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// Run within transaction and roll back at end so dummy data remains clean
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatalf("failed to start tx: %v", err)
+	}
+	defer tx.Rollback()
+
+	queries := sqlc.New(tx)
+
+	candidateUserIDs, err := queries.GetCandidateUsersForExpiryNotification(ctx)
+	if err != nil {
+		t.Fatalf("failed to get candidate users: %v", err)
+	}
+
+	user009ID := uuid.MustParse("10000000-0000-0000-0000-000000000009")
+	found009 := false
+	for _, id := range candidateUserIDs {
+		if id == user009ID {
+			found009 = true
+			break
+		}
+	}
+	if !found009 {
+		t.Errorf("expected user 009 to be in candidate users list, got %v", candidateUserIDs)
+	}
+
+	// Test notification key query
+	testKey := "test-notification-key-" + uuid.New().String()
+	notifID := uuid.New()
+	_, err = queries.CreateNotification(ctx, sqlc.CreateNotificationParams{
+		ID:               notifID,
+		UserID:           uuid.NullUUID{UUID: user009ID, Valid: true},
+		NotificationType: string(notifications.TypeCertificateExpirySummary),
+		NotificationKey:  testKey,
+		Payload:          []byte("{}"),
+		ScheduledAt:      time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("failed to create notification in tx: %v", err)
+	}
+
+	fetched, err := queries.GetNotificationByKey(ctx, testKey)
+	if err != nil {
+		t.Fatalf("failed to fetch notification by key: %v", err)
+	}
+	if fetched.ID != notifID {
+		t.Errorf("expected notification ID %s, got %s", notifID, fetched.ID)
+	}
+	if fetched.NotificationType != string(notifications.TypeCertificateExpirySummary) {
+		t.Errorf("expected notification type %s, got %s", notifications.TypeCertificateExpirySummary, fetched.NotificationType)
 	}
 }

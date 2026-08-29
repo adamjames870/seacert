@@ -64,3 +64,14 @@ WHERE u.created_at <= NOW() - INTERVAL '1 month'
       WHERE n.user_id = u.id
         AND n.notification_type = 'no_certificates_1m'
   );
+
+-- name: GetCandidateUsersForExpiryNotification :many
+SELECT DISTINCT user_id
+FROM certificates
+WHERE deleted = FALSE
+ORDER BY user_id ASC;
+
+-- name: GetNotificationByKey :one
+SELECT *
+FROM notifications
+WHERE notification_key = $1;
