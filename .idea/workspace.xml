@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="27a1116a-0280-4dd9-b10d-bd2edf5025a1" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/cmd/notifications/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/api/handlers/notifications/handler_notify_testmail.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/handlers/notifications/handler_notify_testmail.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/api/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/database/queries/notifications.sql" beforeDir="false" afterPath="$PROJECT_DIR$/internal/database/queries/notifications.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/database/sqlc/notifications.sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/database/sqlc/notifications.sql.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/domain/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/domain/repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/notifications/generator.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/generator.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/notifications/generator_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/generator_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/notifications/processor.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/processor.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/notifications/processor_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/notifications/processor_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/postgres/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/postgres/repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/expiry_notification_query_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/expiry_notification_query_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +20,13 @@
   </component>
   <component name="EmbeddingIndexingInfo">
     <option name="cachedIndexableFilesCount" value="263" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
   </component>
   <component name="GOROOT" url="file://$PROJECT_DIR$/../go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.1.linux-amd64" />
   <component name="Git.Settings">
@@ -49,61 +46,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.001343302556777" />
-      <entry key="MS500" value="1.2664616840169858" />
-      <entry key="S2" value="1.7184700884407373" />
-      <entry key="S5" value="1.8765642942193794" />
-      <entry key="S10" value="1.9988204034763992" />
-      <entry key="S30" value="3.6952385179378093" />
-      <entry key="S60" value="5.93445036960278" />
-      <entry key="M2" value="8.938609313327099" />
-      <entry key="M5" value="24.56815036731429" />
-      <entry key="M10" value="52.47457182098124" />
-      <entry key="M15" value="76.50883093392275" />
-      <entry key="M30" value="128.46108219406105" />
-      <entry key="H1" value="179.15751679949128" />
-      <entry key="H2" value="216.08216459788065" />
-      <entry key="H4" value="244.47668648355977" />
-      <entry key="D1" value="467.62404350306895" />
-      <entry key="W1" value="697.3668585373197" />
+      <entry key="MS100" value="1.3299061286801823" />
+      <entry key="MS500" value="5.592736520663951" />
+      <entry key="S2" value="15.983147005792423" />
+      <entry key="S5" value="30.470997675666172" />
+      <entry key="S10" value="42.313812413670675" />
+      <entry key="S30" value="54.740256515367236" />
+      <entry key="S60" value="58.667680806414744" />
+      <entry key="M2" value="60.780446932454865" />
+      <entry key="M5" value="62.09898970331745" />
+      <entry key="M10" value="62.54726464374994" />
+      <entry key="M15" value="62.69767842531548" />
+      <entry key="M30" value="62.848589607338006" />
+      <entry key="H1" value="62.92423228893234" />
+      <entry key="H2" value="62.96210051590961" />
+      <entry key="H4" value="62.983528564364754" />
+      <entry key="D1" value="148.22232492904166" />
+      <entry key="W1" value="712.2122050170453" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="5.532282094468339E-113" />
-      <entry key="MS500" value="3.536558638652622E-23" />
-      <entry key="S2" value="2.4386260899644774E-6" />
-      <entry key="S5" value="0.005686670781167849" />
-      <entry key="S10" value="0.07541001777726782" />
-      <entry key="S30" value="0.42248460973823765" />
-      <entry key="S60" value="0.65246657579394" />
-      <entry key="M2" value="0.926324615809588" />
-      <entry key="M5" value="2.168469950499323" />
-      <entry key="M10" value="3.6961215157113605" />
-      <entry key="M15" value="4.527889990324618" />
-      <entry key="M30" value="5.604700853083328" />
-      <entry key="H1" value="6.257157056257854" />
-      <entry key="H2" value="6.619755191385559" />
-      <entry key="H4" value="7.002014269488572" />
-      <entry key="D1" value="13.739017444379044" />
-      <entry key="W1" value="21.66982338713622" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="9.324794717736204E-247" />
+      <entry key="M10" value="1.891570135205137E-123" />
+      <entry key="M15" value="2.4795645183490104E-82" />
+      <entry key="M30" value="3.909064963133184E-41" />
+      <entry key="H1" value="2.0068596622080073E-20" />
+      <entry key="H2" value="5.095353977749547E-10" />
+      <entry key="H4" value="8.474197503020827E-5" />
+      <entry key="D1" value="2.783569500285721" />
+      <entry key="W1" value="21.510552849432877" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.001588596206689254" />
-      <entry key="MS500" value="0.41939289278173153" />
-      <entry key="S2" value="1.3413192307639819" />
-      <entry key="S5" value="1.7080882596223048" />
-      <entry key="S10" value="1.973395532450881" />
-      <entry key="S30" value="4.064905376728854" />
-      <entry key="S60" value="6.553571505039971" />
-      <entry key="M2" value="9.841462244784932" />
-      <entry key="M5" value="26.703355043870985" />
-      <entry key="M10" value="56.13459599142683" />
-      <entry key="M15" value="81.00333592272364" />
-      <entry key="M30" value="134.0406025244631" />
-      <entry key="H1" value="185.39841428886564" />
-      <entry key="H2" value="222.69252779337575" />
-      <entry key="H4" value="251.4735701676632" />
-      <entry key="D1" value="481.3617962630171" />
-      <entry key="W1" value="719.0364377230211" />
+      <entry key="MS100" value="0.809889149738591" />
+      <entry key="MS500" value="5.329378679391025" />
+      <entry key="S2" value="15.84455291406166" />
+      <entry key="S5" value="30.376076050932728" />
+      <entry key="S10" value="42.24975120300868" />
+      <entry key="S30" value="54.71300213150357" />
+      <entry key="S60" value="58.65311370007857" />
+      <entry key="M2" value="60.77290993982406" />
+      <entry key="M5" value="62.09591155587206" />
+      <entry key="M10" value="62.54571479409115" />
+      <entry key="M15" value="62.69664278118206" />
+      <entry key="M30" value="62.84807057563832" />
+      <entry key="H1" value="62.92397246989954" />
+      <entry key="H2" value="62.96197053100931" />
+      <entry key="H4" value="62.98354824023619" />
+      <entry key="D1" value="151.00562823923806" />
+      <entry key="W1" value="733.7225051202482" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -111,36 +108,40 @@
   &quot;associatedIndex&quot;: 6
 }</component>
   <component name="ProjectId" id="3IPwZvaLSo5Ky2aFJb60OzaxEXP" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginOnboardingV2&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoOptimizationToolWindowEnableInLayout.v333333&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.analysis.ui.options.defaults&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/adam&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.GoLinterPluginOnboardingV2": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
+    "RunOnceActivity.GoOptimizationToolWindowEnableInLayout.v333333": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.analysis.ui.options.defaults": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "dev",
+    "go.sdk.automatically.set": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/adam",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "run.configurations.included.in.services": "true",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
+}]]></component>
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="junie" />
@@ -170,6 +171,15 @@
       <package value="github.com/adamjames870/seacert/cmd/get_token" />
       <directory value="$PROJECT_DIR$" />
       <auto_managed_config_id value="$PROJECT_DIR$/cmd/get_token" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build github.com/adamjames870/seacert/cmd/notifications" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="seacert" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/adamjames870/seacert/cmd/notifications" />
+      <directory value="$PROJECT_DIR$" />
+      <auto_managed_config_id value="$PROJECT_DIR$/cmd/notifications" />
       <method v="2" />
     </configuration>
     <configuration name="go build test_storage/" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
@@ -208,5 +218,17 @@
     <option featureType="dependencySupport" implementationName="executable:docker" />
     <option featureType="dependencySupport" implementationName="javascript:npm:vite" />
     <option featureType="dependencySupport" implementationName="executable:kubectl" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" log-message="true" suspend="NONE" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/api/setup.go</url>
+          <line>100</line>
+          <log-expression expression="&#9;dbUrl := os.Getenv(&quot;DB_URL&quot;)&#10;&#9;if dbUrl == &quot;&quot; {&#10;&#9;&#9;return fmt.Errorf(&quot;DB_URL environment variable is not set&quot;)&#10;&#9;}&#10;&#10;&#9;db, errDb := sql.Open(&quot;postgres&quot;, dbUrl)&#10;&#9;if errDb != nil {&#10;&#9;&#9;return fmt.Errorf(&quot;unable to load DB: %w&quot;, errDb)&#10;&#9;}&#10;&#10;&#9;// Set connection pooling limits&#10;&#9;db.SetMaxOpenConns(25)&#10;&#9;db.SetMaxIdleConns(25)&#10;&#9;db.SetConnMaxLifetime(5 * time.Minute)&#10;&#10;&#9;if err := db.Ping(); err != nil {&#10;&#9;&#9;return fmt.Errorf(&quot;error pinging database: %w&quot;, err)&#10;&#9;}&#10;&#10;&#9;// Run Migrations&#10;&#9;if err := runMigrations(state, db); err != nil {&#10;&#9;&#9;return fmt.Errorf(&quot;migration error: %w&quot;, err)&#10;&#9;}&#10;&#10;&#9;state.Queries = sqlc.New(db)&#10;&#9;state.Repo = postgres.NewRepository(db)&#10;&#10;&#9;return nil&#10;}" language="go" />
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
