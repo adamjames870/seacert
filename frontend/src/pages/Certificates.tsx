@@ -468,16 +468,31 @@ const Certificates = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
               You haven't added any certificates yet. Start adding your maritime qualifications to keep track of their validity.
             </Typography>
-            <Button 
-              variant="contained" 
-              size="large"
-              startIcon={<Plus size={24} />}
-              component={RouterLink}
-              to="/add-certificate"
-              sx={{ px: 4, py: 1.5, borderRadius: 2, fontSize: '1.1rem', fontWeight: 700 }}
-            >
-              Add First Certificate
-            </Button>
+            <Stack spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
+              <Button 
+                variant="contained" 
+                size="large"
+                startIcon={<AutoAwesomeIcon sx={{ fontSize: 24 }} />}
+                component={RouterLink}
+                to="/certificate-wizard"
+                sx={{ px: 4, py: 1.5, borderRadius: 2, fontSize: '1.1rem', fontWeight: 700, width: '100%', maxWidth: 350 }}
+              >
+                Smart Add
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                Upload an image or PDF and we'll extract the data for you!
+              </Typography>
+              <Button 
+                variant="outlined" 
+                size="large"
+                startIcon={<Plus size={24} />}
+                component={RouterLink}
+                to="/add-certificate"
+                sx={{ px: 4, py: 1.5, borderRadius: 2, fontSize: '1.1rem', fontWeight: 700, width: '100%', maxWidth: 350 }}
+              >
+                Manually Add
+              </Button>
+            </Stack>
           </Paper>
         </Box>
       ) : (
