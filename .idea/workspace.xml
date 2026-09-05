@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="27a1116a-0280-4dd9-b10d-bd2edf5025a1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/cmd/notifications/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -19,7 +19,7 @@
     </colors>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="263" />
+    <option name="cachedIndexableFilesCount" value="3308" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -115,33 +115,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultGoTemplateProperty": "Go File",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.GoLinterPluginOnboardingV2": "true",
-    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
-    "RunOnceActivity.GoOptimizationToolWindowEnableInLayout.v333333": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.go.analysis.ui.options.defaults": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "dev",
-    "go.sdk.automatically.set": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/adam",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.configurations.included.in.services": "true",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginOnboardingV2&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoOptimizationToolWindowEnableInLayout.v333333&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.analysis.ui.options.defaults&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;test&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/adam&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="junie" />
@@ -195,8 +195,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-63c95d513abe-9addb268e56c-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-262.9437.286" />
-        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-GO-262.9437.286" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-WS-262.9437.145" />
       </set>
     </attachedChunks>
   </component>
@@ -207,6 +206,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1787679573080</updated>
+      <workItem from="1788606204878" duration="9000" />
+      <workItem from="1788606252200" duration="4000" />
     </task>
     <servers />
   </component>
@@ -218,17 +219,5 @@
     <option featureType="dependencySupport" implementationName="executable:docker" />
     <option featureType="dependencySupport" implementationName="javascript:npm:vite" />
     <option featureType="dependencySupport" implementationName="executable:kubectl" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" log-message="true" suspend="NONE" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/cmd/api/setup.go</url>
-          <line>100</line>
-          <log-expression expression="&#9;dbUrl := os.Getenv(&quot;DB_URL&quot;)&#10;&#9;if dbUrl == &quot;&quot; {&#10;&#9;&#9;return fmt.Errorf(&quot;DB_URL environment variable is not set&quot;)&#10;&#9;}&#10;&#10;&#9;db, errDb := sql.Open(&quot;postgres&quot;, dbUrl)&#10;&#9;if errDb != nil {&#10;&#9;&#9;return fmt.Errorf(&quot;unable to load DB: %w&quot;, errDb)&#10;&#9;}&#10;&#10;&#9;// Set connection pooling limits&#10;&#9;db.SetMaxOpenConns(25)&#10;&#9;db.SetMaxIdleConns(25)&#10;&#9;db.SetConnMaxLifetime(5 * time.Minute)&#10;&#10;&#9;if err := db.Ping(); err != nil {&#10;&#9;&#9;return fmt.Errorf(&quot;error pinging database: %w&quot;, err)&#10;&#9;}&#10;&#10;&#9;// Run Migrations&#10;&#9;if err := runMigrations(state, db); err != nil {&#10;&#9;&#9;return fmt.Errorf(&quot;migration error: %w&quot;, err)&#10;&#9;}&#10;&#10;&#9;state.Queries = sqlc.New(db)&#10;&#9;state.Repo = postgres.NewRepository(db)&#10;&#10;&#9;return nil&#10;}" language="go" />
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

@@ -4,7 +4,7 @@ import {
   Container, 
   Box, 
   Paper, 
-  Grid, 
+  Grid,
   Button, 
   CircularProgress, 
   Alert, 
@@ -158,7 +158,7 @@ const CertificateDetails = () => {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom color="primary">
               {certificate['cert-type-name']}
@@ -170,20 +170,20 @@ const CertificateDetails = () => {
             <Divider sx={{ my: 2 }} />
             
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">Certificate Number</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>{certificate['cert-number'] || 'N/A'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">Alternative Name</Typography>
                 <Typography variant="body1">{certificate['alternative-name'] || 'None'}</Typography>
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">Issued Date</Typography>
                 <Typography variant="body1">{formatDate(certificate['issued-date'])}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">Expiry Date</Typography>
                 <Typography variant="body1" sx={{ 
                   fontWeight: 500,
@@ -194,7 +194,7 @@ const CertificateDetails = () => {
                 </Typography>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="caption" color="text.secondary">Remarks</Typography>
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{certificate.remarks || 'No remarks'}</Typography>
               </Grid>
@@ -206,16 +206,16 @@ const CertificateDetails = () => {
               Issuer Information
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">Name</Typography>
                 <Typography variant="body1">{certificate['issuer-name']}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">Country</Typography>
                 <Typography variant="body1">{getCountryName(certificate['issuer-country'])}</Typography>
               </Grid>
               {certificate['issuer-website'] && (
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="caption" color="text.secondary">Website</Typography>
                   <Box>
                     <Link href={certificate['issuer-website']} target="_blank" rel="noopener noreferrer">
@@ -250,7 +250,7 @@ const CertificateDetails = () => {
           )}
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h6" gutterBottom alignSelf="flex-start">
               Document

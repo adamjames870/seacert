@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Box, TextField, Autocomplete, Button, Checkbox, FormControlLabel, CircularProgress } from '@mui/material';
+import { Box, TextField, Autocomplete, Button, CircularProgress } from '@mui/material';
 import { countries } from '../utils/countryData';
 
 interface UserDetailsFormProps {
